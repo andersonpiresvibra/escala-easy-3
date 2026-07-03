@@ -1,0 +1,7 @@
+/* Global Stylesheet for Escala Easy VIBRA */
+@import "./themes.css";
+
+body {
+  margin: 0;
+  padding: 0;
+}
