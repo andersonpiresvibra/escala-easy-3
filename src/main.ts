@@ -1,8 +1,8 @@
 import { bootstrapApplication } from '@angular/platform-browser';
-import { AppComponent } from './app/app';
+import { App } from './app/app';
 import { provideZonelessChangeDetection } from '@angular/core';
 
-bootstrapApplication(AppComponent, {
+bootstrapApplication(App, {
   providers: [
     provideZonelessChangeDetection()
   ]

@@ -26,7 +26,7 @@ interface AppNotification {
     '(document:click)': 'onDocumentClick($event)'
   }
 })
-export class AppComponent {
+export class App {
   public scaleService = inject(ScaleService);
 
   // Theme & Fullscreen states
