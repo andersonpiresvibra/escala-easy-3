@@ -1221,16 +1221,16 @@
       @if (activeSubTab() === 'siglas') {
         <div class="flex flex-col h-full overflow-hidden animate-fade-in font-sans w-full flex-1" id="siglas_tab_content">
           <!-- FIXED HEADER -->
-          <div class="p-4 md:p-6 pb-3 border-b border-[#10213b] flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0" style="height: 44px;">
+          <div class="p-4 md:p-6 pb-3 border-b border-[#10213b] flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0" style="height: 44px; background-color: #10B981; color: #ffffff;">
             <div>
-              <h3 class="font-black text-sm uppercase tracking-tight text-white flex items-center gap-1.5">
-                <span class="material-icons text-blue-400">label</span>
+              <h3 class="font-black text-sm uppercase tracking-tight flex items-center gap-1.5" style="color: #ffffff;">
+                <span class="material-icons text-blue-400" style="color: #ffffff;">label</span>
                 Gerenciamento de Siglas
               </h3>
             </div>
-            <div class="flex items-center gap-2 text-xs bg-blue-500/10 text-blue-400 border border-blue-500/25 px-3 py-1.5 rounded-lg font-mono font-bold">
-              <span class="material-icons text-xs">info</span>
-              <span>Total de Siglas: {{ scaleService.siglaTypes().length }}</span>
+            <div class="flex items-center gap-2 text-xs bg-blue-500/10 border border-blue-500/25 px-3 py-1.5 rounded-lg font-mono font-bold" style="color: #ffffff;">
+              <span class="material-icons text-xs" style="color: #ffffff;">info</span>
+              <span style="color: #ffffff;">Total de Siglas: {{ scaleService.siglaTypes().length }}</span>
             </div>
           </div>
 
@@ -1251,10 +1251,10 @@
                     <table class="w-full text-left border-collapse select-none">
                       <thead class="sticky top-0 z-10 shadow-sm">
                         <tr class="border-b border-[#10213b] bg-[#071426] text-slate-400 uppercase text-[9px] font-black tracking-wider">
-                          <th class="py-3 px-4 sticky top-0 bg-[#071426] z-10 border-b border-[#10213b]">Sigla / Código</th>
-                          <th class="py-3 px-4 sticky top-0 bg-[#071426] z-10 border-b border-[#10213b]">Identificação / Nome</th>
-                          <th class="py-3 px-4 sticky top-0 bg-[#071426] z-10 border-b border-[#10213b]">Descrição detalhada</th>
-                          <th class="py-3 px-4 sticky top-0 bg-[#071426] z-10 border-b border-[#10213b] text-center">Ações</th>
+                          <th class="py-3 px-4 sticky top-0 z-10 border-b border-[#10213b]" style="background-color: #d8fff8; color: #071426;">Sigla / Código</th>
+                          <th class="py-3 px-4 sticky top-0 z-10 border-b border-[#10213b]" style="background-color: #d8fff8; color: #071426;">Identificação / Nome</th>
+                          <th class="py-3 px-4 sticky top-0 z-10 border-b border-[#10213b]" style="background-color: #d8fff8; color: #071426;">Descrição detalhada</th>
+                          <th class="py-3 px-4 sticky top-0 z-10 border-b border-[#10213b] text-center" style="background-color: #d8fff8; color: #071426;">Ações</th>
                         </tr>
                       </thead>
                       <tbody class="divide-y divide-[#10213b] text-xs">
@@ -1307,14 +1307,6 @@
                   </div>
                 </div>
 
-                <!-- Quick Explanation Note -->
-                <div class="bg-blue-500/5 border border-blue-500/10 rounded-lg p-4 flex gap-3 shrink-0">
-                  <span class="material-icons text-blue-400">psychology</span>
-                  <div class="text-[10px] text-slate-400 leading-relaxed">
-                    <span class="text-white font-bold block mb-0.5">Independência de Siglas:</span>
-                    As siglas representam eventos de exceção (como férias ou atestados médicos) e são independentes das cargas horárias dos turnos operacionais padrão. Ao pintar uma sigla sobre a escala de um colaborador, a carga diária é ajustada de acordo com as diretrizes regulatórias vigentes.
-                  </div>
-                </div>
               </div>
 
               <!-- RIGHT COLUMN: SIGLA FORM -->
