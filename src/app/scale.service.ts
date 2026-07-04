@@ -184,6 +184,8 @@ export class ScaleService {
   activeDb = signal<'firebase' | 'supabase'>(
     (localStorage.getItem('active_db') as 'firebase' | 'supabase') || 'supabase'
   );
+  activeMonth = signal<number>(7); // Default is July (7)
+  activeYear = signal<number>(2026); // Default is 2026
   supabaseUrl = signal<string>(this.getInitialSupabaseUrl());
   supabaseKey = signal<string>(this.getInitialSupabaseKey());
   databaseError = signal<string | null>(null);
@@ -325,7 +327,7 @@ export class ScaleService {
         querySiglas,
         queryShifts,
         queryAudit,
-        this.fetchAllScaleRows(7, 2026)
+        this.fetchAllScaleRows(this.activeMonth(), this.activeYear())
       ]);
 
       if (this.activeDb() !== 'supabase') return;
@@ -546,22 +548,22 @@ export class ScaleService {
   getAutoPreSelectedFolgas(collab: Collaborator): FolgaRequest[] {
     const preSelected: FolgaRequest[] = [];
     
-    // 1. Check birthday (Month 7 - July)
+    // 1. Check birthday (Active month)
     if (collab.birthday) {
       const parts = collab.birthday.split('-'); // YYYY-MM-DD
       if (parts.length === 3) {
         const m = parseInt(parts[1], 10);
         const d = parseInt(parts[2], 10);
-        if (m === 7) { // July
+        if (m === this.activeMonth()) {
           preSelected.push({
-            date: `2026-07-${String(d).padStart(2, '0')}`,
+            date: `${this.activeYear()}-${String(this.activeMonth()).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
             isPreSelected: true
           });
         }
       }
     }
     
-    // 2. Check special dates (Month 7 - July)
+    // 2. Check special dates (Active month)
     if (collab.specialDates && Array.isArray(collab.specialDates)) {
       const sorted = [...collab.specialDates].sort((a, b) => a.priority - b.priority);
       for (const sd of sorted) {
@@ -570,8 +572,8 @@ export class ScaleService {
         if (parts.length === 3) {
           const m = parseInt(parts[1], 10);
           const d = parseInt(parts[2], 10);
-          if (m === 7) {
-            const dateStr = `2026-07-${String(d).padStart(2, '0')}`;
+          if (m === this.activeMonth()) {
+            const dateStr = `${this.activeYear()}-${String(this.activeMonth()).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
             if (!preSelected.some(p => p.date === dateStr)) {
               preSelected.push({
                 date: dateStr,
@@ -714,10 +716,11 @@ export class ScaleService {
     if (!name.trim()) return;
     const id = 'collab_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
     
-    // Initialize standard scale (5 days work, 2 days off) for July 2026
+    // Initialize standard scale (5 days work, 2 days off) dynamically for selected month and year
     const initialScale: { [day: number]: string } = {};
     for (let d = 1; d <= 31; d++) {
-      const dayOfWeek = (d + 2) % 7; // July 1st, 2026 is a Wednesday (Index 3)
+      const date = new Date(this.activeYear(), this.activeMonth() - 1, d);
+      const dayOfWeek = date.getDay(); // 0 is Sunday, 6 is Saturday
       if (dayOfWeek === 6 || dayOfWeek === 0) {
         initialScale[d] = 'X';
       } else {
@@ -767,8 +770,8 @@ export class ScaleService {
           scaleRows.push({
             collaborator_id: newCollab.id,
             day: d,
-            month: 7,
-            year: 2026,
+            month: this.activeMonth(),
+            year: this.activeYear(),
             value: newCollab.scale[d] || 'X'
           });
         }
@@ -861,8 +864,8 @@ export class ScaleService {
           scaleRows.push({
             collaborator_id: refreshedCol.id,
             day: d,
-            month: 7,
-            year: 2026,
+            month: this.activeMonth(),
+            year: this.activeYear(),
             value: refreshedCol.scale[d] || 'X'
           });
         }
@@ -931,8 +934,8 @@ export class ScaleService {
             scaleRows.push({
               collaborator_id: refreshed.id,
               day: d,
-              month: 7,
-              year: 2026,
+              month: this.activeMonth(),
+              year: this.activeYear(),
               value: '-'
             });
           }
@@ -985,8 +988,8 @@ export class ScaleService {
             scaleRows.push({
               collaborator_id: refreshed.id,
               day: d,
-              month: 7,
-              year: 2026,
+              month: this.activeMonth(),
+              year: this.activeYear(),
               value: refreshed.scale[d] || '-'
             });
           }
@@ -1036,7 +1039,7 @@ export class ScaleService {
           const dbCollabIds = new Set(dbCollabs.map((c: any) => c.id));
           missingCollabs = updatedList.filter(c => !dbCollabIds.has(c.id));
 
-          const dbScales = await this.fetchAllScaleRows(7, 2026);
+          const dbScales = await this.fetchAllScaleRows(this.activeMonth(), this.activeYear());
 
           // Group scales by collaborator ID to verify they each have all 31 days
           const scaleCountMap = new Map<string, number>();

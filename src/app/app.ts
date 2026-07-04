@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ScaleService, Collaborator, ShiftType, SpecialDate, FolgaRequest } from './scale.service';
 import * as pdfjsLib from 'pdfjs-dist';
+import * as XLSX from 'xlsx';
 
 if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -548,6 +549,8 @@ export class App {
   scannedTextResult = signal<string>('');
   scannedDataParsed = signal<any[]>([]);
   unrecognizedCodes = signal<string[]>([]);
+  importTargetMonth = signal<number>(7);
+  importTargetYear = signal<number>(2026);
 
   constructor() {
     this.updateClock();
@@ -564,6 +567,15 @@ export class App {
         this.hasInitiallyLogged.set(true);
       }
     });
+
+    effect(() => {
+      const month = this.selectedMonthIndex() + 1;
+      this.scaleService.activeMonth.set(month);
+      this.scaleService.activeYear.set(2026); // Standard 2026 year for UI
+      if (this.scaleService.activeDb() === 'supabase') {
+        this.scaleService.syncSupabase();
+      }
+    }, { allowSignalWrites: true });
   }
 
   // Clock Update Function
@@ -1652,6 +1664,8 @@ export class App {
     this.scannedTextResult.set('');
     this.scannedDataParsed.set([]);
     this.unrecognizedCodes.set([]);
+    this.importTargetMonth.set(this.selectedMonthIndex() + 1);
+    this.importTargetYear.set(2026);
   }
 
   async triggerAIScan(event: any) {
@@ -1659,73 +1673,71 @@ export class App {
     if (!file) return;
 
     this.importingState.set('processing');
-    this.showToast('IA lendo o arquivo de escala...');
+    this.showToast('Lendo o arquivo de escala...');
 
-    const reader = new FileReader();
-    
-    reader.onload = async (e) => {
-      const text = e.target?.result as string || '';
-      const parsed: any[] = [];
-      const lines = text.split('\n');
-      const rawLines: string[] = [];
-      
-      const collabs = this.scaleService.collaborators();
-      const validSiglas = new Set(this.scaleService.siglaTypes().map(s => s.code.toUpperCase()));
-      validSiglas.add('X');
-      validSiglas.add('-');
-      validSiglas.add('F');
-      validSiglas.add('LM');
-      
-      const validShifts = new Set(this.scaleService.shiftTypes().map(s => s.code.toUpperCase()));
-      const unrecognizedSet = new Set<string>();
+    const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || file.type === 'application/vnd.ms-excel';
+    const isJson = file.name.endsWith('.json') || file.type === 'application/json';
 
-      const isKnown = (token: string): boolean => {
-        const u = token.toUpperCase().trim();
-        return u === '-' || u === '' || u === '?' || validSiglas.has(u) || validShifts.has(u);
-      };
-      
-      lines.forEach(line => {
-        const trimmed = line.trim();
-        if (!trimmed) return;
-        rawLines.push(trimmed);
-
-        const lowerLine = trimmed.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        
-        let matchedCollab: Collaborator | null = null;
-        for (const collab of collabs) {
-          const collabLower = collab.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-          if (lowerLine.includes(collabLower)) {
-            matchedCollab = collab;
-            break;
-          }
-        }
-        
-        if (!matchedCollab) {
-           for (const collab of collabs) {
-             const parts = collab.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(' ');
-             if (parts.length >= 2) {
-               const first = parts[0];
-               const last = parts[parts.length - 1];
-               if (lowerLine.includes(first) && lowerLine.includes(last)) {
-                 matchedCollab = collab;
-                 break;
-               }
-             }
-           }
-        }
-
-        if (matchedCollab) {
-          const scaleUpdates: { day: number, value: string }[] = [];
+    if (isExcel) {
+      const arrayBufferReader = new FileReader();
+      arrayBufferReader.onload = async (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
           
-          if (trimmed.includes('|')) {
-             const tokens = trimmed.split('|').map(s => s.trim().toUpperCase());
-             // tokens[0] is name info. tokens[1..31] are the days.
-             for(let d = 1; d <= 31 && d < tokens.length; d++) {
-                let token = tokens[d];
-                if (token === '' || token === '-') {
+          const sheetData: any[] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          const collabs = this.scaleService.collaborators();
+          const validSiglas = new Set(this.scaleService.siglaTypes().map(s => s.code.toUpperCase()));
+          validSiglas.add('X');
+          validSiglas.add('-');
+          validSiglas.add('F');
+          validSiglas.add('LM');
+          const validShifts = new Set(this.scaleService.shiftTypes().map(s => s.code.toUpperCase()));
+          const unrecognizedSet = new Set<string>();
+
+          const parsed: any[] = [];
+
+          sheetData.forEach((row: any) => {
+            if (!Array.isArray(row) || row.length === 0) return;
+            
+            let matchedCollab: Collaborator | null = null;
+            let nameColIndex = -1;
+            
+            for (let i = 0; i < Math.min(row.length, 5); i++) {
+              const cellVal = String(row[i] || '').trim();
+              if (!cellVal) continue;
+              
+              const lowerCell = cellVal.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+              const foundCollab = collabs.find(c => {
+                const collabLower = c.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                return lowerCell.includes(collabLower) || collabLower.includes(lowerCell);
+              });
+              
+              if (foundCollab) {
+                matchedCollab = foundCollab;
+              }
+              
+              if (matchedCollab) {
+                nameColIndex = i;
+                break;
+              }
+            }
+            
+            if (matchedCollab && nameColIndex !== -1) {
+              const scaleUpdates: { day: number, value: string }[] = [];
+              let day = 1;
+              
+              for (let i = nameColIndex + 1; i < row.length; i++) {
+                if (day > 31) break;
+                
+                let token = String(row[i] || '').trim().toUpperCase();
+                if (token === '' || token === 'NULL' || token === 'UNDEFINED') {
+                  token = '-';
+                } else if (token === '' || token === '-') {
                   token = '-';
                 } else {
-                  // Check parts of this token to see if they are unrecognized
                   const parts = token.split(/[\s/,\-]+/).filter((p: string) => p !== '');
                   parts.forEach((p: string) => {
                     const u = p.toUpperCase().trim();
@@ -1734,163 +1746,446 @@ export class App {
                     }
                   });
                 }
-                scaleUpdates.push({ day: d, value: token });
-             }
+                
+                scaleUpdates.push({ day, value: token });
+                day++;
+              }
+              
+              if (scaleUpdates.length > 0) {
+                parsed.push({
+                  collab: matchedCollab,
+                  updates: scaleUpdates
+                });
+              }
+            }
+          });
+
+          this.unrecognizedCodes.set(Array.from(unrecognizedSet).sort());
+
+          if (parsed.length === 0) {
+            let text = '';
+            sheetData.forEach((row: any) => {
+              text += row.map((cell: any) => String(cell || '').trim()).join(' | ') + '\n';
+            });
+            this.processExtractedText(text, file.name);
           } else {
-             const tokens = trimmed.split(/[,;\t|\s]+/);
-             let day = 1;
-             for (let i = 0; i < tokens.length; i++) {
-               const token = tokens[i].toUpperCase();
-               
-               // Allow anything that is a valid sigla, OR any 1-3 letter string if it looks like a symbol
-               // Specifically exclude the parts of the name or role which might be captured.
-               if (validSiglas.has(token) || (token.length >= 1 && token.length <= 4 && /^[A-Z0-9\-]+$/.test(token))) {
-                  // Only take up to 31 tokens. 
-                  // Heuristic: scale values usually come after name.
-                  if (day <= 31) {
-                    const parts = token.split(/[\s/,\-]+/).filter((p: string) => p !== '');
-                    parts.forEach((p: string) => {
-                      const u = p.toUpperCase().trim();
-                      if (u !== '-' && u !== '' && u !== '?' && !validSiglas.has(u) && !validShifts.has(u)) {
-                        unrecognizedSet.add(u);
-                      }
-                    });
-                    scaleUpdates.push({ day, value: token });
-                    day++;
-                  }
-               }
-             }
+            const summary = parsed.map(p => `- ${p.collab.name}: ${p.updates.length} dias lidos`).join('\n');
+            this.scannedTextResult.set(
+              `[LEITURA EXCEL CONCLUÍDA]:\nPlanilha: ${file.name}\nLinhas processadas: ${sheetData.length}\nColaboradores extraídos: ${parsed.length}\n\nResumo:\n${summary}`
+            );
+            this.scannedDataParsed.set(parsed);
+            this.importingState.set('done');
+            this.showToast('Escala importada da planilha Excel com sucesso!');
           }
+        } catch (err: any) {
+          console.error('Erro ao ler Excel:', err);
+          this.showToast('Erro ao processar planilha Excel: ' + (err.message || err));
+          this.importingState.set('idle');
+        }
+      };
+      arrayBufferReader.readAsArrayBuffer(file);
+
+    } else if (isJson) {
+      const jsonReader = new FileReader();
+      jsonReader.onload = async (e) => {
+        try {
+          const text = e.target?.result as string || '';
+          const data = JSON.parse(text);
+          const collabs = this.scaleService.collaborators();
+          const validSiglas = new Set(this.scaleService.siglaTypes().map(s => s.code.toUpperCase()));
+          validSiglas.add('X');
+          validSiglas.add('-');
+          validSiglas.add('F');
+          validSiglas.add('LM');
+          const validShifts = new Set(this.scaleService.shiftTypes().map(s => s.code.toUpperCase()));
+          const unrecognizedSet = new Set<string>();
+
+          const parsed: any[] = [];
           
-          if (scaleUpdates.length > 0) {
-            parsed.push({
-              collab: matchedCollab,
-              updates: scaleUpdates
+          if (Array.isArray(data)) {
+            data.forEach((item: any) => {
+              const searchId = item.id || item.collaborator_id || '';
+              const searchName = item.name || item.nome || '';
+              
+              let matchedCollab = collabs.find(c => c.id === searchId);
+              if (!matchedCollab && searchName) {
+                const normSearchName = searchName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                matchedCollab = collabs.find(c => c.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === normSearchName);
+              }
+              
+              if (matchedCollab) {
+                const scaleSource = item.scale || item.escala || item.days || item.dias || item;
+                const scaleUpdates: { day: number, value: string }[] = [];
+                for (let d = 1; d <= 31; d++) {
+                  let token: string | undefined;
+                  if (scaleSource[d] !== undefined) {
+                    token = String(scaleSource[d]);
+                  } else if (scaleSource[String(d)] !== undefined) {
+                    token = String(scaleSource[String(d)]);
+                  }
+                  
+                  if (token !== undefined) {
+                    token = token.trim().toUpperCase();
+                    if (token === '' || token === '-') {
+                      token = '-';
+                    } else {
+                      const parts = token.split(/[\s/,\-]+/).filter((p: string) => p !== '');
+                      parts.forEach((p: string) => {
+                        const u = p.toUpperCase().trim();
+                        if (u !== '-' && u !== '' && u !== '?' && !validSiglas.has(u) && !validShifts.has(u)) {
+                          unrecognizedSet.add(u);
+                        }
+                      });
+                    }
+                    scaleUpdates.push({ day: d, value: token });
+                  }
+                }
+                if (scaleUpdates.length > 0) {
+                  parsed.push({
+                    collab: matchedCollab,
+                    updates: scaleUpdates
+                  });
+                }
+              }
+            });
+          } else if (typeof data === 'object' && data !== null) {
+            Object.keys(data).forEach((key) => {
+              const item = data[key];
+              let matchedCollab = collabs.find(c => c.id === key);
+              if (!matchedCollab) {
+                const normKey = key.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                matchedCollab = collabs.find(c => c.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === normKey);
+              }
+              
+              if (matchedCollab && typeof item === 'object' && item !== null) {
+                const scaleUpdates: { day: number, value: string }[] = [];
+                for (let d = 1; d <= 31; d++) {
+                  let token: string | undefined;
+                  if (item[d] !== undefined) {
+                    token = String(item[d]);
+                  } else if (item[String(d)] !== undefined) {
+                    token = String(item[String(d)]);
+                  }
+
+                  if (token !== undefined) {
+                    token = token.trim().toUpperCase();
+                    if (token === '' || token === '-') {
+                      token = '-';
+                    } else {
+                      const parts = token.split(/[\s/,\-]+/).filter((p: string) => p !== '');
+                      parts.forEach((p: string) => {
+                        const u = p.toUpperCase().trim();
+                        if (u !== '-' && u !== '' && u !== '?' && !validSiglas.has(u) && !validShifts.has(u)) {
+                          unrecognizedSet.add(u);
+                        }
+                      });
+                    }
+                    scaleUpdates.push({ day: d, value: token });
+                  }
+                }
+                if (scaleUpdates.length > 0) {
+                  parsed.push({
+                    collab: matchedCollab,
+                    updates: scaleUpdates
+                  });
+                }
+              }
             });
           }
+
+          this.unrecognizedCodes.set(Array.from(unrecognizedSet).sort());
+
+          if (parsed.length === 0) {
+            this.scannedTextResult.set(
+              `[LEITURA JSON CONCLUÍDA]:\nArquivo: ${file.name}\n\nAviso: Nenhum colaborador cadastrado ou dados de escala estruturados puderam ser extraídos deste JSON. Certifique-se de que o JSON é um array ou dicionário contendo os IDs ou Nomes corretos dos colaboradores.`
+            );
+            this.scannedDataParsed.set([]);
+            this.showToast('Nenhum dado estruturado extraído do JSON.');
+            this.importingState.set('done');
+          } else {
+            const summary = parsed.map(p => `- ${p.collab.name}: ${p.updates.length} dias lidos`).join('\n');
+            this.scannedTextResult.set(
+              `[LEITURA JSON CONCLUÍDA]:\nArquivo: ${file.name}\nColaboradores extraídos: ${parsed.length}\n\nResumo:\n${summary}`
+            );
+            this.scannedDataParsed.set(parsed);
+            this.importingState.set('done');
+            this.showToast('Escala importada do arquivo JSON com sucesso!');
+          }
+        } catch (err: any) {
+          console.error('Erro ao ler JSON:', err);
+          this.showToast('Erro ao processar JSON: ' + (err.message || err));
+          this.importingState.set('idle');
         }
-      });
+      };
+      jsonReader.readAsText(file);
+
+    } else {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const text = e.target?.result as string || '';
+        this.processExtractedText(text, file.name);
+      };
+
+      if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+        const arrayBufferReader = new FileReader();
+        arrayBufferReader.onload = async (e) => {
+          try {
+            const buffer = e.target?.result as ArrayBuffer;
+            const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+            let text = '';
+            let dayXs: number[] = [];
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i);
+              const content = await page.getTextContent();
+              
+              const lineMap = new Map<number, any[]>();
+              content.items.forEach((item: any) => {
+                if (item.str && item.str.trim() !== '') {
+                  const y = Math.round(item.transform[5] / 2) * 2;
+                  if (!lineMap.has(y)) {
+                    lineMap.set(y, []);
+                  }
+                  lineMap.get(y)!.push(item);
+                }
+              });
+
+              const sortedYs = Array.from(lineMap.keys()).sort((a, b) => b - a);
+              
+              sortedYs.forEach(y => {
+                const items = lineMap.get(y)!;
+                items.sort((a, b) => a.transform[4] - b.transform[4]);
+                const strs = items.map(i => i.str.trim()).filter(s => s !== '');
+                
+                if (strs.includes('1') && strs.includes('15') && strs.includes('31')) {
+                   let currentDay = 1;
+                   let tempXs: number[] = [];
+                   for(let i=0; i<items.length; i++) {
+                      if (items[i].str.trim() === currentDay.toString()) {
+                         tempXs[currentDay] = items[i].transform[4];
+                         currentDay++;
+                      }
+                   }
+                   if (currentDay > 31) {
+                      dayXs = tempXs; 
+                   }
+                }
+              });
+
+              sortedYs.forEach(y => {
+                const itemsOnLine = lineMap.get(y)!;
+                itemsOnLine.sort((a, b) => a.transform[4] - b.transform[4]);
+                
+                if (dayXs.length === 32) {
+                   const infoItems = itemsOnLine.filter(item => item.transform[4] < dayXs[1] - 10);
+                   const infoStr = infoItems.map(i => i.str.trim()).join(' ').trim();
+                   
+                   if (infoStr.length > 2) {
+                      const dayValues: string[] = [];
+                      for(let d=1; d<=31; d++) {
+                         const targetX = dayXs[d];
+                         const itemForDay = itemsOnLine.find(item => Math.abs(item.transform[4] - targetX) < 12);
+                         if (itemForDay && itemForDay.str.trim() !== '') {
+                           dayValues.push(itemForDay.str.trim());
+                         } else {
+                           dayValues.push('-');
+                         }
+                      }
+                      text += infoStr + ' | ' + dayValues.join(' | ') + '\n';
+                   } else {
+                      text += itemsOnLine.map(item => item.str.trim()).join('   ') + '\n';
+                   }
+                } else {
+                   text += itemsOnLine.map(item => item.str.trim()).join('   ') + '\n';
+                }
+              });
+            }
+            this.processExtractedText(text, file.name);
+          } catch (err) {
+            console.error('Error reading PDF:', err);
+            this.processExtractedText('', file.name);
+          }
+        };
+        arrayBufferReader.readAsArrayBuffer(file);
+      } else if (file.type.startsWith('image/')) {
+        const imageReader = new FileReader();
+        imageReader.onload = async (e) => {
+          try {
+            const base64Data = e.target?.result as string;
+            
+            const response = await fetch('/api/gemini/scan-image', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                imageBase64: base64Data,
+                mimeType: file.type
+              })
+            });
+
+            if (!response.ok) {
+              const errBody = await response.json().catch(() => ({}));
+              throw new Error(errBody.error || `HTTP error ${response.status}`);
+            }
+
+            const data = await response.json();
+            const extractedText = data.text || '';
+            
+            this.processExtractedText(extractedText, file.name);
+          } catch (err) {
+            const errMsg = err instanceof Error ? err.message : String(err);
+            console.error('Erro ao digitalizar escala via imagem:', err);
+            this.showToast('Erro ao processar imagem via Gemini: ' + errMsg);
+            this.processExtractedText('', file.name);
+          }
+        };
+        imageReader.readAsDataURL(file);
+      } else if (file.type === 'text/plain' || file.type === 'text/csv' || file.name.endsWith('.csv') || file.name.endsWith('.txt')) {
+        reader.readAsText(file);
+      } else {
+        setTimeout(() => {
+          this.processExtractedText('', file.name);
+        }, 1800);
+      }
+    }
+  }
+
+  // Função auxiliar para analisar texto extraído
+  processExtractedText(text: string, fileName: string) {
+    const parsed: any[] = [];
+    const lines = text.split('\n');
+    const rawLines: string[] = [];
+    
+    const collabs = this.scaleService.collaborators();
+    const validSiglas = new Set(this.scaleService.siglaTypes().map(s => s.code.toUpperCase()));
+    validSiglas.add('X');
+    validSiglas.add('-');
+    validSiglas.add('F');
+    validSiglas.add('LM');
+    
+    const validShifts = new Set(this.scaleService.shiftTypes().map(s => s.code.toUpperCase()));
+    const unrecognizedSet = new Set<string>();
+    
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+      rawLines.push(trimmed);
+
+      const lowerLine = trimmed.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       
-      this.unrecognizedCodes.set(Array.from(unrecognizedSet).sort());
+      let matchedCollab: Collaborator | null = null;
+      for (const collab of collabs) {
+        const collabLower = collab.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        if (lowerLine.includes(collabLower)) {
+          matchedCollab = collab;
+          break;
+        }
+      }
       
-      if (parsed.length === 0) {
-        const rawLog = `[PROCESSO DE LEITURA]
-Arquivo carregado: ${file.name} (${Math.round(file.size / 1024)} KB)
+      if (!matchedCollab) {
+         for (const collab of collabs) {
+           const parts = collab.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(' ');
+           if (parts.length >= 2) {
+             const first = parts[0];
+             const last = parts[parts.length - 1];
+             if (lowerLine.includes(first) && lowerLine.includes(last)) {
+               matchedCollab = collab;
+               break;
+             }
+           }
+         }
+      }
+
+      if (matchedCollab) {
+        const scaleUpdates: { day: number, value: string }[] = [];
+        
+        if (trimmed.includes('|')) {
+           const tokens = trimmed.split('|').map(s => s.trim().toUpperCase());
+           for(let d = 1; d <= 31 && d < tokens.length; d++) {
+              let token = tokens[d];
+              if (token === '' || token === '-') {
+                token = '-';
+              } else {
+                const parts = token.split(/[\s/,\-]+/).filter((p: string) => p !== '');
+                parts.forEach((p: string) => {
+                  const u = p.toUpperCase().trim();
+                  if (u !== '-' && u !== '' && u !== '?' && !validSiglas.has(u) && !validShifts.has(u)) {
+                    unrecognizedSet.add(u);
+                  }
+                });
+              }
+              scaleUpdates.push({ day: d, value: token });
+           }
+        } else {
+           const tokens = trimmed.split(/[,;\t|\s]+/);
+           let day = 1;
+           for (let i = 0; i < tokens.length; i++) {
+             const token = tokens[i].toUpperCase();
+             
+             if (validSiglas.has(token) || (token.length >= 1 && token.length <= 4 && /^[A-Z0-9\-]+$/.test(token))) {
+                if (day <= 31) {
+                  const parts = token.split(/[\s/,\-]+/).filter((p: string) => p !== '');
+                  parts.forEach((p: string) => {
+                    const u = p.toUpperCase().trim();
+                    if (u !== '-' && u !== '' && u !== '?' && !validSiglas.has(u) && !validShifts.has(u)) {
+                      unrecognizedSet.add(u);
+                    }
+                  });
+                  scaleUpdates.push({ day, value: token });
+                  day++;
+                }
+             }
+           }
+        }
+        
+        if (scaleUpdates.length > 0) {
+          parsed.push({
+            collab: matchedCollab,
+            updates: scaleUpdates
+          });
+        }
+      }
+    });
+    
+    this.unrecognizedCodes.set(Array.from(unrecognizedSet).sort());
+    
+    if (parsed.length === 0) {
+      const rawLog = `[PROCESSO DE LEITURA]
+Arquivo carregado: ${fileName}
+Mecanismo: Scanner Dinâmico (OCR / Texto Extraído)
 
 Aviso: Nenhum colaborador cadastrado foi encontrado nas linhas do arquivo.
 O leitor requer um arquivo contendo os nomes dos colaboradores já cadastrados no banco de dados e os dados da escala na mesma linha.
 Verifique se os nomes no PDF correspondem aos nomes no sistema.`;
 
-        this.scannedTextResult.set(rawLog);
-        this.scannedDataParsed.set([]);
-        this.showToast('Nenhum colaborador válido encontrado no arquivo.');
-      } else {
-        const summary = parsed.map(p => `- ${p.collab.name}: ${p.updates.length} dias lidos`).join('\n');
-        this.scannedTextResult.set(
-          `[LEITURA DINÂMICA CONCLUÍDA]:\nArquivo processado: ${file.name}\nTotal de linhas lidas: ${lines.length}\nColaboradores extraídos: ${parsed.length}\n\nResumo:\n${summary}`
-        );
-        this.scannedDataParsed.set(parsed);
-      }
-      
-      this.importingState.set('done');
-      this.showToast('Escala importada e processada com sucesso!');
-    };
-    
-    if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-      const arrayBufferReader = new FileReader();
-      arrayBufferReader.onload = async (e) => {
-        try {
-          const buffer = e.target?.result as ArrayBuffer;
-          const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
-          let text = '';
-          let dayXs: number[] = [];
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const content = await page.getTextContent();
-            
-            const lineMap = new Map<number, any[]>();
-            content.items.forEach((item: any) => {
-              if (item.str && item.str.trim() !== '') {
-                const y = Math.round(item.transform[5] / 2) * 2;
-                if (!lineMap.has(y)) {
-                  lineMap.set(y, []);
-                }
-                lineMap.get(y)!.push(item);
-              }
-            });
-
-            const sortedYs = Array.from(lineMap.keys()).sort((a, b) => b - a);
-            
-            sortedYs.forEach(y => {
-              const items = lineMap.get(y)!;
-              items.sort((a, b) => a.transform[4] - b.transform[4]);
-              const strs = items.map(i => i.str.trim()).filter(s => s !== '');
-              
-              if (strs.includes('1') && strs.includes('15') && strs.includes('31')) {
-                 let currentDay = 1;
-                 let tempXs: number[] = [];
-                 for(let i=0; i<items.length; i++) {
-                    if (items[i].str.trim() === currentDay.toString()) {
-                       tempXs[currentDay] = items[i].transform[4];
-                       currentDay++;
-                    }
-                 }
-                 if (currentDay > 31) {
-                    dayXs = tempXs; 
-                 }
-              }
-            });
-
-            sortedYs.forEach(y => {
-              const itemsOnLine = lineMap.get(y)!;
-              itemsOnLine.sort((a, b) => a.transform[4] - b.transform[4]);
-              
-              if (dayXs.length === 32) {
-                 const infoItems = itemsOnLine.filter(item => item.transform[4] < dayXs[1] - 10);
-                 const infoStr = infoItems.map(i => i.str.trim()).join(' ').trim();
-                 
-                 if (infoStr.length > 2) {
-                    const dayValues: string[] = [];
-                    for(let d=1; d<=31; d++) {
-                       const targetX = dayXs[d];
-                       const itemForDay = itemsOnLine.find(item => Math.abs(item.transform[4] - targetX) < 12);
-                       if (itemForDay && itemForDay.str.trim() !== '') {
-                         dayValues.push(itemForDay.str.trim());
-                       } else {
-                         dayValues.push('-');
-                       }
-                    }
-                    text += infoStr + ' | ' + dayValues.join(' | ') + '\n';
-                 } else {
-                    text += itemsOnLine.map(item => item.str.trim()).join('   ') + '\n';
-                 }
-              } else {
-                 text += itemsOnLine.map(item => item.str.trim()).join('   ') + '\n';
-              }
-            });
-          }
-          // Pass the extracted text to the existing reader logic
-          reader.onload!({ target: { result: text } } as any);
-        } catch (err) {
-          console.error('Error reading PDF:', err);
-          reader.onload!({ target: { result: '' } } as any);
-        }
-      };
-      arrayBufferReader.readAsArrayBuffer(file);
-    } else if (file.type === 'text/plain' || file.type === 'text/csv' || file.name.endsWith('.csv') || file.name.endsWith('.txt')) {
-      reader.readAsText(file);
+      this.scannedTextResult.set(rawLog);
+      this.scannedDataParsed.set([]);
+      this.showToast('Nenhum colaborador válido encontrado no arquivo.');
     } else {
-      setTimeout(() => {
-        reader.onload!({ target: { result: '' } } as any);
-      }, 1800);
+      const summary = parsed.map(p => `- ${p.collab.name}: ${p.updates.length} dias lidos`).join('\n');
+      this.scannedTextResult.set(
+        `[LEITURA DINÂMICA CONCLUÍDA]:\nArquivo processado: ${fileName}\nTotal de linhas lidas: ${lines.length}\nColaboradores extraídos: ${parsed.length}\n\nResumo:\n${summary}`
+      );
+      this.scannedDataParsed.set(parsed);
     }
+    
+    this.importingState.set('done');
+    this.showToast('Escala importada e processada com sucesso!');
   }
 
   async commitAIScannedUsers() {
     const parsedData = this.scannedDataParsed();
     if (parsedData.length === 0) return;
 
-    this.showToast(`Atualizando escala para ${parsedData.length} colaboradores...`);
+    const targetMonth = this.importTargetMonth();
+    const targetYear = this.importTargetYear();
+
+    this.scaleService.activeMonth.set(targetMonth);
+    this.scaleService.activeYear.set(targetYear);
+    
+    this.selectedMonthIndex.set(targetMonth - 1);
+
+    this.showToast(`Atualizando escala do mês ${targetMonth}/${targetYear} para ${parsedData.length} colaboradores...`);
 
     const registeredSiglas = new Set(this.scaleService.siglaTypes().map(s => s.code.toUpperCase()));
     registeredSiglas.add('X');
@@ -1899,7 +2194,6 @@ Verifique se os nomes no PDF correspondem aos nomes no sistema.`;
     registeredSiglas.add('LM');
     const registeredShifts = new Set(this.scaleService.shiftTypes().map(s => s.code.toUpperCase()));
     
-    // We will collect the updated collabs and bulk save them
     const updatedCollabs = this.scaleService.collaborators().map(collab => {
       const match = parsedData.find(p => p.collab.id === collab.id);
       if (match) {
@@ -1920,10 +2214,10 @@ Verifique se os nomes no PDF correspondem aos nomes no sistema.`;
       return collab;
     });
 
-    await this.scaleService.saveUpdatedListToDb(updatedCollabs, 'IMPORTACAO_ESCALA', 'Importação em lote de arquivo da escala.');
+    await this.scaleService.saveUpdatedListToDb(updatedCollabs, 'IMPORTACAO_ESCALA', `Importação em lote de arquivo da escala para ${targetMonth}/${targetYear}.`);
 
     this.isImportModalOpen.set(false);
-    this.showToast(`A escala de ${parsedData.length} colaboradores foi atualizada com sucesso!`);
+    this.showToast(`A escala de ${parsedData.length} colaboradores foi atualizada com sucesso para ${targetMonth}/${targetYear}!`);
   }
 
   async registerUnrecognizedCodes() {

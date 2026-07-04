@@ -1,3 +1,5 @@
+import './polyfills.server';
+
 import {
   BootstrapContext,
   bootstrapApplication,
