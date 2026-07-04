@@ -31,6 +31,17 @@ CREATE TABLE IF NOT EXISTS public.colaboradores (
   folga_requests JSONB DEFAULT '[]'::jsonb
 );
 
+CREATE TABLE IF NOT EXISTS public.colaboradores_periodo (
+  collaborator_id VARCHAR(100) REFERENCES public.colaboradores(id) ON DELETE CASCADE,
+  month INT NOT NULL,
+  year INT NOT NULL,
+  shift VARCHAR(100) NOT NULL,
+  schedule VARCHAR(50) NOT NULL,
+  sector VARCHAR(100) NOT NULL,
+  grupo VARCHAR(100) NOT NULL,
+  PRIMARY KEY (collaborator_id, month, year)
+);
+
 CREATE TABLE IF NOT EXISTS public.escala_diaria (
   collaborator_id VARCHAR(100) REFERENCES public.colaboradores(id) ON DELETE CASCADE,
   day INT NOT NULL,
@@ -223,6 +234,23 @@ SELECT
 FROM collab_indexed c
 CROSS JOIN days d
 ON CONFLICT (collaborator_id, day, month, year) DO UPDATE SET value = EXCLUDED.value;
+
+-- 7.1. POPULA O HISTÓRICO DE PERÍODO (JULHO/2026) PARA TODOS OS COLABORADORES
+INSERT INTO public.colaboradores_periodo (collaborator_id, month, year, shift, schedule, sector, grupo)
+SELECT 
+  id, 
+  7 AS month, 
+  2026 AS year, 
+  shift, 
+  schedule, 
+  sector, 
+  grupo 
+FROM public.colaboradores
+ON CONFLICT (collaborator_id, month, year) DO UPDATE SET 
+  shift = EXCLUDED.shift, 
+  schedule = EXCLUDED.schedule, 
+  sector = EXCLUDED.sector, 
+  grupo = EXCLUDED.grupo;
 
 -- 8. REGISTRO DE AUDITORIA DE CRIAÇÃO DA ESCALA ATUALIZADA
 INSERT INTO public.audit_history (id, timestamp, author, action, description)

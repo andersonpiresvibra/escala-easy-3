@@ -1958,7 +1958,7 @@ export class App {
                 
                 if (strs.includes('1') && strs.includes('15') && strs.includes('31')) {
                    let currentDay = 1;
-                   let tempXs: number[] = [];
+                   const tempXs: number[] = [];
                    for(let i=0; i<items.length; i++) {
                       if (items[i].str.trim() === currentDay.toString()) {
                          tempXs[currentDay] = items[i].transform[4];

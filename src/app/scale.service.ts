@@ -321,13 +321,15 @@ export class ScaleService {
       const querySiglas = this.supabase.from('sigla_types').select('*');
       const queryShifts = this.supabase.from('shift_types').select('*');
       const queryAudit = this.supabase.from('audit_history').select('*');
+      const queryPeriodos = this.supabase.from('colaborador_alocacao_mensal').select('*').eq('month', this.activeMonth()).eq('year', this.activeYear());
 
-      const [collabsResult, siglasResult, shiftsResult, auditResult, escalaData] = await Promise.all([
+      const [collabsResult, siglasResult, shiftsResult, auditResult, escalaData, periodosResult] = await Promise.all([
         queryCollabs,
         querySiglas,
         queryShifts,
         queryAudit,
-        this.fetchAllScaleRows(this.activeMonth(), this.activeYear())
+        this.fetchAllScaleRows(this.activeMonth(), this.activeYear()),
+        queryPeriodos
       ]);
 
       if (this.activeDb() !== 'supabase') return;
@@ -340,6 +342,13 @@ export class ScaleService {
         this.databaseError.set(`Erro ao carregar colaboradores do Supabase: ${collabsError.message}`);
         this.collaborators.set([]);
         return;
+      }
+
+      let periodosData: any[] = [];
+      if (periodosResult && !periodosResult.error) {
+        periodosData = periodosResult.data || [];
+      } else if (periodosResult && periodosResult.error) {
+        console.warn('colaborador_alocacao_mensal table does not exist or fetch failed (non-blocking):', periodosResult.error);
       }
 
       // 1. Sync Siglas
@@ -402,6 +411,13 @@ export class ScaleService {
           });
         }
 
+        const periodMap = new Map<string, any>();
+        if (periodosData) {
+          periodosData.forEach((p: any) => {
+            periodMap.set(p.collaborator_id, p);
+          });
+        }
+
         // Map database records to Collaborator interface
         const mappedCollabs: Collaborator[] = collabsData.map((row: any) => {
           // Ensure all 31 days are filled
@@ -412,22 +428,28 @@ export class ScaleService {
             }
           }
 
+          const hist = periodMap.get(row.id);
+          const activeShift = hist ? hist.shift : row.shift;
+          const activeSchedule = hist ? hist.schedule : row.schedule;
+          const activeSector = hist ? hist.sector : row.sector;
+          const activeGrupo = hist ? hist.grupo : row.grupo;
+
           return {
             id: row.id,
             name: row.name || 'Sem Nome',
             role: row.role || 'OPERADOR',
-            hours: row.schedule || '7h20',
-            group: row.grupo || (
+            hours: activeSchedule || '7h20',
+            group: activeGrupo || (
               row.role === 'LIDER' ? 'Líderes' :
-              row.sector === 'VIP' ? 'VIP' :
-              row.sector === 'TREINAMENTO' ? 'Treinamento' :
-              row.shift === 'MANHÃ' ? 'Manhã' :
-              row.shift === 'TARDE' ? 'Tarde' :
-              row.shift === 'MADRUGADA' || row.shift === 'NOITE' ? 'Noite' :
-              row.shift === 'ADMINISTRATIVO' ? 'Administrativo' : 'Corporativo'
+              activeSector === 'VIP' ? 'VIP' :
+              activeSector === 'TREINAMENTO' ? 'Treinamento' :
+              activeShift === 'MANHÃ' ? 'Manhã' :
+              activeShift === 'TARDE' ? 'Tarde' :
+              activeShift === 'MADRUGADA' || activeShift === 'NOITE' ? 'Noite' :
+              activeShift === 'ADMINISTRATIVO' ? 'Administrativo' : 'Corporativo'
             ),
-            shift: (row.shift === 'MADRUGADA' ? 'NOITE' : (row.shift || 'NOITE')),
-            sector: row.sector || 'AERÓDROMO',
+            shift: (activeShift === 'MADRUGADA' ? 'NOITE' : (activeShift || 'NOITE')),
+            sector: activeSector || 'AERÓDROMO',
             bhBalance: row.bh_balance || 0,
             score: row.score || 90,
             scale: scale,
@@ -765,6 +787,20 @@ export class ScaleService {
         const upRes = await this.supabase.from('colaboradores').upsert(dbRow);
         if (upRes.error) throw upRes.error;
 
+        const dbPeriodRow = {
+          collaborator_id: newCollab.id,
+          month: this.activeMonth(),
+          year: this.activeYear(),
+          shift: newCollab.shift,
+          schedule: newCollab.hours,
+          sector: newCollab.sector
+        };
+        try {
+          await this.supabase.from('colaborador_alocacao_mensal').upsert(dbPeriodRow);
+        } catch (err) {
+          console.warn('Non-blocking colaborador_alocacao_mensal upsert error in addCollaborator:', err);
+        }
+
         const scaleRows = [];
         for (let d = 1; d <= 31; d++) {
           scaleRows.push({
@@ -858,6 +894,20 @@ export class ScaleService {
         };
         const upRes = await this.supabase.from('colaboradores').upsert(dbRow);
         if (upRes.error) throw upRes.error;
+
+        const dbPeriodRow = {
+          collaborator_id: refreshedCol.id,
+          month: this.activeMonth(),
+          year: this.activeYear(),
+          shift: refreshedCol.shift,
+          schedule: refreshedCol.hours,
+          sector: refreshedCol.sector
+        };
+        try {
+          await this.supabase.from('colaborador_alocacao_mensal').upsert(dbPeriodRow);
+        } catch (err) {
+          console.warn('Non-blocking colaborador_alocacao_mensal upsert error in updateCollaborator:', err);
+        }
 
         const scaleRows = [];
         for (let d = 1; d <= 31; d++) {
@@ -982,6 +1032,7 @@ export class ScaleService {
       try {
         const scaleRows: any[] = [];
         const collabRows: any[] = [];
+        const periodoRows: any[] = [];
         
         updatedList.forEach(refreshed => {
           for (let d = 1; d <= 31; d++) {
@@ -1007,6 +1058,15 @@ export class ScaleService {
             special_dates: refreshed.specialDates || null,
             folga_requests: refreshed.folgaRequests || null
           });
+
+          periodoRows.push({
+            collaborator_id: refreshed.id,
+            month: this.activeMonth(),
+            year: this.activeYear(),
+            shift: refreshed.shift,
+            schedule: refreshed.hours,
+            sector: refreshed.sector
+          });
         });
 
         // 1. Chunked saving of collaborators (100 in each chunk)
@@ -1015,6 +1075,16 @@ export class ScaleService {
           const chunk = collabRows.slice(i, i + COLLAB_CHUNK_SIZE);
           const { error: collabErr } = await this.supabase.from('colaboradores').upsert(chunk);
           if (collabErr) throw collabErr;
+        }
+
+        // 1.1 Saving period assignments (non-blocking in case table doesn't exist yet)
+        try {
+          const { error: periodErr } = await this.supabase.from('colaborador_alocacao_mensal').upsert(periodoRows);
+          if (periodErr) {
+            console.warn('Non-blocking colaborador_alocacao_mensal upsert error (table may not exist yet):', periodErr);
+          }
+        } catch (err) {
+          console.warn('Failed to upsert colaborador_alocacao_mensal, proceeding anyway:', err);
         }
 
         // 2. Chunked saving of scale rows (400 in each chunk)
@@ -1426,7 +1496,7 @@ export class ScaleService {
     let energy = 100;
     let consecutiveWorkDays = 0;
     let maxConsecutiveWorkDays = 0;
-    let bankHours = collab.bhBalance || 0;
+    const bankHours = collab.bhBalance || 0;
     let totalHoursWorked = 0;
     let alertaLimite = false;
     const daysCount = 30; // June 2026 has 30 days

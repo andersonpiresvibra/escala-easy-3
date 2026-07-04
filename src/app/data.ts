@@ -57,63 +57,6 @@ export interface AuditLog {
   details: string;
 }
 
-export interface JetFuelOperation {
-  flight: string;
-  aircraftModel: 'Boeing 737-7' | 'Boeing 737-8';
-  aircraftPrefix: string;
-  stand: string;
-  truckId: string;
-  truckType: 'SERVIDORES' | 'CTAs';
-  truckBrand: string;
-  operatorName: string;
-  status: 'ABASTECENDO' | 'CONCLUÍDO' | 'AGUARDANDO';
-  progress: number; // percentage
-  fuelVolume: number; // liters
-}
-
-export const GOL_AIRCRAFT_737_7 = [
-  'PR-GEA', 'PR-GEC', 'PR-GED', 'PR-GEH', 'PR-GEI', 'PR-GEJ', 'PR-GEK', 'PR-GEQ', 'PR-GIH', 'PR-GOQ', 'PR-GOR', 'PR-VBQ'
-];
-
-export const GOL_AIRCRAFT_737_8 = [
-  'PR-GGE', 'PR-GGF', 'PR-GGH', 'PR-GGL', 'PR-GGM', 'PR-GGP', 'PR-GGQ', 'PR-GGR', 'PR-GGX', 'PR-GKA',
-  'PR-XMA', 'PR-XMB', 'PR-XMC', 'PR-XMD', 'PR-XME', 'PR-XMF', 'PR-XMG', 'PR-XMH', 'PS-GOL', 'PS-GPA',
-  'PS-GPB', 'PS-GPC', 'PS-GPD', 'PS-GPE', 'PS-GPF', 'PS-GPG', 'PS-GPH', 'PS-GPI', 'PS-GPJ'
-];
-
-export const FLEET_SERVIDORES = [
-  { id: '2104', brand: 'FORD' },
-  { id: '2108', brand: 'FORD' },
-  { id: '2111', brand: 'FORD' },
-  { id: '2113', brand: 'FORD' },
-  { id: '2122', brand: 'MERCEDES-BENZ' },
-  { id: '2123', brand: 'MERCEDES-BENZ' },
-  { id: '2124', brand: 'MERCEDES-BENZ' },
-  { id: '2125', brand: 'MERCEDES-BENZ' },
-  { id: '2126', brand: 'MERCEDES-BENZ' },
-  { id: '2127', brand: 'MERCEDES-BENZ' },
-  { id: '2128', brand: 'MERCEDES-BENZ' },
-  { id: '2129', brand: 'MERCEDES-BENZ' },
-  { id: '2130', brand: 'MERCEDES-BENZ' },
-  { id: '2135', brand: 'MERCEDES-BENZ' },
-  { id: '2140', brand: 'VOLKSWAGEN' },
-  { id: '2145', brand: 'VOLKSWAGEN' },
-  { id: '2160', brand: 'VOLKSWAGEN' },
-  { id: '2165', brand: 'VOLKSWAGEN' }
-];
-
-export const FLEET_CTAS = [
-  { id: '1405', capacity: '15.000L' },
-  { id: '1425', capacity: '20.000L' },
-  { id: '1426', capacity: '20.000L' },
-  { id: '1428', capacity: '20.000L' },
-  { id: '1435', capacity: '20.000L' },
-  { id: '1437', capacity: '20.000L' },
-  { id: '1439', capacity: '20.000L' },
-  { id: '1499', capacity: '20.000L' },
-  { id: '1517', capacity: '20.000L' }
-];
-
 // Seed initial collaborators
 export const INITIAL_COLLABORATORS: Collaborator[] = [
   // 05:00 - 14:00 (Manhã / Aeródromo)
