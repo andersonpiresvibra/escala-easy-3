@@ -1541,7 +1541,8 @@ export class ScaleService {
           code: newSigla.code,
           label: newSigla.label,
           color: newSigla.color,
-          description: newSigla.description
+          description: newSigla.description,
+          textColor: newSigla.textColor
         };
         const res = await this.supabase.from('sigla_types').upsert(payload);
         if (res.error) throw res.error;
@@ -1583,7 +1584,8 @@ export class ScaleService {
           code: sigla.code,
           label: sigla.label,
           color: sigla.color,
-          description: sigla.description
+          description: sigla.description,
+          textColor: sigla.textColor
         };
         const res = await this.supabase.from('sigla_types').upsert(payload);
         if (res.error) throw res.error;
@@ -1611,7 +1613,8 @@ export class ScaleService {
           code: newSigla.code,
           label: newSigla.label,
           color: newSigla.color,
-          description: newSigla.description
+          description: newSigla.description,
+          textColor: newSigla.textColor
         };
         const insRes = await this.supabase.from('sigla_types').insert(payload);
         if (insRes.error) throw insRes.error;
