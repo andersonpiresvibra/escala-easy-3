@@ -1103,7 +1103,7 @@ export class App {
     }
   }
 
-  removeSiglaType(code: string) {
+  async removeSiglaType(code: string) {
     // Check if any scheduled days contain this sigla
     let count = 0;
     this.scaleService.collaborators().forEach(c => {
@@ -1113,12 +1113,56 @@ export class App {
     });
 
     if (count > 0) {
-      this.showToast(`Erro: Há ${count} dia(s) programado(s) com esta sigla. Substitua-os primeiro.`);
-      return;
-    }
+      const confirmForce = window.confirm(
+        `A sigla "${code}" está sendo usada em ${count} dia(s) na escala atual.\n\n` +
+        `Se você confirmar a exclusão, todos esses dias serão redefinidos para "-" (vazio/escala comum) e a sigla será removida definitivamente.\n\n` +
+        `Deseja continuar com a exclusão?`
+      );
+      if (!confirmForce) return;
 
-    this.scaleService.removeSiglaType(code);
-    this.showToast(`Sigla "${code}" removida.`);
+      this.scaleService.isProcessing.set(true);
+      try {
+        // Remove the sigla type itself and clear all references in the DB
+        await this.scaleService.removeSiglaType(code, true);
+
+        // Also ensure local collaborator scale states are updated
+        const updatedCollabs = this.scaleService.collaborators().map(collab => {
+          const updatedScale = { ...collab.scale };
+          let changed = false;
+          for (let d = 1; d <= 31; d++) {
+            if (updatedScale[d] === code) {
+              updatedScale[d] = '-';
+              changed = true;
+            }
+          }
+          return changed ? { ...collab, scale: updatedScale } : collab;
+        });
+        this.scaleService.collaborators.set(updatedCollabs);
+
+        this.scaleService.addAuditHistory('REMOCAO_SIGLA_EM_USO', `Sigla "${code}" excluída e ${count} referências limpas na escala.`);
+        this.showToast(`Sigla "${code}" e suas ${count} referências na escala foram excluídas com sucesso.`);
+      } catch (err: any) {
+        console.error('Error removing sigla in use:', err);
+        this.showToast(`Erro ao excluir sigla: ${err.message || err}`);
+      } finally {
+        this.scaleService.isProcessing.set(false);
+      }
+    } else {
+      const confirmDelete = window.confirm(`Deseja realmente excluir a sigla "${code}"?`);
+      if (!confirmDelete) return;
+
+      this.scaleService.isProcessing.set(true);
+      try {
+        await this.scaleService.removeSiglaType(code, false);
+        this.scaleService.addAuditHistory('REMOCAO_SIGLA', `Sigla "${code}" excluída do sistema.`);
+        this.showToast(`Sigla "${code}" excluída com sucesso.`);
+      } catch (err: any) {
+        console.error('Error removing sigla:', err);
+        this.showToast(`Erro ao excluir sigla: ${err.message || err}`);
+      } finally {
+        this.scaleService.isProcessing.set(false);
+      }
+    }
   }
 
   // Dynamic colors for matrix rendering

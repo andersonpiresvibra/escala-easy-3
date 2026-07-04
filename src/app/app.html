@@ -1221,7 +1221,7 @@
       @if (activeSubTab() === 'siglas') {
         <div class="flex flex-col h-full overflow-hidden animate-fade-in font-sans w-full flex-1" id="siglas_tab_content">
           <!-- FIXED HEADER -->
-          <div class="p-4 md:p-6 pb-3 border-b border-[#10213b] flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
+          <div class="p-4 md:p-6 pb-3 border-b border-[#10213b] flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0" style="height: 44px;">
             <div>
               <h3 class="font-black text-sm uppercase tracking-tight text-white flex items-center gap-1.5">
                 <span class="material-icons text-blue-400">label</span>
@@ -1346,7 +1346,8 @@
                                [value]="newSiglaCode()"
                                (input)="newSiglaCode.set($any($event.target).value)"
                                placeholder="Ex: TR"
-                               class="bg-[#071426] border border-[#10213b] rounded px-3 py-2 text-white outline-none focus:border-blue-500 font-mono font-bold uppercase w-full">
+                               style="height: 25px;"
+                               class="bg-[#071426] border border-[#10213b] rounded px-3 py-0.5 text-white outline-none focus:border-blue-500 font-mono font-bold uppercase w-full">
                       </div>
 
                       <!-- Label (60% / Remaining) -->
@@ -1357,7 +1358,8 @@
                                [value]="newSiglaLabel()"
                                (input)="newSiglaLabel.set($any($event.target).value)"
                                placeholder="Ex: Treinamento"
-                               class="bg-[#071426] border border-[#10213b] rounded px-3 py-2 text-white outline-none focus:border-blue-500 font-bold w-full">
+                               style="height: 25px;"
+                               class="bg-[#071426] border border-[#10213b] rounded px-3 py-0.5 text-white outline-none focus:border-blue-500 font-bold w-full">
                       </div>
                     </div>
 
@@ -1375,11 +1377,12 @@
                                 (input)="newSiglaDescription.set($any($event.target).value)"
                                 placeholder="Ex: Utilizada para indicar afastamentos devido a treinamentos..."
                                 rows="3"
-                                class="bg-[#071426] border border-[#10213b] rounded px-3 py-2 text-white outline-none focus:border-blue-500 font-bold resize-none"></textarea>
+                                style="height: 50px;"
+                                class="bg-[#071426] border border-[#10213b] rounded px-3 py-1 text-white outline-none focus:border-blue-500 font-bold resize-none"></textarea>
                     </div>
 
                     <!-- Computa Ausência Toggle -->
-                    <div class="flex items-center gap-3 bg-[#071426] p-3 rounded border border-[#10213b]">
+                    <div class="flex items-center gap-3 bg-[#071426] px-3 rounded border border-[#10213b]" style="height: 45px;">
                       <input id="sigla_computa_ausencia_input"
                              type="checkbox"
                              [checked]="newSiglaComputaAusencia()"
@@ -1390,7 +1393,7 @@
                           Computa Ausência
                         </label>
                         <span class="text-[8px] text-slate-400 leading-tight">
-                          Se ativado, esta sigla contará como dia de ausência (não computa presença do colaborador na escala).
+                          Se ativado, esta sigla contará como dia de ausência (não computa presença).
                         </span>
                       </div>
                     </div>
@@ -1422,8 +1425,46 @@
                       </div>
                     </div>
 
+                    <!-- REAL-TIME PREVIEW OF THE ACRONYM -->
+                    <div class="bg-[#071426] border border-[#10213b] rounded-lg p-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3" style="height: 75px;">
+                      <div class="flex flex-col gap-0.5">
+                        <span class="font-black text-[9px] uppercase tracking-wider text-slate-300 flex items-center gap-1">
+                          <span class="material-icons text-[10px] text-emerald-400">visibility</span>
+                          Visualização em Tempo Real
+                        </span>
+                        <span class="text-[8px] text-slate-400 font-medium">Veja como a sigla aparecerá na escala</span>
+                      </div>
+                      <div class="flex items-center gap-3 shrink-0">
+                        <!-- Preview Badge on Scale Matrix -->
+                        <div class="flex flex-col items-center gap-1">
+                          <div class="w-8 h-8 rounded flex items-center justify-center font-bold font-mono text-[11px] shadow-lg transition-all border border-black/20"
+                               [style.backgroundColor]="newSiglaColor()"
+                               [style.color]="newSiglaTextColor()">
+                            {{ (newSiglaCode() || '?').substring(0, 3).toUpperCase() }}
+                          </div>
+                          <span class="text-[7px] text-slate-500 font-bold uppercase tracking-wider">Na Grade</span>
+                        </div>
+                        
+                        <!-- Larger Row Preview -->
+                        <div class="flex flex-col items-center gap-1">
+                          <div class="px-3 py-1 rounded flex items-center gap-2 text-[10px] font-bold border border-black/20 shadow-md h-8 transition-all"
+                               [style.backgroundColor]="newSiglaColor() + '15'"
+                               [style.borderColor]="newSiglaColor() + '30'"
+                               [style.color]="newSiglaTextColor()">
+                            <span class="w-5 h-5 rounded flex items-center justify-center font-bold font-mono text-[9px] border border-black/10"
+                                  [style.backgroundColor]="newSiglaColor()"
+                                  [style.color]="newSiglaTextColor()">
+                              {{ (newSiglaCode() || '?').substring(0, 3).toUpperCase() }}
+                            </span>
+                            <span class="max-w-[80px] truncate text-white">{{ newSiglaLabel() || 'Sem Identificação' }}</span>
+                          </div>
+                          <span class="text-[7px] text-slate-500 font-bold uppercase tracking-wider">No Painel</span>
+                        </div>
+                      </div>
+                    </div>
+
                     <!-- Action Buttons -->
-                    <div class="pt-2 flex gap-2">
+                    <div class="flex gap-2" style="padding-top: 0px;">
                       <button (click)="saveSiglaType()"
                               class="flex-1 bg-[#10b981] hover:bg-emerald-600 text-white font-black py-2.5 rounded uppercase tracking-wider transition-all cursor-pointer border-none shadow-md outline-none">
                         {{ editingSiglaCode() ? 'Salvar Alterações' : 'Criar Sigla' }}

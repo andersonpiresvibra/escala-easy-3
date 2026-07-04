@@ -1601,21 +1601,54 @@ export class ScaleService {
     }
   }
 
-  async removeSiglaType(code: string) {
+  async removeSiglaType(code: string, clearReferences = false) {
     if (this.activeDb() === 'supabase' && this.supabase) {
       try {
+        if (clearReferences) {
+          const updRes = await this.supabase
+            .from('escala_diaria')
+            .update({ value: '-' })
+            .eq('value', code);
+          if (updRes.error) throw updRes.error;
+        }
+
         const res = await this.supabase.from('sigla_types').delete().eq('code', code);
         if (res.error) throw res.error;
+
         this.syncSupabase();
         this.addAuditHistory('REMOCAO_SIGLA', `Sigla ${code} removida do Supabase.`);
       } catch (err: any) {
         console.error(err);
+        throw err;
       }
     } else {
-      deleteDoc(doc(this.db, 'siglaTypes', code)).catch((err) => {
-        handleFirestoreError(err, OperationType.DELETE, `siglaTypes/${code}`);
-      });
-      this.addAuditHistory('REMOCAO_SIGLA', `Sigla ${code} removida do Firebase.`);
+      try {
+        if (clearReferences) {
+          const updatedCollabs = this.collaborators().map(collab => {
+            const updatedScale = { ...collab.scale };
+            let changed = false;
+            for (let d = 1; d <= 31; d++) {
+              if (updatedScale[d] === code) {
+                updatedScale[d] = '-';
+                changed = true;
+              }
+            }
+            return changed ? { ...collab, scale: updatedScale } : collab;
+          });
+          this.collaborators.set(updatedCollabs);
+
+          const promises = updatedCollabs.map(collab => {
+            return setDoc(doc(this.db, 'collaborators', collab.id), collab);
+          });
+          await Promise.all(promises);
+        }
+
+        await deleteDoc(doc(this.db, 'siglaTypes', code));
+        this.addAuditHistory('REMOCAO_SIGLA', `Sigla ${code} removida do Firebase.`);
+      } catch (err: any) {
+        console.error(err);
+        throw err;
+      }
     }
   }
 
