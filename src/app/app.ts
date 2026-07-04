@@ -1101,7 +1101,7 @@ export class App {
   // Dynamic colors for matrix rendering
   getShiftOrSiglaColor(code: string, day?: number): string {
     const upperCode = (code || '-').toUpperCase().trim();
-    if (upperCode === '-') {
+    if (upperCode === '-' || upperCode === '?') {
       if (this.isLightTheme()) {
         return 'transparent';
       }
@@ -1167,6 +1167,9 @@ export class App {
     const upperCode = (code || '-').toUpperCase().trim();
     if (upperCode === '-') {
       return '#475569';
+    }
+    if (upperCode === '?') {
+      return '#ef4444';
     }
 
     const sigla = this.scaleService.siglaTypes().find(s => s.code.trim().toUpperCase() === upperCode);
@@ -1643,7 +1646,16 @@ export class App {
              // tokens[0] is name info. tokens[1..31] are the days.
              for(let d = 1; d <= 31 && d < tokens.length; d++) {
                 let token = tokens[d];
-                if (token === '') token = '-';
+                if (token === '' || token === '-') {
+                  token = '-';
+                } else {
+                  // Check if this token is a registered sigla or shift code
+                  const isSigla = validSiglas.has(token);
+                  const isShift = this.scaleService.shiftTypes().some(s => s.code.toUpperCase() === token);
+                  if (!isSigla && !isShift) {
+                    token = '?';
+                  }
+                }
                 scaleUpdates.push({ day: d, value: token });
              }
           } else {
@@ -1704,6 +1716,7 @@ Verifique se os nomes no PDF correspondem aos nomes no sistema.`;
           const buffer = e.target?.result as ArrayBuffer;
           const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
           let text = '';
+          let dayXs: number[] = [];
           for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
             const content = await page.getTextContent();
@@ -1720,8 +1733,6 @@ Verifique se os nomes no PDF correspondem aos nomes no sistema.`;
             });
 
             const sortedYs = Array.from(lineMap.keys()).sort((a, b) => b - a);
-            
-            let dayXs: number[] = [];
             
             sortedYs.forEach(y => {
               const items = lineMap.get(y)!;
