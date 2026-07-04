@@ -94,6 +94,7 @@ export interface SiglaType {
   color: string;
   description?: string;
   textColor?: string;
+  computaAusencia?: boolean;
 }
 
 export interface BackupHistory {
@@ -346,7 +347,20 @@ export class ScaleService {
         console.error('Supabase sigla_types error:', siglasError);
         this.siglaTypes.set([]);
       } else {
-        this.siglaTypes.set(siglasData || []);
+        const parsedSiglas = (siglasData || []).map((s: any) => {
+          let desc = s.description || '';
+          let computaAusencia = false;
+          if (desc.startsWith('#COMPUTA_AUSENCIA#')) {
+            computaAusencia = true;
+            desc = desc.substring('#COMPUTA_AUSENCIA#'.length);
+          }
+          return {
+            ...s,
+            description: desc,
+            computaAusencia
+          };
+        });
+        this.siglaTypes.set(parsedSiglas);
       }
 
       // 2. Sync Shift Types
@@ -480,7 +494,18 @@ export class ScaleService {
       if (this.activeDb() !== 'firebase') return;
       const list: SiglaType[] = [];
       snapshot.forEach((doc) => {
-        list.push(doc.data() as SiglaType);
+        const s = doc.data() as any;
+        let desc = s.description || '';
+        let computaAusencia = s.computaAusencia || false;
+        if (desc.startsWith('#COMPUTA_AUSENCIA#')) {
+          computaAusencia = true;
+          desc = desc.substring('#COMPUTA_AUSENCIA#'.length);
+        }
+        list.push({
+          ...s,
+          description: desc,
+          computaAusencia
+        });
       });
       this.siglaTypes.set(list);
     }, (error) => {
@@ -1380,6 +1405,19 @@ export class ScaleService {
     return { hours, factor };
   }
 
+  isSiglaAbsence(val: string): boolean {
+    const upper = (val || '').toUpperCase().trim();
+    if (!upper || upper === '-' || upper === '?') return false;
+    if (upper === 'X' || upper === 'BH' || upper === 'F' || upper === 'LM' || upper === 'CP' || upper === 'AT' || upper === 'W' || upper === 'FO' || upper === 'P' || upper === 'R' || upper === 'EX') {
+      return true;
+    }
+    const sigla = this.siglaTypes().find(s => s.code.toUpperCase().trim() === upper);
+    if (sigla && sigla.computaAusencia) {
+      return true;
+    }
+    return false;
+  }
+
   calculateEnergyAndFatigue(collab: Collaborator) {
     const scale = collab.scale || {};
     let energy = 100;
@@ -1392,7 +1430,7 @@ export class ScaleService {
     
     for (let d = 1; d <= daysCount; d++) {
       const val = (scale[d] || '-').toUpperCase().trim();
-      const isRest = val === 'X' || val === 'BH' || val === 'F' || val === 'LM' || val === 'CP' || val === 'AT' || val === 'W' || val === 'FO' || val === 'P' || val === 'R' || val === 'EX';
+      const isRest = this.isSiglaAbsence(val);
       
       if (isRest) {
         consecutiveWorkDays = 0;
@@ -1467,7 +1505,7 @@ export class ScaleService {
     
     for (let d = 1; d <= daysCount; d++) {
       const val = (scale[d] || '-').toUpperCase().trim();
-      const isRest = val === 'X' || val === 'BH' || val === 'F' || val === 'LM' || val === 'CP' || val === 'AT' || val === 'W' || val === 'FO' || val === 'P' || val === 'R' || val === 'EX';
+      const isRest = this.isSiglaAbsence(val);
       
       if (isRest) {
         if (val === 'F') {
@@ -1493,7 +1531,7 @@ export class ScaleService {
       const scale = collab.scale || {};
       for (let d = 30; d >= 1; d--) {
         const val = (scale[d] || '-').toUpperCase().trim();
-        const isRest = val === 'X' || val === 'BH' || val === 'F' || val === 'LM' || val === 'CP' || val === 'AT' || val === 'W' || val === 'FO' || val === 'P' || val === 'R' || val === 'EX';
+        const isRest = this.isSiglaAbsence(val);
         if (isRest) {
           lastRestStreak++;
         } else {
@@ -1524,14 +1562,18 @@ export class ScaleService {
     return collabsWithEnergy;
   }
 
-  async addSiglaType(code: string, label: string, color: string, description: string, textColor?: string) {
+  async addSiglaType(code: string, label: string, color: string, description: string, textColor?: string, computaAusencia?: boolean) {
     if (!code || !label) return;
     const upperCode = code.toUpperCase().trim();
+    let finalDesc = description || '';
+    if (computaAusencia) {
+      finalDesc = '#COMPUTA_AUSENCIA#' + finalDesc;
+    }
     const newSigla: SiglaType = {
       code: upperCode,
       label,
       color,
-      description,
+      description: finalDesc,
       ...(textColor ? { textColor } : {})
     };
 
@@ -1578,16 +1620,21 @@ export class ScaleService {
   }
 
   async saveSiglaType(sigla: SiglaType) {
+    let finalDesc = sigla.description || '';
+    if (sigla.computaAusencia) {
+      finalDesc = '#COMPUTA_AUSENCIA#' + finalDesc;
+    }
+    const dbSigla = {
+      code: sigla.code,
+      label: sigla.label,
+      color: sigla.color,
+      description: finalDesc,
+      textColor: sigla.textColor
+    };
+
     if (this.activeDb() === 'supabase' && this.supabase) {
       try {
-        const payload = {
-          code: sigla.code,
-          label: sigla.label,
-          color: sigla.color,
-          description: sigla.description,
-          textColor: sigla.textColor
-        };
-        const res = await this.supabase.from('sigla_types').upsert(payload);
+        const res = await this.supabase.from('sigla_types').upsert(dbSigla);
         if (res.error) throw res.error;
         await this.syncSupabase();
       } catch (err: any) {
@@ -1596,7 +1643,7 @@ export class ScaleService {
       }
     } else {
       try {
-        await setDoc(doc(this.db, 'siglaTypes', sigla.code), sigla);
+        await setDoc(doc(this.db, 'siglaTypes', sigla.code), dbSigla);
       } catch (err: any) {
         handleFirestoreError(err, OperationType.WRITE, `siglaTypes/${sigla.code}`);
         throw err;
@@ -1606,34 +1653,35 @@ export class ScaleService {
 
   async updateSiglaTypeCode(oldCode: string, newSigla: SiglaType) {
     const newCode = newSigla.code.toUpperCase().trim();
+    let finalDesc = newSigla.description || '';
+    if (newSigla.computaAusencia) {
+      finalDesc = '#COMPUTA_AUSENCIA#' + finalDesc;
+    }
+    const dbSigla = {
+      code: newSigla.code,
+      label: newSigla.label,
+      color: newSigla.color,
+      description: finalDesc,
+      textColor: newSigla.textColor
+    };
+
     if (this.activeDb() === 'supabase' && this.supabase) {
       try {
-        // 1. Insert the new sigla type
-        const payload = {
-          code: newSigla.code,
-          label: newSigla.label,
-          color: newSigla.color,
-          description: newSigla.description,
-          textColor: newSigla.textColor
-        };
-        const insRes = await this.supabase.from('sigla_types').insert(payload);
+        const insRes = await this.supabase.from('sigla_types').insert(dbSigla);
         if (insRes.error) throw insRes.error;
 
-        // 2. Update all escala_diaria rows where value === oldCode to newCode
         const updRes = await this.supabase
           .from('escala_diaria')
           .update({ value: newCode })
           .eq('value', oldCode);
         if (updRes.error) throw updRes.error;
 
-        // 3. Delete the old sigla type
         const delRes = await this.supabase
           .from('sigla_types')
           .delete()
           .eq('code', oldCode);
         if (delRes.error) throw delRes.error;
 
-        // 4. Update the local collaborator scales in memory
         const updatedCollabs = this.collaborators().map(collab => {
           const updatedScale = { ...collab.scale };
           let changed = false;
@@ -1647,19 +1695,15 @@ export class ScaleService {
         });
         this.collaborators.set(updatedCollabs);
 
-        // 5. Sync and log
         await this.syncSupabase();
       } catch (err: any) {
         console.error('Error renaming sigla code in Supabase:', err);
         throw err;
       }
     } else {
-      // Firebase Integration
       try {
-        // 1. Save new sigla doc
-        await setDoc(doc(this.db, 'siglaTypes', newCode), newSigla);
+        await setDoc(doc(this.db, 'siglaTypes', newCode), dbSigla);
 
-        // 2. Update all collaborators in Firebase
         const updatedCollabs = this.collaborators().map(collab => {
           const updatedScale = { ...collab.scale };
           let changed = false;
@@ -1677,10 +1721,8 @@ export class ScaleService {
         });
         await Promise.all(promises);
 
-        // 3. Delete old sigla doc
         await deleteDoc(doc(this.db, 'siglaTypes', oldCode));
 
-        // 4. Update state and log
         this.collaborators.set(updatedCollabs);
       } catch (err: any) {
         console.error('Error renaming sigla code in Firebase:', err);

@@ -1219,16 +1219,14 @@
 
       <!-- SUB-TAB: GERENCIAMENTO DE SIGLAS -->
       @if (activeSubTab() === 'siglas') {
-        <div class="p-4 md:p-6 space-y-6 animate-fade-in font-sans w-full flex-1 overflow-y-auto scrollbar-thin" id="siglas_tab_content">
-          <div class="pb-3 border-b border-[#10213b] flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex flex-col h-full overflow-hidden animate-fade-in font-sans w-full flex-1" id="siglas_tab_content">
+          <!-- FIXED HEADER -->
+          <div class="p-4 md:p-6 pb-3 border-b border-[#10213b] flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
             <div>
-              <h3 class="font-black text-sm uppercase tracking-tight text-white flex items-center gap-1.5 animate-pulse">
+              <h3 class="font-black text-sm uppercase tracking-tight text-white flex items-center gap-1.5">
                 <span class="material-icons text-blue-400">label</span>
-                Painel de Gerenciamento de Siglas (Afastamentos e Ausências)
+                Gerenciamento de Siglas
               </h3>
-              <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">
-                Gerencie as siglas utilizadas para indicar ausências, folgas, licenças ou serviços administrativos. Cadastre novos códigos com cores customizadas para aplicação na escala.
-              </p>
             </div>
             <div class="flex items-center gap-2 text-xs bg-blue-500/10 text-blue-400 border border-blue-500/25 px-3 py-1.5 rounded-lg font-mono font-bold">
               <span class="material-icons text-xs">info</span>
@@ -1236,177 +1234,208 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- SIGLAS TABLE LIST (Span 2) -->
-            <div class="lg:col-span-2 space-y-4">
-              <div class="border border-[#10213b] rounded-lg overflow-hidden bg-[#030a14]">
-                <div class="bg-[#071426] px-4 py-3 border-b border-[#10213b] flex items-center justify-between">
-                  <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
-                    <span class="material-icons text-xs text-blue-500">list</span>
-                    Dicionário de Siglas Cadastradas
-                  </span>
-                  <span class="text-[9px] text-slate-500 font-bold uppercase">* Clique no ícone de edição para alterar</span>
-                </div>
-                <div class="overflow-x-auto">
-                  <table class="w-full text-left border-collapse select-none">
-                    <thead>
-                      <tr class="border-b border-[#10213b] bg-[#071426] text-slate-400 uppercase text-[9px] font-black tracking-wider">
-                        <th class="py-3 px-4">Sigla / Código</th>
-                        <th class="py-3 px-4">Identificação / Nome</th>
-                        <th class="py-3 px-4">Descrição detalhada</th>
-                        <th class="py-3 px-4 text-center">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody class="divide-y divide-[#10213b] text-xs">
-                      @for (sigla of scaleService.siglaTypes(); track sigla.code) {
-                        <tr class="hover:bg-[#0b1e36]/30 transition-colors">
-                          <td class="py-3 px-4 font-mono">
-                            <span class="inline-flex items-center justify-center w-11 py-1 rounded font-black text-xs shadow-md border border-white/5"
-                                  [style.background-color]="sigla.color"
-                                  [style.color]="sigla.textColor || '#ffffff'">
-                              {{ sigla.code }}
-                            </span>
-                          </td>
-                          <td class="py-3 px-4">
-                            <div class="flex flex-col">
-                              <span class="text-white font-bold text-xs">{{ sigla.label }}</span>
-                              <span class="text-[9px] text-slate-500 mt-0.5">Base regulatória operacional</span>
-                            </div>
-                          </td>
-                          <td class="py-3 px-4 text-slate-400 text-[11px]">
-                            {{ sigla.description || 'Não especificada' }}
-                          </td>
-
-                          <!-- Actions: Edit & Delete -->
-                          <td class="py-3 px-4 text-center">
-                            <div class="flex items-center justify-center gap-2">
-                              <button (click)="startEditingSigla(sigla)"
-                                      class="p-1.5 text-blue-400 hover:text-white hover:bg-blue-950/40 rounded transition-all cursor-pointer border-none outline-none"
-                                      title="Editar Sigla">
-                                <span class="material-icons text-sm">edit</span>
-                              </button>
-                              
-                              <button (click)="removeSiglaType(sigla.code)"
-                                      class="p-1.5 text-red-500 hover:text-white hover:bg-red-950/40 rounded transition-all cursor-pointer border-none outline-none"
-                                      title="Excluir Sigla">
-                                <span class="material-icons text-sm">delete</span>
-                              </button>
-                            </div>
-                          </td>
+          <!-- FIXED BODY WRAPPER -->
+          <div class="flex-1 min-h-0 flex flex-col overflow-hidden p-4 md:p-6 space-y-6 relative">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0 items-stretch">
+              <!-- SIGLAS TABLE LIST (Span 2) -->
+              <div class="lg:col-span-2 flex flex-col h-full min-h-0 space-y-4">
+                <div class="border border-[#10213b] rounded-lg overflow-hidden bg-[#030a14] flex flex-col flex-1 min-h-0">
+                  <div class="bg-[#071426] px-4 py-3 border-b border-[#10213b] flex items-center justify-between shrink-0">
+                    <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                      <span class="material-icons text-xs text-blue-500">list</span>
+                      Dicionário de Siglas Cadastradas
+                    </span>
+                    <span class="text-[9px] text-slate-500 font-bold uppercase">* Clique no ícone de edição para alterar</span>
+                  </div>
+                  <div class="overflow-y-auto scrollbar-thin flex-1">
+                    <table class="w-full text-left border-collapse select-none">
+                      <thead class="sticky top-0 z-10 shadow-sm">
+                        <tr class="border-b border-[#10213b] bg-[#071426] text-slate-400 uppercase text-[9px] font-black tracking-wider">
+                          <th class="py-3 px-4 sticky top-0 bg-[#071426] z-10 border-b border-[#10213b]">Sigla / Código</th>
+                          <th class="py-3 px-4 sticky top-0 bg-[#071426] z-10 border-b border-[#10213b]">Identificação / Nome</th>
+                          <th class="py-3 px-4 sticky top-0 bg-[#071426] z-10 border-b border-[#10213b]">Descrição detalhada</th>
+                          <th class="py-3 px-4 sticky top-0 bg-[#071426] z-10 border-b border-[#10213b] text-center">Ações</th>
                         </tr>
-                      }
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody class="divide-y divide-[#10213b] text-xs">
+                        @for (sigla of scaleService.siglaTypes(); track sigla.code) {
+                          <tr class="hover:bg-[#0b1e36]/30 transition-colors">
+                            <td class="py-3 px-4 font-mono">
+                              <span class="inline-flex items-center justify-center w-11 py-1 rounded font-black text-xs shadow-md border border-white/5"
+                                    [style.background-color]="sigla.color"
+                                    [style.color]="sigla.textColor || '#ffffff'">
+                                {{ sigla.code }}
+                              </span>
+                            </td>
+                            <td class="py-3 px-4">
+                              <div class="flex flex-col">
+                                <div class="flex items-center gap-2">
+                                  <span class="text-white font-bold text-xs">{{ sigla.label }}</span>
+                                  @if (sigla.computaAusencia) {
+                                    <span class="text-[8px] bg-red-500/10 text-red-400 border border-red-500/25 px-1 py-0.5 rounded font-black uppercase">
+                                      Ausência
+                                    </span>
+                                  }
+                                </div>
+                                <span class="text-[9px] text-slate-500 mt-0.5">Base regulatória operacional</span>
+                              </div>
+                            </td>
+                            <td class="py-3 px-4 text-slate-400 text-[11px]">
+                              {{ sigla.description || 'Não especificada' }}
+                            </td>
+
+                            <!-- Actions: Edit & Delete -->
+                            <td class="py-3 px-4 text-center">
+                              <div class="flex items-center justify-center gap-2">
+                                <button (click)="startEditingSigla(sigla)"
+                                        class="p-1.5 text-blue-400 hover:text-white hover:bg-blue-950/40 rounded transition-all cursor-pointer border-none outline-none"
+                                        title="Editar Sigla">
+                                  <span class="material-icons text-sm">edit</span>
+                                </button>
+                                
+                                <button (click)="removeSiglaType(sigla.code)"
+                                        class="p-1.5 text-red-500 hover:text-white hover:bg-red-950/40 rounded transition-all cursor-pointer border-none outline-none"
+                                        title="Excluir Sigla">
+                                  <span class="material-icons text-sm">delete</span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Quick Explanation Note -->
+                <div class="bg-blue-500/5 border border-blue-500/10 rounded-lg p-4 flex gap-3 shrink-0">
+                  <span class="material-icons text-blue-400">psychology</span>
+                  <div class="text-[10px] text-slate-400 leading-relaxed">
+                    <span class="text-white font-bold block mb-0.5">Independência de Siglas:</span>
+                    As siglas representam eventos de exceção (como férias ou atestados médicos) e são independentes das cargas horárias dos turnos operacionais padrão. Ao pintar uma sigla sobre a escala de um colaborador, a carga diária é ajustada de acordo com as diretrizes regulatórias vigentes.
+                  </div>
                 </div>
               </div>
 
-              <!-- Quick Explanation Note -->
-              <div class="bg-blue-500/5 border border-blue-500/10 rounded-lg p-4 flex gap-3">
-                <span class="material-icons text-blue-400">psychology</span>
-                <div class="text-[10px] text-slate-400 leading-relaxed">
-                  <span class="text-white font-bold block mb-0.5">Independência de Siglas:</span>
-                  As siglas representam eventos de exceção (como férias ou atestados médicos) e são independentes das cargas horárias dos turnos operacionais padrão. Ao pintar uma sigla sobre a escala de um colaborador, a carga diária é ajustada de acordo com as diretrizes regulatórias vigentes.
-                </div>
-              </div>
-            </div>
-
-            <!-- RIGHT COLUMN: SIGLA FORM -->
-            <div class="space-y-6">
-              <!-- SIGLA CREATION / EDITING CARD -->
-              <div class="bg-[#030a14] border border-[#10213b] rounded-lg p-5 shadow-xl">
-                <div class="flex items-center justify-between pb-2 border-b border-[#10213b] mb-4">
-                  <h4 class="font-black text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <span class="material-icons text-blue-500 text-sm">
-                      {{ editingSiglaCode() ? 'edit_note' : 'library_add' }}
-                    </span>
-                    {{ editingSiglaCode() ? 'Editar Sigla' : 'Criar Nova Sigla' }}
-                  </h4>
-                  @if (editingSiglaCode()) {
-                    <span class="text-[8px] bg-amber-500/10 text-amber-400 border border-amber-500/25 px-1.5 py-0.5 rounded font-mono font-black uppercase">
-                      Modo Edição
-                    </span>
-                  }
-                </div>
-
-                <div class="space-y-4 text-xs">
-                  <!-- Code -->
-                  <div class="flex flex-col gap-1">
-                    <label for="sigla_code_input" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Sigla / Código (Ex: TR, OU)</label>
-                    <input id="sigla_code_input"
-                           type="text"
-                           [value]="newSiglaCode()"
-                           (input)="newSiglaCode.set($any($event.target).value)"
-                           placeholder="Ex: TR, LM"
-                           class="bg-[#071426] border border-[#10213b] rounded px-3 py-2 text-white outline-none focus:border-blue-500 font-mono font-bold uppercase">
+              <!-- RIGHT COLUMN: SIGLA FORM -->
+              <div class="space-y-6 overflow-y-auto scrollbar-thin h-full pr-1 shrink-0">
+                <!-- SIGLA CREATION / EDITING CARD -->
+                <div class="bg-[#030a14] border border-[#10213b] rounded-lg p-5 shadow-xl">
+                  <div class="flex items-center justify-between pb-2 border-b border-[#10213b] mb-4">
+                    <h4 class="font-black text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
+                      <span class="material-icons text-blue-500 text-sm">
+                        {{ editingSiglaCode() ? 'edit_note' : 'library_add' }}
+                      </span>
+                      {{ editingSiglaCode() ? 'Editar Sigla' : 'Criar Nova Sigla' }}
+                    </h4>
                     @if (editingSiglaCode()) {
-                      <span class="text-[8px] text-amber-400 font-bold leading-normal mt-0.5">
-                        * Ao alterar o código da sigla, todos os lançamentos existentes na escala diária serão atualizados automaticamente no banco de dados.
+                      <span class="text-[8px] bg-amber-500/10 text-amber-400 border border-amber-500/25 px-1.5 py-0.5 rounded font-mono font-black uppercase">
+                        Modo Edição
                       </span>
                     }
                   </div>
 
-                  <!-- Label -->
-                  <div class="flex flex-col gap-1">
-                    <label for="sigla_label_input" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Nome / Identificação</label>
-                    <input id="sigla_label_input"
-                           type="text"
-                           [value]="newSiglaLabel()"
-                           (input)="newSiglaLabel.set($any($event.target).value)"
-                           placeholder="Ex: Treinamento Técnico"
-                           class="bg-[#071426] border border-[#10213b] rounded px-3 py-2 text-white outline-none focus:border-blue-500 font-bold">
-                  </div>
+                  <div class="space-y-4 text-xs">
+                    <!-- Code & Label Row -->
+                    <div class="flex gap-4">
+                      <!-- Code (40%) -->
+                      <div class="flex flex-col gap-1 w-[40%] shrink-0">
+                        <label for="sigla_code_input" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Sigla / Código (Ex: TR, OU)</label>
+                        <input id="sigla_code_input"
+                               type="text"
+                               [value]="newSiglaCode()"
+                               (input)="newSiglaCode.set($any($event.target).value)"
+                               placeholder="Ex: TR"
+                               class="bg-[#071426] border border-[#10213b] rounded px-3 py-2 text-white outline-none focus:border-blue-500 font-mono font-bold uppercase w-full">
+                      </div>
 
-                  <!-- Description -->
-                  <div class="flex flex-col gap-1">
-                    <label for="sigla_desc_input" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Descrição detalhada</label>
-                    <textarea id="sigla_desc_input"
-                              [value]="newSiglaDescription()"
-                              (input)="newSiglaDescription.set($any($event.target).value)"
-                              placeholder="Ex: Utilizada para indicar afastamentos devido a treinamentos..."
-                              rows="3"
-                              class="bg-[#071426] border border-[#10213b] rounded px-3 py-2 text-white outline-none focus:border-blue-500 font-bold resize-none"></textarea>
-                  </div>
-
-                  <!-- Color picker -->
-                  <div class="grid grid-cols-2 gap-4">
-                    <div class="flex flex-col gap-1">
-                      <label for="sigla_color_input" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Cor Fundo</label>
-                      <div class="flex gap-2 items-center h-9">
-                        <input id="sigla_color_input"
-                               type="color"
-                               [value]="newSiglaColor()"
-                               (input)="newSiglaColor.set($any($event.target).value)"
-                               class="bg-transparent border-none w-8 h-8 rounded cursor-pointer outline-none">
-                        <span class="text-[9px] font-mono text-slate-400 font-bold">{{ newSiglaColor() }}</span>
+                      <!-- Label (60% / Remaining) -->
+                      <div class="flex flex-col gap-1 flex-1">
+                        <label for="sigla_label_input" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Identificação</label>
+                        <input id="sigla_label_input"
+                               type="text"
+                               [value]="newSiglaLabel()"
+                               (input)="newSiglaLabel.set($any($event.target).value)"
+                               placeholder="Ex: Treinamento"
+                               class="bg-[#071426] border border-[#10213b] rounded px-3 py-2 text-white outline-none focus:border-blue-500 font-bold w-full">
                       </div>
                     </div>
-                    
-                    <div class="flex flex-col gap-1">
-                      <label for="sigla_text_color_input" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Cor Fonte</label>
-                      <div class="flex gap-2 items-center h-9">
-                        <input id="sigla_text_color_input"
-                               type="color"
-                               [value]="newSiglaTextColor()"
-                               (input)="newSiglaTextColor.set($any($event.target).value)"
-                               class="bg-transparent border-none w-8 h-8 rounded cursor-pointer outline-none">
-                        <span class="text-[9px] font-mono text-slate-400 font-bold">{{ newSiglaTextColor() }}</span>
-                      </div>
-                    </div>
-                  </div>
 
-                  <!-- Action Buttons -->
-                  <div class="pt-2 flex gap-2">
-                    <button (click)="saveSiglaType()"
-                            class="flex-1 bg-[#10b981] hover:bg-emerald-600 text-white font-black py-2.5 rounded uppercase tracking-wider transition-all cursor-pointer border-none shadow-md outline-none">
-                      {{ editingSiglaCode() ? 'Salvar Alterações' : 'Criar Sigla' }}
-                    </button>
-                    
                     @if (editingSiglaCode()) {
-                      <button (click)="cancelEditingSigla()"
-                              class="bg-[#1e293b] hover:bg-slate-800 text-slate-300 font-black px-4 rounded uppercase tracking-wider transition-all cursor-pointer border-none outline-none">
-                        Cancelar
-                      </button>
+                      <div class="text-[8px] text-amber-400 font-bold leading-normal mt-0.5">
+                        * Ao alterar o código da sigla, todos os lançamentos existentes na escala diária serão atualizados automaticamente no banco de dados.
+                      </div>
                     }
+
+                    <!-- Description -->
+                    <div class="flex flex-col gap-1">
+                      <label for="sigla_desc_input" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Descrição detalhada</label>
+                      <textarea id="sigla_desc_input"
+                                [value]="newSiglaDescription()"
+                                (input)="newSiglaDescription.set($any($event.target).value)"
+                                placeholder="Ex: Utilizada para indicar afastamentos devido a treinamentos..."
+                                rows="3"
+                                class="bg-[#071426] border border-[#10213b] rounded px-3 py-2 text-white outline-none focus:border-blue-500 font-bold resize-none"></textarea>
+                    </div>
+
+                    <!-- Computa Ausência Toggle -->
+                    <div class="flex items-center gap-3 bg-[#071426] p-3 rounded border border-[#10213b]">
+                      <input id="sigla_computa_ausencia_input"
+                             type="checkbox"
+                             [checked]="newSiglaComputaAusencia()"
+                             (change)="newSiglaComputaAusencia.set($any($event.target).checked)"
+                             class="w-4 h-4 rounded text-blue-500 focus:ring-blue-500 bg-[#030a14] border-[#10213b] cursor-pointer">
+                      <div class="flex flex-col">
+                        <label for="sigla_computa_ausencia_input" class="font-black text-[10px] uppercase tracking-wider text-white cursor-pointer select-none">
+                          Computa Ausência
+                        </label>
+                        <span class="text-[8px] text-slate-400 leading-tight">
+                          Se ativado, esta sigla contará como dia de ausência (não computa presença do colaborador na escala).
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Color picker -->
+                    <div class="grid grid-cols-2 gap-4">
+                      <div class="flex flex-col gap-1">
+                        <label for="sigla_color_input" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Cor Fundo</label>
+                        <div class="flex gap-2 items-center h-9">
+                          <input id="sigla_color_input"
+                                 type="color"
+                                 [value]="newSiglaColor()"
+                                 (input)="newSiglaColor.set($any($event.target).value)"
+                                 class="bg-transparent border-none w-8 h-8 rounded cursor-pointer outline-none">
+                          <span class="text-[9px] font-mono text-slate-400 font-bold">{{ newSiglaColor() }}</span>
+                        </div>
+                      </div>
+                      
+                      <div class="flex flex-col gap-1">
+                        <label for="sigla_text_color_input" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Cor Fonte</label>
+                        <div class="flex gap-2 items-center h-9">
+                          <input id="sigla_text_color_input"
+                                 type="color"
+                                 [value]="newSiglaTextColor()"
+                                 (input)="newSiglaTextColor.set($any($event.target).value)"
+                                 class="bg-transparent border-none w-8 h-8 rounded cursor-pointer outline-none">
+                          <span class="text-[9px] font-mono text-slate-400 font-bold">{{ newSiglaTextColor() }}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="pt-2 flex gap-2">
+                      <button (click)="saveSiglaType()"
+                              class="flex-1 bg-[#10b981] hover:bg-emerald-600 text-white font-black py-2.5 rounded uppercase tracking-wider transition-all cursor-pointer border-none shadow-md outline-none">
+                        {{ editingSiglaCode() ? 'Salvar Alterações' : 'Criar Sigla' }}
+                      </button>
+                      
+                      @if (editingSiglaCode()) {
+                        <button (click)="cancelEditingSigla()"
+                                class="bg-[#1e293b] hover:bg-slate-800 text-slate-300 font-black px-4 rounded uppercase tracking-wider transition-all cursor-pointer border-none outline-none">
+                          Cancelar
+                        </button>
+                      }
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2763,7 +2792,9 @@
   <!-- IMPORT MODAL DIALOG (GEMINI EXTRACTION SIMULATOR) -->
   @if (isImportModalOpen()) {
     <div class="fixed inset-0 bg-[#020813]/80 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
-      <div class="bg-[#071426] border border-[#10213b] w-full max-w-lg rounded-lg p-6 shadow-2xl space-y-4 animate-scale-up">
+      <div [class.max-w-lg]="importingState() !== 'done'"
+           [class.max-w-3xl]="importingState() === 'done'"
+           class="bg-[#071426] border border-[#10213b] w-full rounded-lg p-6 shadow-2xl space-y-4 animate-scale-up transition-all duration-300">
         
         <!-- Header -->
         <div class="flex items-center justify-between pb-2 border-b border-[#10213b]">
@@ -2808,43 +2839,76 @@
 
         <!-- STATE 3: PARSED RESULTS READY TO REVIEW -->
         @if (importingState() === 'done') {
-          <div class="space-y-4">
-            <div class="p-3 bg-[#030a14] border border-[#10213b] rounded-lg">
-              <span class="text-[8px] font-black uppercase text-purple-400 tracking-wider font-mono block">Log do Processamento (OCR)</span>
-              <pre class="text-[8px] font-mono text-slate-400 leading-relaxed max-h-[80px] overflow-y-auto mt-1">{{ scannedTextResult() }}</pre>
-            </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <!-- Left Column: OCR Log & Warnings -->
+            <div class="space-y-4">
+              <div class="p-3 bg-[#030a14] border border-[#10213b] rounded-lg">
+                <span class="text-[8px] font-black uppercase text-purple-400 tracking-wider font-mono block">Log do Processamento (OCR)</span>
+                <pre class="text-[8px] font-mono text-slate-400 leading-relaxed max-h-[80px] overflow-y-auto mt-1">{{ scannedTextResult() }}</pre>
+              </div>
 
-            <div class="space-y-2">
-              <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Integrantes Mapeados (Review):</span>
-              <div class="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
-                @for (usr of scannedDataParsed(); track usr.name) {
-                  <div class="flex items-center justify-between bg-[#030a14] border border-[#10213b] p-2.5 rounded-lg text-xs font-bold text-white">
-                    <div class="flex items-center gap-2">
-                      <span class="material-icons text-xs text-[#10b981]">person</span>
-                      <span>{{ usr.name }}</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <span class="text-[8px] bg-[#10213b] text-slate-400 px-1 py-0.5 rounded font-mono">{{ usr.role }}</span>
-                      <span class="text-[8px] bg-emerald-950 text-emerald-400 px-1 py-0.5 rounded font-mono">{{ usr.shift }}</span>
+              @if (unrecognizedCodes().length > 0) {
+                <div class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg space-y-2">
+                  <div class="flex items-start gap-2">
+                    <span class="material-icons text-amber-500 text-sm shrink-0 mt-0.5">warning</span>
+                    <div class="flex-1">
+                      <span class="text-[10px] font-black text-amber-400 block uppercase tracking-wider">Siglas Não Cadastradas Detectadas!</span>
+                      <p class="text-[9px] text-slate-300 mt-0.5 leading-relaxed">
+                        Identificamos siglas no arquivo que não existem no dicionário: 
+                        <strong class="text-amber-300 font-mono text-[10px] bg-[#030a14] border border-[#10213b] px-1.5 py-0.5 rounded ml-1">{{ unrecognizedCodes().join(', ') }}</strong>
+                      </p>
                     </div>
                   </div>
-                }
+                  <div class="flex items-center justify-between gap-4 pt-1.5 border-t border-amber-500/20">
+                    <span class="text-[8px] text-slate-400 leading-snug">
+                      Se não cadastrar, estas siglas serão convertidas para interrogação (?) no sistema.
+                    </span>
+                    <button (click)="registerUnrecognizedCodes()"
+                            class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded font-black text-[9px] uppercase tracking-wider transition-all cursor-pointer border-none outline-none flex items-center gap-1 shrink-0 shadow-lg shadow-amber-500/10">
+                      <span class="material-icons text-xs">add_box</span>
+                      Criar Automaticamente
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Right Column: Reviewed Members & Action Buttons -->
+            <div class="space-y-4 flex flex-col justify-between">
+              <div class="space-y-2">
+                <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Integrantes Mapeados (Review):</span>
+                <div class="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
+                  @for (usr of scannedDataParsed(); track usr.collab.id) {
+                    <div class="flex items-center justify-between bg-[#030a14] border border-[#10213b] p-2.5 rounded-lg text-xs font-bold text-white">
+                      <div class="flex items-center gap-2">
+                        <span class="material-icons text-xs text-[#10b981]">person</span>
+                        <span class="truncate max-w-[120px]">{{ usr.collab.name }}</span>
+                      </div>
+                      <div class="flex items-center gap-2 shrink-0">
+                        <span class="text-[8px] bg-[#10213b] text-slate-400 px-1 py-0.5 rounded font-mono">{{ usr.collab.role }}</span>
+                        <span class="text-[8px] bg-emerald-950 text-emerald-400 px-1 py-0.5 rounded font-mono">{{ usr.collab.shift }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="flex gap-3">
+                <button (click)="isImportModalOpen.set(false)"
+                        class="flex-1 bg-[#1e293b] hover:bg-slate-800 text-slate-300 font-black py-2.5 rounded uppercase tracking-wider cursor-pointer border-none text-xs outline-none">
+                  Descartar
+                </button>
+                <button (click)="commitAIScannedUsers()"
+                        [disabled]="scannedDataParsed().length === 0"
+                        [class.opacity-50]="scannedDataParsed().length === 0"
+                        [class.cursor-not-allowed]="scannedDataParsed().length === 0"
+                        class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black py-2.5 rounded uppercase tracking-wider cursor-pointer border-none text-xs shadow-lg shadow-emerald-500/10 outline-none">
+                  Importar e Salvar Escala
+                </button>
               </div>
             </div>
 
-            <div class="flex gap-3">
-              <button (click)="isImportModalOpen.set(false)"
-                      class="flex-1 bg-[#1e293b] hover:bg-slate-800 text-slate-300 font-black py-2.5 rounded uppercase tracking-wider cursor-pointer border-none text-xs outline-none">
-                Descartar
-              </button>
-              <button (click)="commitAIScannedUsers()"
-                      [disabled]="scannedDataParsed().length === 0"
-                      [class.opacity-50]="scannedDataParsed().length === 0"
-                      [class.cursor-not-allowed]="scannedDataParsed().length === 0"
-                      class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black py-2.5 rounded uppercase tracking-wider cursor-pointer border-none text-xs shadow-lg shadow-emerald-500/10 outline-none">
-                Importar e Salvar Escala
-              </button>
-            </div>
           </div>
         }
       </div>

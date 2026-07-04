@@ -189,6 +189,24 @@ export class App {
     };
   });
 
+  isSiglaAbsence(val: string): boolean {
+    const upper = (val || '').toUpperCase().trim();
+    if (!upper || upper === '-' || upper === '?') return false;
+    
+    // Base standard rest codes
+    if (upper === 'X' || upper === 'BH' || upper === 'F' || upper === 'LM' || upper === 'CP' || upper === 'AT' || upper === 'W' || upper === 'FO' || upper === 'P' || upper === 'R' || upper === 'EX') {
+      return true;
+    }
+    
+    // Dynamic check
+    const sigla = this.scaleService.siglaTypes().find(s => s.code.toUpperCase().trim() === upper);
+    if (sigla && sigla.computaAusencia) {
+      return true;
+    }
+    
+    return false;
+  }
+
   // Reusable method to calculate stats for any collaborator
   calculateStatsForCollab(collab: Collaborator | null) {
     if (!collab) return null;
@@ -207,8 +225,8 @@ export class App {
     for (let d = 1; d <= 30; d++) {
       const val = scale[d] || 'X';
       
-      // We consider X (Folga), F (Férias), LM (Licença Médica) as rest/off days
-      const isRest = val === 'X' || val === 'F' || val === 'LM';
+      // Use dynamic absence check
+      const isRest = this.isSiglaAbsence(val);
       
       if (!isRest) {
         workDays++;
@@ -470,6 +488,7 @@ export class App {
   newSiglaColor = signal<string>('#64748b');
   newSiglaTextColor = signal<string>('#ffffff');
   newSiglaDescription = signal<string>('');
+  newSiglaComputaAusencia = signal<boolean>(false);
   editingSiglaCode = signal<string | null>(null);
 
   // New collaborator photo upload state
@@ -528,6 +547,7 @@ export class App {
   importingState = signal<'idle' | 'processing' | 'done'>('idle');
   scannedTextResult = signal<string>('');
   scannedDataParsed = signal<any[]>([]);
+  unrecognizedCodes = signal<string[]>([]);
 
   constructor() {
     this.updateClock();
@@ -1003,6 +1023,7 @@ export class App {
     this.newSiglaColor.set(sigla.color);
     this.newSiglaTextColor.set(sigla.textColor || '#ffffff');
     this.newSiglaDescription.set(sigla.description || '');
+    this.newSiglaComputaAusencia.set(!!sigla.computaAusencia);
     this.showToast(`Editando a sigla "${sigla.code}". Modifique os campos desejados.`);
   }
 
@@ -1013,6 +1034,7 @@ export class App {
     this.newSiglaColor.set('#64748b');
     this.newSiglaTextColor.set('#ffffff');
     this.newSiglaDescription.set('');
+    this.newSiglaComputaAusencia.set(false);
   }
 
   async saveSiglaType() {
@@ -1021,6 +1043,7 @@ export class App {
     const color = this.newSiglaColor();
     const textColor = this.newSiglaTextColor();
     const desc = this.newSiglaDescription().trim();
+    const computaAusencia = this.newSiglaComputaAusencia();
 
     if (!code || !label) {
       this.showToast('Erro: Código e Nome da sigla são obrigatórios.');
@@ -1043,14 +1066,14 @@ export class App {
 
           this.scaleService.isProcessing.set(true);
           // Call service to rename the code and update all reference scales
-          await this.scaleService.updateSiglaTypeCode(oldCode, { code, label, color, description: desc, textColor });
+          await this.scaleService.updateSiglaTypeCode(oldCode, { code, label, color, description: desc, textColor, computaAusencia });
           this.scaleService.addAuditHistory('EDICAO_SIGLA_CODIGO', `Sigla "${oldCode}" renomeada para "${code}" pelo gestor.`);
           this.showToast(`Sigla "${oldCode}" alterada para "${code}" com sucesso.`);
         } else {
           // Standard edit of existing sigla
           const sigla = this.scaleService.siglaTypes().find(s => s.code.trim().toUpperCase() === oldCode);
           if (sigla) {
-            const updatedSigla = { ...sigla, label, color, description: desc, textColor };
+            const updatedSigla = { ...sigla, label, color, description: desc, textColor, computaAusencia };
             this.scaleService.isProcessing.set(true);
             await this.scaleService.saveSiglaType(updatedSigla);
             this.scaleService.addAuditHistory('EDICAO_SIGLA', `Sigla "${code}" editada pelo gestor.`);
@@ -1067,7 +1090,7 @@ export class App {
           return;
         }
         this.scaleService.isProcessing.set(true);
-        await this.scaleService.addSiglaType(code, label, color, desc, textColor);
+        await this.scaleService.addSiglaType(code, label, color, desc, textColor, computaAusencia);
         this.scaleService.addAuditHistory('CADASTRO_SIGLA', `Nova sigla "${code}" cadastrada.`);
         this.cancelEditingSigla();
         this.showToast(`Sigla "${code}" criada com sucesso.`);
@@ -1584,6 +1607,7 @@ export class App {
     this.importingState.set('idle');
     this.scannedTextResult.set('');
     this.scannedDataParsed.set([]);
+    this.unrecognizedCodes.set([]);
   }
 
   async triggerAIScan(event: any) {
@@ -1607,6 +1631,14 @@ export class App {
       validSiglas.add('-');
       validSiglas.add('F');
       validSiglas.add('LM');
+      
+      const validShifts = new Set(this.scaleService.shiftTypes().map(s => s.code.toUpperCase()));
+      const unrecognizedSet = new Set<string>();
+
+      const isKnown = (token: string): boolean => {
+        const u = token.toUpperCase().trim();
+        return u === '-' || u === '' || u === '?' || validSiglas.has(u) || validShifts.has(u);
+      };
       
       lines.forEach(line => {
         const trimmed = line.trim();
@@ -1649,12 +1681,14 @@ export class App {
                 if (token === '' || token === '-') {
                   token = '-';
                 } else {
-                  // Check if this token is a registered sigla or shift code
-                  const isSigla = validSiglas.has(token);
-                  const isShift = this.scaleService.shiftTypes().some(s => s.code.toUpperCase() === token);
-                  if (!isSigla && !isShift) {
-                    token = '?';
-                  }
+                  // Check parts of this token to see if they are unrecognized
+                  const parts = token.split(/[\s/,\-]+/).filter((p: string) => p !== '');
+                  parts.forEach((p: string) => {
+                    const u = p.toUpperCase().trim();
+                    if (u !== '-' && u !== '' && u !== '?' && !validSiglas.has(u) && !validShifts.has(u)) {
+                      unrecognizedSet.add(u);
+                    }
+                  });
                 }
                 scaleUpdates.push({ day: d, value: token });
              }
@@ -1670,6 +1704,13 @@ export class App {
                   // Only take up to 31 tokens. 
                   // Heuristic: scale values usually come after name.
                   if (day <= 31) {
+                    const parts = token.split(/[\s/,\-]+/).filter((p: string) => p !== '');
+                    parts.forEach((p: string) => {
+                      const u = p.toUpperCase().trim();
+                      if (u !== '-' && u !== '' && u !== '?' && !validSiglas.has(u) && !validShifts.has(u)) {
+                        unrecognizedSet.add(u);
+                      }
+                    });
                     scaleUpdates.push({ day, value: token });
                     day++;
                   }
@@ -1685,6 +1726,8 @@ export class App {
           }
         }
       });
+      
+      this.unrecognizedCodes.set(Array.from(unrecognizedSet).sort());
       
       if (parsed.length === 0) {
         const rawLog = `[PROCESSO DE LEITURA]
@@ -1804,6 +1847,13 @@ Verifique se os nomes no PDF correspondem aos nomes no sistema.`;
     if (parsedData.length === 0) return;
 
     this.showToast(`Atualizando escala para ${parsedData.length} colaboradores...`);
+
+    const registeredSiglas = new Set(this.scaleService.siglaTypes().map(s => s.code.toUpperCase()));
+    registeredSiglas.add('X');
+    registeredSiglas.add('-');
+    registeredSiglas.add('F');
+    registeredSiglas.add('LM');
+    const registeredShifts = new Set(this.scaleService.shiftTypes().map(s => s.code.toUpperCase()));
     
     // We will collect the updated collabs and bulk save them
     const updatedCollabs = this.scaleService.collaborators().map(collab => {
@@ -1811,7 +1861,15 @@ Verifique se os nomes no PDF correspondem aos nomes no sistema.`;
       if (match) {
         const newScale = { ...collab.scale };
         match.updates.forEach((upd: any) => {
-          newScale[upd.day] = upd.value;
+          let val = (upd.value || '-').toUpperCase().trim();
+          if (val !== '-' && val !== '' && val !== '?') {
+            const parts = val.split(/[\s/,\-]+/).filter((p: string) => p !== '');
+            const allKnown = parts.every((p: string) => p === '-' || p === '' || p === '?' || registeredSiglas.has(p) || registeredShifts.has(p));
+            if (!allKnown) {
+              val = '?';
+            }
+          }
+          newScale[upd.day] = val;
         });
         return { ...collab, scale: newScale };
       }
@@ -1822,6 +1880,53 @@ Verifique se os nomes no PDF correspondem aos nomes no sistema.`;
 
     this.isImportModalOpen.set(false);
     this.showToast(`A escala de ${parsedData.length} colaboradores foi atualizada com sucesso!`);
+  }
+
+  async registerUnrecognizedCodes() {
+    const codes = this.unrecognizedCodes();
+    if (codes.length === 0) return;
+
+    this.showToast(`Cadastrando ${codes.length} sigla(s) no dicionário...`);
+
+    const colors = [
+      '#ef4444', // Red
+      '#ec4899', // Pink
+      '#f59e0b', // Amber/Orange
+      '#3b82f6', // Blue
+      '#8b5cf6', // Violet
+      '#06b6d4', // Cyan
+      '#14b8a6', // Teal
+      '#10b981', // Emerald
+      '#a855f7'  // Purple
+    ];
+
+    try {
+      for (let i = 0; i < codes.length; i++) {
+        const code = codes[i].toUpperCase().trim();
+        // Generate a random pleasant color based on index or code
+        let hash = 0;
+        for (let j = 0; j < code.length; j++) {
+          hash = code.charCodeAt(j) + ((hash << 5) - hash);
+        }
+        const color = colors[Math.abs(hash) % colors.length];
+
+        const newSigla = {
+          code: code,
+          label: `Importada (${code})`,
+          color: color,
+          description: 'Gerada automaticamente via Leitor Inteligente de PDF.',
+          textColor: '#ffffff'
+        };
+
+        await this.scaleService.saveSiglaType(newSigla);
+      }
+
+      this.unrecognizedCodes.set([]); // Clear unrecognized list
+      this.showToast('Siglas cadastradas com sucesso! Dicionário de Siglas atualizado.');
+    } catch (err: any) {
+      console.error('Error auto-registering siglas:', err);
+      this.showToast(`Falha ao cadastrar: ${err.message || err}`);
+    }
   }
 
   startEditingCollab(collab: Collaborator) {
