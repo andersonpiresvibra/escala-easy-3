@@ -647,33 +647,82 @@
                       </td>
                     </tr>
                   }
+
+                  <!-- SUMMARY RESUME ROW: EFETIVO DO DIA -->
+                  <tr class="transition-colors font-mono font-black select-none sticky bottom-0 z-30 shadow-[0_-2px_10px_rgba(0,0,0,0.3)]"
+                      [class.bg-[#051122]]="!isLightTheme()"
+                      [class.bg-emerald-50/60]="isLightTheme()"
+                      id="matrix_summary_row">
+                    <!-- Column 1: Header / Title -->
+                    <td class="py-2.5 pl-5 pr-4 md:pl-7 md:pr-5 sticky left-0 bottom-0 z-40 shadow-md min-w-[260px]"
+                        [class.bg-[#07172e]]="!isLightTheme()"
+                        [class.border-r]="true"
+                        [class.border-[#10213b]]="!isLightTheme()"
+                        [class.border-t-2]="true"
+                        [class.border-[#10b981]/40]="!isLightTheme()"
+                        [class.bg-emerald-100/70]="isLightTheme()"
+                        [class.border-slate-200]="isLightTheme()"
+                        [class.border-t-emerald-500]="isLightTheme()">
+                      <div class="flex items-center justify-between"
+                           [class.text-slate-200]="!isLightTheme()"
+                           [class.text-emerald-900]="isLightTheme()">
+                        <span class="font-black text-[9px] uppercase tracking-wider flex items-center gap-1.5"
+                              [class.text-[#10b981]]="!isLightTheme()"
+                              [class.text-emerald-700]="isLightTheme()">
+                          <span class="material-icons text-[11px] font-black"
+                                [class.text-[#10b981]]="!isLightTheme()"
+                                [class.text-emerald-700]="isLightTheme()">group</span>
+                          Efetivo do Dia
+                        </span>
+                        <span class="text-[8px] font-bold"
+                              [class.text-slate-400]="!isLightTheme()"
+                              [class.text-emerald-600]="isLightTheme()">OPERADORES</span>
+                      </div>
+                    </td>
+                    
+                    <!-- Month Calendar Cells with Daily Working Counts -->
+                    @for (day of daysInMonth(); track day) {
+                      @let currentCount = dailyWorkingCounts()[day] || 0;
+                      <td class="py-1 px-0.5 text-center sticky bottom-0 z-30 border-r"
+                          [class.border-[#10213b]]="!isLightTheme()"
+                          [class.border-t-2]="true"
+                          [class.border-[#10b981]/40]="!isLightTheme()"
+                          [class.bg-[#051122]]="!isLightTheme()"
+                          [class.bg-emerald-50/60]="isLightTheme()"
+                          [class.border-slate-100]="isLightTheme()"
+                          [class.border-t-emerald-300]="isLightTheme()"
+                          [class.text-[#10b981]]="!isLightTheme() && currentCount > 0"
+                          [class.text-emerald-600]="isLightTheme() && currentCount > 0"
+                          [class.text-slate-500]="!isLightTheme() && currentCount === 0"
+                          [class.text-slate-300]="isLightTheme() && currentCount === 0"
+                          [title]="'Dia ' + day + ': ' + currentCount + ' colaboradores efetivos (T / horários)'">
+                        <div class="w-full h-full min-h-[22px] flex items-center justify-center text-[10px] font-black">
+                          {{ currentCount }}
+                        </div>
+                      </td>
+                    }
+                    
+                    <!-- Column Sticky Right: Actions placeholder -->
+                    <td class="py-1 px-0.5 sticky right-0 bottom-0 z-40 shadow-md text-center w-12 min-w-[44px]"
+                        [class.bg-[#07172e]]="!isLightTheme()"
+                        [class.border-l]="true"
+                        [class.border-[#10213b]]="!isLightTheme()"
+                        [class.border-t-2]="true"
+                        [class.border-[#10b981]/40]="!isLightTheme()"
+                        [class.bg-emerald-100/70]="isLightTheme()"
+                        [class.border-slate-200]="isLightTheme()"
+                        [class.border-t-emerald-500]="isLightTheme()">
+                      <span class="material-icons text-[11px] font-black"
+                            [class.text-[#10b981]]="!isLightTheme()"
+                            [class.text-emerald-700]="isLightTheme()">done_all</span>
+                    </td>
+                  </tr>
                 }
               </tbody>
             </table>
           </div>
 
-          <!-- SIGNATURES EXPLANATIONS FOOTER -->
-          <div class="mt-0 px-4 md:px-6 py-4 border-t border-[#10213b] bg-[#020813] flex flex-col sm:flex-row gap-4 items-center justify-between select-none">
-            <div class="flex flex-wrap gap-x-4 gap-y-2 items-center text-[9px] font-sans font-bold uppercase text-slate-400">
-              <span class="text-white">Legenda Turnos:</span>
-              @for (shift of scaleService.shiftTypes(); track shift.code) {
-                <span class="flex items-center gap-1">
-                  <span class="w-2 h-2 rounded" [style.background-color]="shift.color"></span>
-                  {{ shift.code }} - {{ shift.label }}
-                </span>
-              }
-              <span class="text-white ml-2">Legenda Siglas:</span>
-              @for (sigla of scaleService.siglaTypes(); track sigla.code) {
-                <span class="flex items-center gap-1">
-                  <span class="w-2 h-2 rounded" [style.background-color]="sigla.color"></span>
-                  {{ sigla.code }} - {{ sigla.label }}
-                </span>
-              }
-            </div>
-            <div class="text-[9px] text-slate-500 font-sans font-black uppercase">
-              * Clique em uma célula para editar em massa se o pincel estiver ativo.
-            </div>
-          </div>
+
         </div>
       }
 
@@ -1577,14 +1626,10 @@
 
             <!-- RIGHT COLUMN: DETAILED VIEW (2/3 Width on desktop) -->
             <div class="xl:col-span-2 space-y-6">
-              @let selectedCol = selectedProfileCollab();
               @let stats = collabStats();
               
-              @if (!selectedCol) {
-                <div class="py-24 text-center text-xs text-slate-500 italic bg-[#030a14] border border-dashed border-[#10213b] rounded-lg">
-                  Selecione um colaborador à esquerda para carregar o prontuário e análises de escala.
-                </div>
-              } @else {
+              @if (selectedProfileCollab()) {
+                @let selectedCol = selectedProfileCollab()!;
                 <!-- COLLABORATOR DETAIL CARD CONTAINER -->
                 <div class="bg-[#030a14] border border-[#10213b] rounded-lg p-6 shadow-2xl space-y-6 animate-fade-in">
                   
@@ -1847,6 +1892,10 @@
                     </div>
                   </div>
 
+                </div>
+              } @else {
+                <div class="py-24 text-center text-xs text-slate-500 italic bg-[#030a14] border border-dashed border-[#10213b] rounded-lg">
+                  Selecione um colaborador à esquerda para carregar o prontuário e análises de escala.
                 </div>
               }
             </div> <!-- Closes Right Column xl:col-span-2 -->
@@ -2833,7 +2882,7 @@
         <div class="flex items-center justify-between pb-2 border-b border-[#10213b]">
           <h3 class="font-black text-sm text-white uppercase tracking-tight flex items-center gap-1.5">
             <span class="material-icons text-purple-400 animate-pulse">auto_awesome</span>
-            Leitor de Escala Multiformato
+            Leitura Inteligente de Escala via IA
           </h3>
           <button (click)="isImportModalOpen.set(false)" class="text-slate-400 hover:text-white bg-transparent border-none cursor-pointer outline-none">
             <span class="material-icons text-sm">close</span>
@@ -2841,73 +2890,20 @@
         </div>
 
         <p class="text-[10px] text-slate-400 leading-relaxed">
-          Selecione o mês e o ano desejados abaixo e suba um arquivo de escala para importação rápida. O sistema fará a leitura automática de <strong>Planilhas Excel (XLSX), JSONs estruturados, Documentos PDF ou Imagens/Fotos (via OCR IA)</strong>.
+          Tire uma foto ou suba um arquivo PDF do quadro impresso de escala de trabalho. Nossa Inteligência Artificial estruturará os dados e cadastrará os colaboradores automaticamente.
         </p>
-
-        <!-- Target Month/Year Selector -->
-        <div class="grid grid-cols-2 gap-3 bg-[#030a14] p-3 border border-[#10213b] rounded-lg">
-          <div class="flex flex-col gap-1">
-            <label for="import_month" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Mês de Destino da Escala</label>
-            <select id="import_month"
-                    [value]="importTargetMonth()"
-                    (change)="importTargetMonth.set(+$any($event.target).value)"
-                    class="bg-[#071426] text-white border border-[#10213b] focus:border-purple-500 outline-none rounded-lg px-2.5 py-1.5 text-[10px] font-bold">
-              <option [value]="1">Janeiro</option>
-              <option [value]="2">Fevereiro</option>
-              <option [value]="3">Março</option>
-              <option [value]="4">Abril</option>
-              <option [value]="5">Maio</option>
-              <option [value]="6">Junho</option>
-              <option [value]="7">Julho</option>
-              <option [value]="8">Agosto</option>
-              <option [value]="9">Setembro</option>
-              <option [value]="10">Outubro</option>
-              <option [value]="11">Novembro</option>
-              <option [value]="12">Dezembro</option>
-            </select>
-          </div>
-          <div class="flex flex-col gap-1">
-            <label for="import_year" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Ano de Destino</label>
-            <select id="import_year"
-                    [value]="importTargetYear()"
-                    (change)="importTargetYear.set(+$any($event.target).value)"
-                    class="bg-[#071426] text-white border border-[#10213b] focus:border-purple-500 outline-none rounded-lg px-2.5 py-1.5 text-[10px] font-bold">
-              <option [value]="2025">2025</option>
-              <option [value]="2026">2026</option>
-              <option [value]="2027">2027</option>
-            </select>
-          </div>
-        </div>
 
         <!-- STATE 1: IDLE / NOT UPLOADED -->
         @if (importingState() === 'idle') {
           <div class="border-2 border-dashed border-[#10213b] hover:border-[#10b981] rounded-lg p-10 flex flex-col items-center justify-center gap-3 transition-colors bg-[#030a14] cursor-pointer relative group">
             <input type="file"
                    (change)="triggerAIScan($event)"
-                   accept="image/*,application/pdf,.xlsx,.xls,application/json"
+                   accept="image/*,application/pdf"
                    class="absolute inset-0 opacity-0 cursor-pointer">
             <span class="material-icons text-slate-500 text-3xl group-hover:text-emerald-500 group-hover:scale-110 transition-transform">cloud_upload</span>
             <div class="text-center">
               <span class="text-xs font-black uppercase text-slate-300 block">Clique para enviar escala</span>
-              <span class="text-[9px] text-slate-500">Aceita Excel (.xlsx, .xls), JSON (.json), PDF (.pdf) ou Imagens</span>
-            </div>
-          </div>
-
-          <!-- Format Guide Cards -->
-          <div class="grid grid-cols-2 gap-2 text-[9px] text-slate-400">
-            <div class="p-2.5 bg-[#030a14]/60 border border-[#10213b] rounded flex gap-2">
-              <span class="material-icons text-emerald-500 text-sm">table_view</span>
-              <div>
-                <strong class="text-slate-300 block">Planilha Excel (.xlsx)</strong>
-                Primeira coluna com nome ou ID do colaborador, e as seguintes com os dias 1 a 31.
-              </div>
-            </div>
-            <div class="p-2.5 bg-[#030a14]/60 border border-[#10213b] rounded flex gap-2">
-              <span class="material-icons text-yellow-500 text-sm">code</span>
-              <div>
-                <strong class="text-slate-300 block">Arquivo JSON (.json)</strong>
-                Lista contendo objeto com ID do colaborador e dicionário de escala com dias.
-              </div>
+              <span class="text-[9px] text-slate-500">Suporta PNG, JPG, JPEG ou PDF</span>
             </div>
           </div>
         }
@@ -2917,8 +2913,8 @@
           <div class="p-8 border border-[#10213b] bg-[#030a14] rounded-lg flex flex-col items-center justify-center gap-4 text-center">
             <div class="w-12 h-12 rounded-full border-4 border-t-emerald-500 border-r-transparent border-[#10213b] animate-spin"></div>
             <div>
-              <span class="text-xs font-black uppercase tracking-wider text-white block">Processando Dados da Escala...</span>
-              <span class="text-[9px] text-slate-500 mt-1 block">Lendo arquivo, mapeando colaboradores, validando turnos e identificando siglas...</span>
+              <span class="text-xs font-black uppercase tracking-wider text-white block">Processamento Ativo Gemini AI</span>
+              <span class="text-[9px] text-slate-500 mt-1 block">Executando OCR, filtragem de redundância e mapeamento da escala de colaboradores...</span>
             </div>
           </div>
         }
@@ -2930,7 +2926,7 @@
             <!-- Left Column: OCR Log & Warnings -->
             <div class="space-y-4">
               <div class="p-3 bg-[#030a14] border border-[#10213b] rounded-lg">
-                <span class="text-[8px] font-black uppercase text-purple-400 tracking-wider font-mono block">Log do Processamento</span>
+                <span class="text-[8px] font-black uppercase text-purple-400 tracking-wider font-mono block">Log do Processamento (OCR)</span>
                 <pre class="text-[8px] font-mono text-slate-400 leading-relaxed max-h-[80px] overflow-y-auto mt-1">{{ scannedTextResult() }}</pre>
               </div>
 
@@ -2963,7 +2959,7 @@
             <!-- Right Column: Reviewed Members & Action Buttons -->
             <div class="space-y-4 flex flex-col justify-between">
               <div class="space-y-2">
-                <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Mapeados para o mês {{ importTargetMonth() }}/{{ importTargetYear() }} (Review):</span>
+                <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Integrantes Mapeados (Review):</span>
                 <div class="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
                   @for (usr of scannedDataParsed(); track usr.collab.id) {
                     <div class="flex items-center justify-between bg-[#030a14] border border-[#10213b] p-2.5 rounded-lg text-xs font-bold text-white">
@@ -2990,7 +2986,7 @@
                         [class.opacity-50]="scannedDataParsed().length === 0"
                         [class.cursor-not-allowed]="scannedDataParsed().length === 0"
                         class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black py-2.5 rounded uppercase tracking-wider cursor-pointer border-none text-xs shadow-lg shadow-emerald-500/10 outline-none">
-                  Salvar em {{ importTargetMonth() }}/{{ importTargetYear() }}
+                  Importar e Salvar Escala
                 </button>
               </div>
             </div>

@@ -21,21 +21,6 @@
           "options": {
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
-            "server": "src/main.server.ts",
-            "outputMode": "server",
-            "ssr": {
-              "entry": "src/server.ts"
-            },
-            "prerender": false,
-            "security": {
-              "allowedHosts": [
-                "localhost",
-                "127.0.0.1",
-                "ais-dev-mv36c6whmtxz5niz4s7afo-20004119152.us-east1.run.app",
-                "ais-pre-mv36c6whmtxz5niz4s7afo-20004119152.us-east1.run.app",
-                ".run.app"
-              ]
-            },
             "assets": [
               {
                 "glob": "**/*",
@@ -65,23 +50,13 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true,
-              "externalDependencies": ["@google/genai"]
+              "sourceMap": true
             }
           },
           "defaultConfiguration": "production"
         },
         "serve": {
           "builder": "@angular/build:dev-server",
-          "options": {
-            "allowedHosts": [
-              "localhost",
-              "127.0.0.1",
-              "ais-dev-mv36c6whmtxz5niz4s7afo-20004119152.us-east1.run.app",
-              "ais-pre-mv36c6whmtxz5niz4s7afo-20004119152.us-east1.run.app",
-              ".run.app"
-            ]
-          },
           "configurations": {
             "production": {
               "buildTarget": "app:build:production"
