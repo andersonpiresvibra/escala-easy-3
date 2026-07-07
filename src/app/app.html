@@ -586,12 +586,13 @@
 
                       <!-- Month Calendar cells -->
                       @for (day of daysInMonth(); track day) {
-                        @let cellVal = editingRowCollabId() === collab.id ? (editingRowScaleDraft()[day] || '-') : (collab.scale[day] || '-');
+                        @let cellValRaw = editingRowCollabId() === collab.id ? (editingRowScaleDraft()[day] || '-') : (collab.scale[day] || '-');
+                        @let cellVal = (cellValRaw === '-') ? getShiftCode(collab.shift) : cellValRaw;
                         @let events = getSpecialEventsForDay(collab, day);
                         <td class="py-1 px-0.5 text-center border-r border-[#10213b] relative cursor-pointer group-cell day-grid-cell"
                             [class.special-day]="isDaySpecial(day)"
                             (click)="editingRowCollabId() === collab.id ? paintDraftCell(day) : (editingRowCollabId() !== null ? null : applyPaintbrush(collab.id, day))"
-                            [ngClass]="{ 'bg-[#10b981]/5': isDaySpecial(day) && (cellVal === 'X' || cellVal === '-') }">
+                            [ngClass]="{ 'bg-[#10b981]/5': isDaySpecial(day) && (cellValRaw === 'X' || cellValRaw === '-') }">
                           
                           <!-- Event tiny absolute top-right markers -->
                           @if (events.length > 0) {
@@ -990,277 +991,328 @@
                 </div>
               </div>
             </div>
-
           </div>
-
         </div>
       }
-
       <!-- SUB-TAB 2: GERENCIAMENTO DE TURNOS OPERACIONAIS -->
       @if (activeSubTab() === 'ger.turnos') {
-        <div class="p-4 md:p-6 space-y-6 animate-fade-in font-sans w-full flex-1 overflow-y-auto scrollbar-thin" id="shifts_tab_content">
-          <div class="pb-3 border-b border-[#10213b] flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex flex-col h-full overflow-hidden animate-fade-in font-sans w-full flex-1" id="shifts_tab_content">
+          <!-- FIXED HEADER -->
+          <div class="p-4 md:p-6 pb-3 border-b border-[#10213b] flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0" style="height: 44px; background-color: #10B981; color: #ffffff;">
             <div>
-              <h3 class="font-black text-sm uppercase tracking-tight text-white flex items-center gap-1.5 animate-pulse">
-                <span class="material-icons text-blue-400">tune</span>
+              <h3 class="font-black text-sm uppercase tracking-tight flex items-center gap-1.5" style="color: #ffffff;">
+                <span class="material-icons text-blue-400" style="color: #ffffff;">tune</span>
                 Painel de Gerenciamento de Turnos
               </h3>
-              <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">
-                Cadastre e edite livremente as janelas de trabalho operacionais do aeródromo, ajuste horários de entrada/saída e visualize a carga diária calculada automaticamente.
-              </p>
             </div>
-            <div class="flex items-center gap-2 text-xs bg-blue-500/10 text-blue-400 border border-blue-500/25 px-3 py-1.5 rounded-lg font-mono font-bold">
-              <span class="material-icons text-xs">info</span>
-              <span>Total de Turnos: {{ scaleService.shiftTypes().length }}</span>
+            <div class="flex items-center gap-2 text-xs bg-blue-500/10 border border-blue-500/25 px-3 py-1.5 rounded-lg font-mono font-bold" style="color: #ffffff;">
+              <span class="material-icons text-xs" style="color: #ffffff;">info</span>
+              <span style="color: #ffffff;">Total de Turnos: {{ scaleService.shiftTypes().length }}</span>
             </div>
           </div>
- 
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- SHIFTS TABLE LIST (Span 2) -->
-            <div class="lg:col-span-2 space-y-4">
-              <div class="border border-[#10213b] rounded-lg overflow-hidden bg-[#030a14]">
-                <div class="bg-[#071426] px-4 py-3 border-b border-[#10213b] flex items-center justify-between">
-                  <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
-                    <span class="material-icons text-xs text-blue-500">list</span>
-                    Dicionário de Turnos Cadastrados
-                  </span>
-                  <span class="text-[9px] text-slate-500 font-bold uppercase">* Clique no ícone de edição para alterar</span>
-                </div>
-                <div class="overflow-x-auto">
-                  <table class="w-full text-left border-collapse select-none">
-                    <thead>
-                      <tr class="border-b border-[#10213b] bg-[#071426] text-slate-400 uppercase text-[9px] font-black tracking-wider">
-                        <th class="py-3 px-4">Sigla / Código</th>
-                        <th class="py-3 px-4">Identificação</th>
-                        <th class="py-3 px-4 text-center">Entrada / Saída</th>
-                        <th class="py-3 px-4 text-center">Carga Diária</th>
-                        <th class="py-3 px-4 text-center">Estatísticas</th>
-                        <th class="py-3 px-4 text-center">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody class="divide-y divide-[#10213b] text-xs">
-                      @for (shift of scaleService.shiftTypes(); track shift.code) {
-                        <tr class="hover:bg-[#0b1e36]/30 transition-colors">
-                          <td class="py-3 px-4 font-mono">
-                            <span class="inline-flex items-center justify-center w-11 py-1 rounded font-black text-xs text-white shadow-md border border-white/5"
-                                  [style.background-color]="shift.color">
-                              {{ shift.code }}
-                            </span>
-                          </td>
-                          <td class="py-3 px-4">
-                            <div class="flex flex-col">
-                              <span class="text-white font-bold text-xs">{{ shift.label }}</span>
-                              <span class="text-[9px] text-slate-500 mt-0.5">Base regulatória de escala VIBRA</span>
-                            </div>
-                          </td>
-                          <td class="py-3 px-4 text-center">
-                            @if (shift.startTime && shift.endTime) {
-                              <span class="inline-flex items-center gap-1 bg-[#0b1e36] text-blue-300 font-mono font-bold px-2 py-1 rounded border border-[#1d3557] text-[11px]">
-                                <span class="material-icons text-[10px] text-blue-400">schedule</span>
-                                {{ shift.startTime }} ➔ {{ shift.endTime }}
-                              </span>
-                            } @else {
-                              <span class="text-slate-500 font-mono italic text-[10px]">Não definido</span>
-                            }
-                          </td>
-                          <td class="py-3 px-4 text-center font-mono font-black text-slate-300">
-                            <span class="bg-[#0f172a] border border-[#1e293b] px-2 py-0.5 rounded">
-                              {{ shift.hours }}
-                            </span>
-                          </td>
-                          
-                          <!-- Real-time Shift Allocation Stats -->
-                          <td class="py-3 px-4">
-                            <div class="flex flex-col gap-1 items-center justify-center">
-                              <span class="px-2 py-0.5 rounded text-[9px] font-black font-sans uppercase inline-flex items-center gap-1 bg-[#052e16]/40 text-emerald-400 border border-emerald-500/20"
-                                    title="Colaboradores que pertencem a este turno como padrão">
-                                <span class="material-icons text-[10px]">people</span>
-                                {{ getCollaboratorCountForShift(shift.code) }} ativo(s)
-                              </span>
-                              <span class="text-[8px] text-slate-500 font-mono font-bold" title="Total de ocorrências programadas neste código na escala de {{ currentMonthName() }}">
-                                Escalas: {{ getScheduledDaysCountForShift(shift.code) }} dias
-                              </span>
-                            </div>
-                          </td>
- 
-                          <!-- Actions: Edit & Delete -->
-                          <td class="py-3 px-4 text-center">
-                            <div class="flex items-center justify-center gap-2">
-                              <button (click)="startEditingShift(shift)"
-                                      class="p-1.5 text-blue-400 hover:text-white hover:bg-blue-950/40 rounded transition-all cursor-pointer border-none outline-none"
-                                      title="Editar Turno">
-                                <span class="material-icons text-sm">edit</span>
-                              </button>
-                              
-                              <button (click)="removeShiftType(shift.code)"
-                                      class="p-1.5 text-red-500 hover:text-white hover:bg-red-950/40 rounded transition-all cursor-pointer border-none outline-none"
-                                      title="Excluir Turno">
-                                <span class="material-icons text-sm">delete</span>
-                              </button>
-                            </div>
-                          </td>
+
+          <!-- FIXED BODY WRAPPER -->
+          <div class="flex-1 min-h-0 flex flex-col overflow-hidden p-4 md:p-6 space-y-6 relative">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0 items-stretch">
+              <!-- SHIFTS TABLE LIST (Span 2) -->
+              <div class="lg:col-span-2 flex flex-col h-full min-h-0 space-y-4">
+                <div class="border border-[#10213b] rounded-lg overflow-hidden bg-[#030a14] flex flex-col flex-1 min-h-0">
+                  <div class="bg-[#071426] px-4 py-3 border-b border-[#10213b] flex items-center justify-between shrink-0">
+                    <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                      <span class="material-icons text-xs text-blue-500">list</span>
+                      Dicionário de Turnos Cadastrados
+                    </span>
+                    <span class="text-[9px] text-slate-500 font-bold uppercase">* Clique no ícone de edição para alterar</span>
+                  </div>
+                  <div class="overflow-y-auto scrollbar-thin flex-1">
+                    <table class="w-full text-left border-collapse select-none">
+                      <thead class="sticky top-0 z-10 shadow-sm">
+                        <tr class="border-b border-[#10213b] bg-[#071426] text-slate-400 uppercase text-[9px] font-black tracking-wider">
+                          <th class="py-3 px-4 sticky top-0 z-10 border-b border-[#10213b]" style="background-color: #d8fff8; color: #071426;">Sigla / Código</th>
+                          <th class="py-3 px-4 sticky top-0 z-10 border-b border-[#10213b]" style="background-color: #d8fff8; color: #071426;">Identificação</th>
+                          <th class="py-3 px-4 sticky top-0 z-10 border-b border-[#10213b] text-center" style="background-color: #d8fff8; color: #071426;">Entrada / Saída</th>
+                          <th class="py-3 px-4 sticky top-0 z-10 border-b border-[#10213b] text-center" style="background-color: #d8fff8; color: #071426;">Carga Diária</th>
+                          <th class="py-3 px-4 sticky top-0 z-10 border-b border-[#10213b] text-center" style="background-color: #d8fff8; color: #071426;">Estatísticas</th>
+                          <th class="py-3 px-4 sticky top-0 z-10 border-b border-[#10213b] text-center" style="background-color: #d8fff8; color: #071426;">Ações</th>
                         </tr>
-                      }
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody class="divide-y divide-[#10213b] text-xs">
+                        @for (shift of scaleService.shiftTypes(); track shift.code) {
+                          <tr class="hover:bg-[#0b1e36]/30 transition-colors">
+                            <td class="py-3 px-4 font-mono">
+                              <span class="inline-flex items-center justify-center w-11 py-1 rounded font-black text-xs shadow-md border border-white/5"
+                                    [style.background-color]="shift.color"
+                                    [style.color]="shift.textColor || '#ffffff'">
+                                {{ shift.code }}
+                              </span>
+                            </td>
+                            <td class="py-3 px-4">
+                              <div class="flex flex-col">
+                                <span class="text-white font-bold text-xs">{{ shift.label }}</span>
+                                <span class="text-[9px] text-slate-500 mt-0.5">Base regulatória de escala VIBRA</span>
+                              </div>
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                              @if (shift.startTime && shift.endTime) {
+                                <span class="inline-flex items-center gap-1 bg-[#0b1e36] text-blue-300 font-mono font-bold px-2 py-1 rounded border border-[#1d3557] text-[11px]">
+                                  <span class="material-icons text-[10px] text-blue-400">schedule</span>
+                                  {{ shift.startTime }} ➔ {{ shift.endTime }}
+                                </span>
+                              } @else {
+                                <span class="text-slate-500 font-mono italic text-[10px]">Não definido</span>
+                              }
+                            </td>
+                            <td class="py-3 px-4 text-center font-mono font-black text-slate-300">
+                              <span class="bg-[#0f172a] border border-[#1e293b] px-2 py-0.5 rounded">
+                                {{ shift.hours }}
+                              </span>
+                            </td>
+                            
+                            <!-- Real-time Shift Allocation Stats -->
+                            <td class="py-3 px-4">
+                              <div class="flex flex-col gap-1 items-center justify-center">
+                                <span class="px-2 py-0.5 rounded text-[9px] font-black font-sans uppercase inline-flex items-center gap-1 bg-[#052e16]/40 text-emerald-400 border border-emerald-500/20"
+                                      title="Colaboradores que pertencem a este turno como padrão">
+                                  <span class="material-icons text-[10px]">people</span>
+                                  {{ getCollaboratorCountForShift(shift.code) }} ativo(s)
+                                </span>
+                                <span class="text-[8px] text-slate-500 font-mono font-bold" title="Total de ocorrências programadas neste código na escala de {{ currentMonthName() }}">
+                                  Escalas: {{ getScheduledDaysCountForShift(shift.code) }} dias
+                                </span>
+                              </div>
+                            </td>
+   
+                            <!-- Actions: Edit & Delete -->
+                            <td class="py-3 px-4 text-center">
+                              <div class="flex items-center justify-center gap-2">
+                                <button (click)="startEditingShift(shift)"
+                                        class="p-1.5 text-blue-400 hover:text-white hover:bg-blue-950/40 rounded transition-all cursor-pointer border-none outline-none"
+                                        title="Editar Turno">
+                                  <span class="material-icons text-sm">edit</span>
+                                </button>
+                                
+                                <button (click)="removeShiftType(shift.code)"
+                                        class="p-1.5 text-red-500 hover:text-white hover:bg-red-950/40 rounded transition-all cursor-pointer border-none outline-none"
+                                        title="Excluir Turno">
+                                  <span class="material-icons text-sm">delete</span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+   
+                <!-- Quick Explanation Note -->
+                <div class="bg-blue-500/5 border border-blue-500/10 rounded-lg p-4 flex gap-3 shrink-0">
+                  <span class="material-icons text-blue-400">psychology</span>
+                  <div class="text-[10px] text-slate-400 leading-relaxed">
+                    <span class="text-white font-bold block mb-0.5">Automação de Alocação de Pista:</span>
+                    Quando você cria ou edita um turno, ele se torna imediatamente elegível para alocação de equipe. Se você mover um colaborador de turno, o sistema recalculará sua escala de {{ currentMonthName() }} 2026, convertendo suas antigas jornadas para o novo turno em lote.
+                  </div>
                 </div>
               </div>
- 
-              <!-- Quick Explanation Note -->
-              <div class="bg-blue-500/5 border border-blue-500/10 rounded-lg p-4 flex gap-3">
-                <span class="material-icons text-blue-400">psychology</span>
-                <div class="text-[10px] text-slate-400 leading-relaxed">
-                  <span class="text-white font-bold block mb-0.5">Automação de Alocação de Pista:</span>
-                  Quando você cria ou edita um turno, ele se torna imediatamente elegível para alocação de equipe. Se você mover um colaborador de turno, o sistema recalculará sua escala de {{ currentMonthName() }} 2026, convertendo suas antigas jornadas para o novo turno em lote.
-                </div>
-              </div>
-            </div>
- 
-            <!-- RIGHT COLUMNS: FORM AND ALLOCATION -->
-            <div class="space-y-6">
-              
-              <!-- SHIFT CREATION / EDITING CARD -->
-              <div class="bg-[#030a14] border border-[#10213b] rounded-lg p-5 shadow-xl">
-                <div class="flex items-center justify-between pb-2 border-b border-[#10213b] mb-4">
-                  <h4 class="font-black text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <span class="material-icons text-blue-500 text-sm">
-                      {{ editingShiftCode() ? 'edit_note' : 'library_add' }}
-                    </span>
-                    {{ editingShiftCode() ? 'Editar Turno' : 'Criar Novo Turno' }}
-                  </h4>
-                  @if (editingShiftCode()) {
-                    <span class="text-[8px] bg-amber-500/10 text-amber-400 border border-amber-500/25 px-1.5 py-0.5 rounded font-mono font-black uppercase">
-                      Modo Edição
-                    </span>
-                  }
-                </div>
- 
-                <div class="space-y-4 text-xs">
-                  <!-- Code -->
-                  <div class="flex flex-col gap-1">
-                    <label for="shift_code_input" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Sigla / Código do Turno</label>
-                    <input id="shift_code_input"
-                           type="text"
-                           [value]="newShiftCode()"
-                           (input)="newShiftCode.set($any($event.target).value)"
-                           [disabled]="editingShiftCode() !== null"
-                           placeholder="Ex: M1, T2, N3"
-                           class="bg-[#071426] border border-[#10213b] rounded px-3 py-2 text-white outline-none focus:border-blue-500 font-mono font-bold disabled:opacity-50 disabled:cursor-not-allowed uppercase">
+   
+              <!-- RIGHT COLUMN: SHIFT FORM -->
+              <div class="space-y-6 overflow-y-auto scrollbar-thin h-full pr-1 shrink-0">
+                <!-- SHIFT CREATION / EDITING CARD -->
+                <div class="bg-[#030a14] border border-[#10213b] rounded-lg p-5 shadow-xl">
+                  <div class="flex items-center justify-between pb-2 border-b border-[#10213b] mb-4">
+                    <h4 class="font-black text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
+                      <span class="material-icons text-blue-500 text-sm">
+                        {{ editingShiftCode() ? 'edit_note' : 'library_add' }}
+                      </span>
+                      {{ editingShiftCode() ? 'Editar Turno' : 'Criar Novo Turno' }}
+                    </h4>
+                    @if (editingShiftCode()) {
+                      <span class="text-[8px] bg-amber-500/10 text-amber-400 border border-amber-500/25 px-1.5 py-0.5 rounded font-mono font-black uppercase">
+                        Modo Edição
+                      </span>
+                    }
                   </div>
- 
-                  <!-- Label -->
-                  <div class="flex flex-col gap-1">
-                    <label for="shift_label_input" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Descrição do Turno</label>
-                    <input id="shift_label_input"
-                           type="text"
-                           [value]="newShiftLabel()"
-                           (input)="newShiftLabel.set($any($event.target).value)"
-                           placeholder="Ex: Turno Manhã Otimizado"
-                           class="bg-[#071426] border border-[#10213b] rounded px-3 py-2 text-white outline-none focus:border-blue-500 font-bold">
-                  </div>
- 
-                  <!-- Horários de Entrada e Saída (Unified Row, Alarm-style) -->
-                  <div class="grid grid-cols-2 gap-3">
-                    <!-- Bloco de Entrada -->
-                    <div class="flex flex-col gap-1">
-                      <label class="font-black text-[9px] uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                        <span class="material-icons text-[10px] text-emerald-400">login</span>
-                        Horário Entrada
-                      </label>
-                      <div class="flex items-center bg-[#071426] border border-[#10213b] rounded px-2.5 py-1.5 focus-within:border-blue-500 transition-all">
-                        <!-- Hour select (left half) -->
-                        <select [value]="startHour()"
-                                (change)="startHour.set($any($event.target).value)"
-                                class="w-1/2 bg-transparent text-white text-center font-bold font-mono outline-none border-none cursor-pointer appearance-none">
-                          @for (h of hoursList; track h) {
-                            <option [value]="h" class="bg-[#071426] text-white">{{ h }}h</option>
-                          }
-                        </select>
-                        <span class="text-slate-500 font-bold font-mono select-none px-1">:</span>
-                        <!-- Minute select (right half) -->
-                        <select [value]="startMinute()"
-                                (change)="startMinute.set($any($event.target).value)"
-                                class="w-1/2 bg-transparent text-white text-center font-bold font-mono outline-none border-none cursor-pointer appearance-none">
-                          @for (m of minutesList; track m) {
-                            <option [value]="m" class="bg-[#071426] text-white">{{ m }}m</option>
-                          }
-                        </select>
+
+                  <div class="space-y-4 text-xs">
+                    <!-- Code & Label Row -->
+                    <div class="flex gap-4">
+                      <!-- Code (40%) -->
+                      <div class="flex flex-col gap-1 w-[40%] shrink-0">
+                        <label for="shift_code_input" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Código / Sigla</label>
+                        <input id="shift_code_input"
+                               type="text"
+                               [value]="newShiftCode()"
+                               (input)="newShiftCode.set($any($event.target).value)"
+                               [disabled]="editingShiftCode() !== null"
+                               placeholder="Ex: M"
+                               style="height: 25px;"
+                               class="bg-[#071426] border border-[#10213b] rounded px-3 py-0.5 text-white outline-none focus:border-blue-500 font-mono font-bold uppercase w-full disabled:opacity-50">
+                      </div>
+
+                      <!-- Label (60%) -->
+                      <div class="flex flex-col gap-1 flex-1">
+                        <label for="shift_label_input" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Identificação / Nome</label>
+                        <input id="shift_label_input"
+                               type="text"
+                               [value]="newShiftLabel()"
+                               (input)="newShiftLabel.set($any($event.target).value)"
+                               placeholder="Ex: Turno Manhã"
+                               style="height: 25px;"
+                               class="bg-[#071426] border border-[#10213b] rounded px-3 py-0.5 text-white outline-none focus:border-blue-500 font-bold w-full">
                       </div>
                     </div>
 
-                    <!-- Bloco de Saída -->
-                    <div class="flex flex-col gap-1">
-                      <label class="font-black text-[9px] uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                        <span class="material-icons text-[10px] text-red-400">logout</span>
-                        Horário Saída
-                      </label>
-                      <div class="flex items-center bg-[#071426] border border-[#10213b] rounded px-2.5 py-1.5 focus-within:border-blue-500 transition-all">
-                        <!-- Hour select (left half) -->
-                        <select [value]="endHour()"
-                                (change)="endHour.set($any($event.target).value)"
-                                class="w-1/2 bg-transparent text-white text-center font-bold font-mono outline-none border-none cursor-pointer appearance-none">
-                          @for (h of hoursList; track h) {
-                            <option [value]="h" class="bg-[#071426] text-white">{{ h }}h</option>
-                          }
-                        </select>
-                        <span class="text-slate-500 font-bold font-mono select-none px-1">:</span>
-                        <!-- Minute select (right half) -->
-                        <select [value]="endMinute()"
-                                (change)="endMinute.set($any($event.target).value)"
-                                class="w-1/2 bg-transparent text-white text-center font-bold font-mono outline-none border-none cursor-pointer appearance-none">
-                          @for (m of minutesList; track m) {
-                            <option [value]="m" class="bg-[#071426] text-white">{{ m }}m</option>
-                          }
-                        </select>
+                    <!-- Horários Row -->
+                    <div class="grid grid-cols-2 gap-3">
+                      <!-- Bloco de Entrada -->
+                      <div class="flex flex-col gap-1">
+                        <label class="font-black text-[9px] uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                          <span class="material-icons text-[10px] text-emerald-400">login</span>
+                          Horário Entrada
+                        </label>
+                        <div class="flex items-center bg-[#071426] border border-[#10213b] rounded px-2 py-0.5 focus-within:border-blue-500 transition-all" style="height: 25px;">
+                          <!-- Hour select -->
+                          <select [value]="startHour()"
+                                  (change)="startHour.set($any($event.target).value)"
+                                  class="w-1/2 bg-transparent text-white text-center font-bold font-mono outline-none border-none cursor-pointer appearance-none text-xs">
+                            @for (h of hoursList; track h) {
+                              <option [value]="h" class="bg-[#071426] text-white">{{ h }}h</option>
+                            }
+                          </select>
+                          <span class="text-slate-500 font-bold font-mono select-none px-1">:</span>
+                          <!-- Minute select -->
+                          <select [value]="startMinute()"
+                                  (change)="startMinute.set($any($event.target).value)"
+                                  class="w-1/2 bg-transparent text-white text-center font-bold font-mono outline-none border-none cursor-pointer appearance-none text-xs">
+                            @for (m of minutesList; track m) {
+                              <option [value]="m" class="bg-[#071426] text-white">{{ m }}m</option>
+                            }
+                          </select>
+                        </div>
+                      </div>
+
+                      <!-- Bloco de Saída -->
+                      <div class="flex flex-col gap-1">
+                        <label class="font-black text-[9px] uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                          <span class="material-icons text-[10px] text-red-400">logout</span>
+                          Horário Saída
+                        </label>
+                        <div class="flex items-center bg-[#071426] border border-[#10213b] rounded px-2 py-0.5 focus-within:border-blue-500 transition-all" style="height: 25px;">
+                          <!-- Hour select -->
+                          <select [value]="endHour()"
+                                  (change)="endHour.set($any($event.target).value)"
+                                  class="w-1/2 bg-transparent text-white text-center font-bold font-mono outline-none border-none cursor-pointer appearance-none text-xs">
+                            @for (h of hoursList; track h) {
+                              <option [value]="h" class="bg-[#071426] text-white">{{ h }}h</option>
+                            }
+                          </select>
+                          <span class="text-slate-500 font-bold font-mono select-none px-1">:</span>
+                          <!-- Minute select -->
+                          <select [value]="endMinute()"
+                                  (change)="endMinute.set($any($event.target).value)"
+                                  class="w-1/2 bg-transparent text-white text-center font-bold font-mono outline-none border-none cursor-pointer appearance-none text-xs">
+                            @for (m of minutesList; track m) {
+                              <option [value]="m" class="bg-[#071426] text-white">{{ m }}m</option>
+                            }
+                          </select>
+                        </div>
                       </div>
                     </div>
-                  </div>
- 
-                  <!-- Auto Hours Counter & Color picker -->
-                  <div class="grid grid-cols-2 gap-3 items-end">
+
+                    <!-- Calculated Hours row -->
                     <div class="flex flex-col gap-1">
                       <label class="font-black text-[9px] uppercase tracking-wider text-slate-400 flex items-center gap-1">
                         <span class="material-icons text-[10px] text-blue-400">schedule</span>
                         Carga Calculada
                       </label>
-                      <div class="bg-[#0c1e35] border border-[#1a3458] rounded px-3 py-2 text-blue-300 font-mono font-black text-center text-sm shadow-inner flex items-center justify-center gap-1">
-                        <span class="material-icons text-xs text-blue-400">timelapse</span>
+                      <div class="bg-[#0c1e35] border border-[#1a3458] rounded px-3 py-1 text-blue-300 font-mono font-black text-center text-xs shadow-inner flex items-center justify-center gap-1" style="height: 25px;">
+                        <span class="material-icons text-[10px] text-blue-400">timelapse</span>
                         <span>{{ calculatedShiftHours() }}</span>
                       </div>
                     </div>
- 
-                    <div class="flex flex-col gap-1">
-                      <label for="shift_color_input" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Cor Representativa</label>
-                      <div class="flex gap-2 items-center h-9">
-                        <input id="shift_color_input"
-                               type="color"
-                               [value]="newShiftColor()"
-                               (input)="newShiftColor.set($any($event.target).value)"
-                               class="bg-transparent border-none w-8 h-8 rounded cursor-pointer outline-none">
-                        <span class="text-[9px] font-mono text-slate-400 font-bold">{{ newShiftColor() }}</span>
+
+                    <!-- Color Pickers (Fundo & Fonte) -->
+                    <div class="grid grid-cols-2 gap-4">
+                      <div class="flex flex-col gap-1">
+                        <label for="shift_color_input" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Cor Fundo</label>
+                        <div class="flex gap-2 items-center h-9">
+                          <input id="shift_color_input"
+                                 type="color"
+                                 [value]="newShiftColor()"
+                                 (input)="newShiftColor.set($any($event.target).value)"
+                                 class="bg-transparent border-none w-8 h-8 rounded cursor-pointer outline-none">
+                          <span class="text-[9px] font-mono text-slate-400 font-bold">{{ newShiftColor() }}</span>
+                        </div>
+                      </div>
+                      
+                      <div class="flex flex-col gap-1">
+                        <label for="shift_text_color_input" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Cor Fonte</label>
+                        <div class="flex gap-2 items-center h-9">
+                          <input id="shift_text_color_input"
+                                 type="color"
+                                 [value]="newShiftTextColor()"
+                                 (input)="newShiftTextColor.set($any($event.target).value)"
+                                 class="bg-transparent border-none w-8 h-8 rounded cursor-pointer outline-none">
+                          <span class="text-[9px] font-mono text-slate-400 font-bold">{{ newShiftTextColor() }}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
- 
-                  <!-- Action Buttons -->
-                  <div class="pt-2 flex gap-2">
-                    <button (click)="saveShiftType()"
-                            class="flex-1 bg-[#10b981] hover:bg-emerald-600 text-white font-black py-2.5 rounded uppercase tracking-wider transition-all cursor-pointer border-none shadow-md outline-none">
-                      {{ editingShiftCode() ? 'Salvar Alterações' : 'Criar Turno' }}
-                    </button>
-                    
-                    @if (editingShiftCode()) {
-                      <button (click)="cancelEditingShift()"
-                              class="bg-[#1e293b] hover:bg-slate-800 text-slate-300 font-black px-4 rounded uppercase tracking-wider transition-all cursor-pointer border-none outline-none">
-                        Cancelar
+
+                    <!-- REAL-TIME PREVIEW OF THE SHIFT -->
+                    <div class="bg-[#071426] border border-[#10213b] rounded-lg p-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3" style="height: 75px;">
+                      <div class="flex flex-col gap-0.5">
+                        <span class="font-black text-[9px] uppercase tracking-wider text-slate-300 flex items-center gap-1">
+                          <span class="material-icons text-[10px] text-emerald-400">visibility</span>
+                          Visualização em Tempo Real
+                        </span>
+                        <span class="text-[8px] text-slate-400 font-medium">Veja como o turno aparecerá na escala</span>
+                      </div>
+                      <div class="flex items-center gap-3 shrink-0">
+                        <!-- Preview Badge on Scale Matrix -->
+                        <div class="flex flex-col items-center gap-1">
+                          <div class="w-8 h-8 rounded flex items-center justify-center font-bold font-mono text-[11px] shadow-lg transition-all border border-black/20"
+                               [style.backgroundColor]="newShiftColor()"
+                               [style.color]="newShiftTextColor()">
+                            {{ (newShiftCode() || '?').substring(0, 3).toUpperCase() }}
+                          </div>
+                          <span class="text-[7px] text-slate-500 font-bold uppercase tracking-wider">Na Grade</span>
+                        </div>
+                        
+                        <!-- Larger Row Preview -->
+                        <div class="flex flex-col items-center gap-1">
+                          <div class="px-3 py-1 rounded flex items-center gap-2 text-[10px] font-bold border border-black/20 shadow-md h-8 transition-all"
+                               [style.backgroundColor]="newShiftColor() + '15'"
+                               [style.borderColor]="newShiftColor() + '30'"
+                               [style.color]="newShiftTextColor()">
+                            <span class="w-5 h-5 rounded flex items-center justify-center font-bold font-mono text-[9px] border border-black/10"
+                                  [style.backgroundColor]="newShiftColor()"
+                                  [style.color]="newShiftTextColor()">
+                              {{ (newShiftCode() || '?').substring(0, 3).toUpperCase() }}
+                            </span>
+                            <span class="max-w-[80px] truncate text-white">{{ newShiftLabel() || 'Sem Identificação' }}</span>
+                          </div>
+                          <span class="text-[7px] text-slate-500 font-bold uppercase tracking-wider">No Painel</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-2" style="padding-top: 0px;">
+                      <button (click)="saveShiftType()"
+                              class="flex-1 bg-[#10b981] hover:bg-emerald-600 text-white font-black py-2.5 rounded uppercase tracking-wider transition-all cursor-pointer border-none shadow-md outline-none">
+                        {{ editingShiftCode() ? 'Salvar Alterações' : 'Criar Turno' }}
                       </button>
-                    }
+                      
+                      @if (editingShiftCode()) {
+                        <button (click)="cancelEditingShift()"
+                                class="bg-[#1e293b] hover:bg-slate-800 text-slate-300 font-black px-4 rounded uppercase tracking-wider transition-all cursor-pointer border-none outline-none">
+                          Cancelar
+                        </button>
+                      }
+                    </div>
                   </div>
                 </div>
               </div>
-
-
-
             </div>
           </div>
         </div>
@@ -2153,11 +2205,11 @@
                             <label for="modal_collab_shift" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Turno de Referência</label>
                             <select id="modal_collab_shift"
                                     #editCollabShift
-                                    [value]="editingCollab() ? editingCollab()!.shift : 'MANHÃ'"
+                                    [value]="editingCollab() ? editingCollab()!.shift : (scaleService.shiftTypes()[0]?.code || 'M')"
                                     class="bg-[#071426] text-white border border-[#10213b] focus:border-blue-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold">
-                              <option value="MANHÃ">MANHÃ</option>
-                              <option value="TARDE">TARDE</option>
-                              <option value="NOITE">NOITE</option>
+                              @for (shiftType of scaleService.shiftTypes(); track shiftType.code) {
+                                <option [value]="shiftType.code">{{ shiftType.code }} - {{ shiftType.label }}</option>
+                              }
                             </select>
                           </div>
 

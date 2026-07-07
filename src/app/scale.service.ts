@@ -84,6 +84,7 @@ export interface ShiftType {
   label: string;
   hours: string;
   color: string;
+  textColor?: string;
   startTime?: string;
   endTime?: string;
 }
@@ -356,8 +357,20 @@ export class ScaleService {
             computaAusencia = true;
             desc = desc.substring('#COMPUTA_AUSENCIA#'.length);
           }
+          
+          let bg = s.color || '#64748b';
+          let fg = s.textColor || s.textcolor || s.text_color || '#ffffff';
+          if (bg.includes('|')) {
+            const parts = bg.split('|');
+            bg = parts[0];
+            fg = parts[1] || fg;
+          }
+
           return {
-            ...s,
+            code: s.code,
+            label: s.label,
+            color: bg,
+            textColor: fg,
             description: desc,
             computaAusencia
           };
@@ -372,7 +385,26 @@ export class ScaleService {
         console.error('Supabase shift_types error:', shiftsError);
         this.shiftTypes.set([]);
       } else {
-        this.shiftTypes.set(shiftsData || []);
+        const parsedShifts = (shiftsData || []).map((s: any) => {
+          let bg = s.color || '#3b82f6';
+          let fg = s.textColor || s.textcolor || s.text_color || '#ffffff';
+          if (bg.includes('|')) {
+            const parts = bg.split('|');
+            bg = parts[0];
+            fg = parts[1] || fg;
+          }
+
+          return {
+            code: s.code,
+            label: s.label,
+            hours: s.hours,
+            color: bg,
+            textColor: fg,
+            startTime: s.startTime || s.starttime || s.start_time,
+            endTime: s.endTime || s.endtime || s.end_time
+          };
+        });
+        this.shiftTypes.set(parsedShifts);
       }
 
       // 3. Sync Audit History
@@ -1582,7 +1614,7 @@ export class ScaleService {
 
     if (this.activeDb() === 'supabase' && this.supabase) {
       try {
-        const payload = {
+        const payload: any = {
           code: newSigla.code,
           label: newSigla.label,
           color: newSigla.color,
@@ -1590,7 +1622,21 @@ export class ScaleService {
           textColor: newSigla.textColor
         };
         const res = await this.supabase.from('sigla_types').upsert(payload);
-        if (res.error) throw res.error;
+        if (res.error) {
+          if (res.error.message?.includes("textColor' column") || res.error.code === 'PGRST204') {
+            const packedColor = `${newSigla.color}|${newSigla.textColor || '#ffffff'}`;
+            const fallbackPayload = {
+              code: newSigla.code,
+              label: newSigla.label,
+              color: packedColor,
+              description: newSigla.description
+            };
+            const resFallback = await this.supabase.from('sigla_types').upsert(fallbackPayload);
+            if (resFallback.error) throw resFallback.error;
+          } else {
+            throw res.error;
+          }
+        }
         this.syncSupabase();
         this.addAuditHistory('CADASTRO_SIGLA', `Nova sigla ${upperCode} cadastrada no Supabase.`);
       } catch (err: any) {
@@ -1660,7 +1706,7 @@ export class ScaleService {
     if (sigla.computaAusencia) {
       finalDesc = '#COMPUTA_AUSENCIA#' + finalDesc;
     }
-    const dbSigla = {
+    const dbSigla: any = {
       code: sigla.code,
       label: sigla.label,
       color: sigla.color,
@@ -1671,7 +1717,21 @@ export class ScaleService {
     if (this.activeDb() === 'supabase' && this.supabase) {
       try {
         const res = await this.supabase.from('sigla_types').upsert(dbSigla);
-        if (res.error) throw res.error;
+        if (res.error) {
+          if (res.error.message?.includes("textColor' column") || res.error.code === 'PGRST204') {
+            const packedColor = `${sigla.color}|${sigla.textColor || '#ffffff'}`;
+            const fallbackSigla = {
+              code: sigla.code,
+              label: sigla.label,
+              color: packedColor,
+              description: finalDesc
+            };
+            const resFallback = await this.supabase.from('sigla_types').upsert(fallbackSigla);
+            if (resFallback.error) throw resFallback.error;
+          } else {
+            throw res.error;
+          }
+        }
         await this.syncSupabase();
       } catch (err: any) {
         console.error('Error in saveSiglaType (Supabase):', err);
@@ -1693,7 +1753,7 @@ export class ScaleService {
     if (newSigla.computaAusencia) {
       finalDesc = '#COMPUTA_AUSENCIA#' + finalDesc;
     }
-    const dbSigla = {
+    const dbSigla: any = {
       code: newSigla.code,
       label: newSigla.label,
       color: newSigla.color,
@@ -1704,7 +1764,21 @@ export class ScaleService {
     if (this.activeDb() === 'supabase' && this.supabase) {
       try {
         const insRes = await this.supabase.from('sigla_types').insert(dbSigla);
-        if (insRes.error) throw insRes.error;
+        if (insRes.error) {
+          if (insRes.error.message?.includes("textColor' column") || insRes.error.code === 'PGRST204') {
+            const packedColor = `${newSigla.color}|${newSigla.textColor || '#ffffff'}`;
+            const fallbackSigla = {
+              code: newSigla.code,
+              label: newSigla.label,
+              color: packedColor,
+              description: finalDesc
+            };
+            const insResFallback = await this.supabase.from('sigla_types').insert(fallbackSigla);
+            if (insResFallback.error) throw insResFallback.error;
+          } else {
+            throw insRes.error;
+          }
+        }
 
         const updRes = await this.supabase
           .from('escala_diaria')
@@ -1770,11 +1844,36 @@ export class ScaleService {
   async saveShiftType(shift: ShiftType) {
     if (this.activeDb() === 'supabase' && this.supabase) {
       try {
-        const res = await this.supabase.from('shift_types').upsert(shift);
-        if (res.error) throw res.error;
+        const payload: any = {
+          code: shift.code,
+          label: shift.label,
+          hours: shift.hours,
+          color: shift.color,
+          textColor: shift.textColor,
+          startTime: shift.startTime,
+          endTime: shift.endTime
+        };
+        const res = await this.supabase.from('shift_types').upsert(payload);
+        if (res.error) {
+          if (res.error.message?.includes("textColor' column") || res.error.code === 'PGRST204') {
+            const packedColor = `${shift.color}|${shift.textColor || '#ffffff'}`;
+            const fallbackShift = {
+              code: shift.code,
+              label: shift.label,
+              hours: shift.hours,
+              color: packedColor,
+              startTime: shift.startTime,
+              endTime: shift.endTime
+            };
+            const resFallback = await this.supabase.from('shift_types').upsert(fallbackShift);
+            if (resFallback.error) throw resFallback.error;
+          } else {
+            throw res.error;
+          }
+        }
         this.syncSupabase();
       } catch (err: any) {
-        console.error(err);
+        console.error('Error in saveShiftType (Supabase):', err);
       }
     } else {
       setDoc(doc(this.db, 'shiftTypes', shift.code), shift).catch((err) => {

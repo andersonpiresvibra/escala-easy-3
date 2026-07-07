@@ -222,8 +222,10 @@ export class App {
     let currentOffStreak = 0;
     let maxOffStreak = 0;
 
+    const defaultCode = this.getShiftCode(collab.shift);
     for (let d = 1; d <= 30; d++) {
-      const val = scale[d] || 'X';
+      const rawVal = scale[d] || '-';
+      const val = (rawVal === '-') ? defaultCode : rawVal;
       
       // Use dynamic absence check
       const isRest = this.isSiglaAbsence(val);
@@ -258,21 +260,31 @@ export class App {
       fatigueDescription = 'Atenção. Sequência de 5 dias trabalhados. Nível de alerta operacional intermediário.';
     }
 
-    // Map shift to times
+    // Map shift to times dynamically
     let entryTime = '07:00';
     let exitTime = '15:20';
-    if (collab.shift === 'MANHÃ') {
-      entryTime = '06:00';
-      exitTime = '14:00';
-    } else if (collab.shift === 'TARDE') {
-      entryTime = '14:00';
-      exitTime = '22:00';
-    } else if (collab.shift === 'MADRUGADA' || collab.shift === 'NOITE') {
-      entryTime = '22:00';
-      exitTime = '06:00';
-    } else if (collab.shift === 'ADMINISTRATIVO') {
-      entryTime = '08:00';
-      exitTime = '17:00';
+    const sCode = (collab.shift || '').trim().toUpperCase();
+    const shiftType = this.scaleService.shiftTypes().find(s => 
+      s.code.trim().toUpperCase() === sCode || 
+      s.label.trim().toUpperCase() === sCode
+    );
+    if (shiftType && shiftType.startTime && shiftType.endTime) {
+      entryTime = shiftType.startTime;
+      exitTime = shiftType.endTime;
+    } else {
+      if (sCode === 'MANHÃ' || sCode === 'M') {
+        entryTime = '06:00';
+        exitTime = '14:00';
+      } else if (sCode === 'TARDE' || sCode === 'T') {
+        entryTime = '14:00';
+        exitTime = '22:00';
+      } else if (sCode === 'MADRUGADA' || sCode === 'NOITE' || sCode === 'N') {
+        entryTime = '22:00';
+        exitTime = '06:00';
+      } else if (sCode === 'ADMINISTRATIVO' || sCode === 'ADM') {
+        entryTime = '08:00';
+        exitTime = '17:00';
+      }
     }
 
     return {
@@ -288,15 +300,40 @@ export class App {
     };
   }
 
+  getShiftCode(s: string): string {
+    const norm = (s || '').toUpperCase().trim();
+    const foundByCode = this.scaleService.shiftTypes().find(st => st.code.toUpperCase().trim() === norm);
+    if (foundByCode) return foundByCode.code;
+
+    const foundByLabel = this.scaleService.shiftTypes().find(st => st.label.toUpperCase().trim() === norm);
+    if (foundByLabel) return foundByLabel.code;
+
+    if (norm === 'MANHÃ' || norm === 'M') return 'M';
+    if (norm === 'TARDE' || norm === 'T') return 'T';
+    if (norm === 'NOITE' || norm === 'MADRUGADA' || norm === 'N') return 'N';
+    if (norm === 'ADMINISTRATIVO' || norm === 'ADM') return 'ADM';
+
+    return 'M';
+  }
+
   getCollabHours(collab: any): string {
-    if (!collab) return '07:00 - 15:20';
-    if (collab.shift === 'MANHÃ') {
+    if (!collab) return '07:00-15:20';
+    const sCode = (collab.shift || '').trim().toUpperCase();
+    const shiftType = this.scaleService.shiftTypes().find(s => 
+      s.code.trim().toUpperCase() === sCode || 
+      s.label.trim().toUpperCase() === sCode
+    );
+    if (shiftType && shiftType.startTime && shiftType.endTime) {
+      return `${shiftType.startTime}-${shiftType.endTime}`;
+    }
+    
+    if (sCode === 'MANHÃ' || sCode === 'M') {
       return '06:00-14:00';
-    } else if (collab.shift === 'TARDE') {
+    } else if (sCode === 'TARDE' || sCode === 'T') {
       return '14:00-22:00';
-    } else if (collab.shift === 'MADRUGADA' || collab.shift === 'NOITE') {
+    } else if (sCode === 'MADRUGADA' || sCode === 'NOITE' || sCode === 'N') {
       return '22:00-06:00';
-    } else if (collab.shift === 'ADMINISTRATIVO') {
+    } else if (sCode === 'ADMINISTRATIVO' || sCode === 'ADM') {
       return '08:00-17:00';
     }
     return '07:00-15:20';
@@ -433,39 +470,25 @@ export class App {
     const upper = code.trim().toUpperCase();
     if (upper === '-' || upper === '' || upper === '?') return false;
     
-    // Explicit 'T' is work
-    if (upper === 'T') return true;
-    
-    // Numeric codes are work (e.g. '7', '2', '12:30')
-    const isNum = /^\d+$/.test(upper) || /^\d+[:.,hH]\d+$/.test(upper);
-    if (isNum) return true;
-    
-    // Registered shifts are work
-    const isShift = this.scaleService.shiftTypes().some(s => s.code.toUpperCase().trim() === upper);
-    if (isShift) return true;
-    
-    // Registered absence siglas are not work
-    const sigla = this.scaleService.siglaTypes().find(s => s.code.toUpperCase().trim() === upper);
-    if (sigla) {
-      if (sigla.computaAusencia) return false;
+    // If it is marked as an absence sigla, it is not a working status
+    if (this.isSiglaAbsence(upper)) {
+      return false;
     }
     
-    // Known absence/leave codes fallback
-    const offCodes = ['X', 'F', 'LM', 'CP', 'AT', 'W', 'FO', 'P', 'R', 'EX', 'BH'];
-    if (offCodes.includes(upper)) return false;
-    
+    // Numbers or shift abbreviations (e.g., M, T, N, ADM) are considered present
     return true;
   }
 
   dailyWorkingCounts = computed(() => {
-    const collabs = this.scaleService.collaborators();
+    const collabs = this.filteredCollaborators();
     const days = this.daysInMonth();
     const counts: { [day: number]: number } = {};
     
     days.forEach(day => {
       let count = 0;
       collabs.forEach(collab => {
-        const val = collab.scale[day];
+        const rawVal = collab.scale[day] || '-';
+        const val = (rawVal === '-') ? this.getShiftCode(collab.shift) : rawVal;
         if (this.isWorkStatus(val)) {
           count++;
         }
@@ -527,6 +550,7 @@ export class App {
   newShiftLabel = signal<string>('');
   newShiftHours = signal<string>('7h20');
   newShiftColor = signal<string>('#3b82f6');
+  newShiftTextColor = signal<string>('#ffffff');
   editingShiftCode = signal<string | null>(null);
 
   // Sigla manager editing state
@@ -950,6 +974,7 @@ export class App {
     this.newShiftLabel.set(shift.label);
     this.newShiftHours.set(shift.hours);
     this.newShiftColor.set(shift.color);
+    this.newShiftTextColor.set(shift.textColor || '#ffffff');
     
     // Parse startTime & endTime
     if (shift.startTime) {
@@ -983,6 +1008,7 @@ export class App {
     this.newShiftLabel.set('');
     this.newShiftHours.set('7h20');
     this.newShiftColor.set('#3b82f6');
+    this.newShiftTextColor.set('#ffffff');
     this.startHour.set('07');
     this.startMinute.set('00');
     this.endHour.set('16');
@@ -1011,6 +1037,7 @@ export class App {
           label,
           hours: calculatedHours,
           color: this.newShiftColor(),
+          textColor: this.newShiftTextColor(),
           startTime: sTime,
           endTime: eTime
         };
@@ -1032,6 +1059,7 @@ export class App {
         label,
         hours: calculatedHours,
         color: this.newShiftColor(),
+        textColor: this.newShiftTextColor(),
         startTime: sTime,
         endTime: eTime
       };
@@ -1063,9 +1091,15 @@ export class App {
 
   getScheduledDaysCountForShift(shiftCode: string): number {
     let count = 0;
+    const days = this.daysInMonth();
     this.scaleService.collaborators().forEach(c => {
-      Object.values(c.scale).forEach(val => {
-        if (val === shiftCode) count++;
+      const defaultCode = this.getShiftCode(c.shift);
+      days.forEach(day => {
+        const rawVal = c.scale[day] || '-';
+        const val = (rawVal === '-') ? defaultCode : rawVal;
+        if (val.trim().toUpperCase() === shiftCode.trim().toUpperCase()) {
+          count++;
+        }
       });
     });
     return count;
@@ -1304,6 +1338,13 @@ export class App {
       return '#ef4444';
     }
 
+    // Try finding in shiftTypes first
+    const shift = this.scaleService.shiftTypes().find(s => s.code.trim().toUpperCase() === upperCode);
+    if (shift && shift.textColor) {
+      return shift.textColor;
+    }
+
+    // Try finding in siglaTypes
     const sigla = this.scaleService.siglaTypes().find(s => s.code.trim().toUpperCase() === upperCode);
     if (sigla && sigla.textColor) {
       return sigla.textColor;
@@ -1319,7 +1360,7 @@ export class App {
     }
 
     if (this.isLightTheme()) {
-      if (!sigla && upperCode === 'X') return '#334155';
+      if (!sigla && !shift && upperCode === 'X') return '#334155';
     }
 
     return '#ffffff';
@@ -1673,8 +1714,11 @@ export class App {
     const target = this.scaleService.collaborators().find(c => c.id === targetId);
     if (!target) return;
 
-    const currentShift = current.scale[day] || 'X';
-    const targetShift = target.scale[day] || 'X';
+    const currentShiftRaw = current.scale[day] || '-';
+    const currentShift = (currentShiftRaw === '-') ? this.getShiftCode(current.shift) : currentShiftRaw;
+
+    const targetShiftRaw = target.scale[day] || '-';
+    const targetShift = (targetShiftRaw === '-') ? this.getShiftCode(target.shift) : targetShiftRaw;
 
     if (currentShift === targetShift) {
       this.permutaStatusMessage.set('Erro: Vocês já possuem a mesma escala neste dia.');
@@ -1709,10 +1753,18 @@ export class App {
   getConcomitantColegues(day: number): Collaborator[] {
     const current = this.getLoggedCollab();
     if (!current) return [];
-    const currentShift = current.scale[day] || 'X';
-    if (currentShift === 'X') return []; // Off duty
+    
+    const currentShiftRaw = current.scale[day] || '-';
+    const currentShift = (currentShiftRaw === '-') ? this.getShiftCode(current.shift) : currentShiftRaw;
+    if (this.isSiglaAbsence(currentShift)) return []; // Off duty
 
-    return this.scaleService.collaborators().filter(c => c.id !== current.id && c.scale[day] === currentShift && c.sector === current.sector);
+    return this.scaleService.collaborators().filter(c => {
+      if (c.id === current.id) return false;
+      if (c.sector !== current.sector) return false;
+      const cShiftRaw = c.scale[day] || '-';
+      const cShift = (cShiftRaw === '-') ? this.getShiftCode(c.shift) : cShiftRaw;
+      return cShift === currentShift;
+    });
   }
 
   openDbConfigModal() {
@@ -1797,7 +1849,7 @@ export class App {
              for(let d = 1; d <= 31 && d < tokens.length; d++) {
                 let token = tokens[d];
                 if (token === '' || token === '-') {
-                  token = 'T';
+                  token = this.getShiftCode(matchedCollab.shift);
                 } else {
                   // Check parts of this token to see if they are unrecognized
                   const parts = token.split(/[\s/,\-]+/).filter((p: string) => p !== '');
@@ -1824,7 +1876,7 @@ export class App {
                   // Heuristic: scale values usually come after name.
                   if (day <= 31) {
                     if (token === '' || token === '-') {
-                      token = 'T';
+                      token = this.getShiftCode(matchedCollab.shift);
                     }
                     const parts = token.split(/[\s/,\-]+/).filter((p: string) => p !== '');
                     parts.forEach((p: string) => {
@@ -1984,9 +2036,9 @@ Verifique se os nomes no PDF correspondem aos nomes no sistema.`;
       if (match) {
         const newScale = { ...collab.scale };
         match.updates.forEach((upd: any) => {
-          let val = (upd.value || 'T').toUpperCase().trim();
+          let val = (upd.value || '').toUpperCase().trim();
           if (val === '-' || val === '') {
-            val = 'T';
+            val = this.getShiftCode(collab.shift);
           }
           if (val !== '-' && val !== '' && val !== '?') {
             const parts = val.split(/[\s/,\-]+/).filter((p: string) => p !== '');

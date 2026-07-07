@@ -15,6 +15,10 @@ ALTER TABLE public.colaboradores ADD COLUMN IF NOT EXISTS grupo VARCHAR(100);
 ALTER TABLE public.colaboradores ADD COLUMN IF NOT EXISTS shift VARCHAR(100);
 ALTER TABLE public.colaboradores ADD COLUMN IF NOT EXISTS sector VARCHAR(100);
 
+-- ADICIONA COLUNAS DE COR DA FONTE NAS TABELAS DE TURNOS E SIGLAS SE NÃO EXISTIREM
+ALTER TABLE public.sigla_types ADD COLUMN IF NOT EXISTS "textColor" VARCHAR(50) DEFAULT '#ffffff';
+ALTER TABLE public.shift_types ADD COLUMN IF NOT EXISTS "textColor" VARCHAR(50) DEFAULT '#ffffff';
+
 -- 2. GARANTE A EXISTÊNCIA DE TODAS AS TABELAS COM A ESTRUTURA COMPLETA
 CREATE TABLE IF NOT EXISTS public.colaboradores (
   id VARCHAR(100) PRIMARY KEY, -- ID com prefixo 'collab_'
@@ -44,6 +48,7 @@ CREATE TABLE IF NOT EXISTS public.sigla_types (
   code VARCHAR(50) PRIMARY KEY,
   label VARCHAR(255) NOT NULL,
   color VARCHAR(50) NOT NULL,
+  "textColor" VARCHAR(50) DEFAULT '#ffffff',
   description TEXT
 );
 
@@ -52,6 +57,7 @@ CREATE TABLE IF NOT EXISTS public.shift_types (
   label VARCHAR(255) NOT NULL,
   hours VARCHAR(50) NOT NULL,
   color VARCHAR(50) NOT NULL,
+  "textColor" VARCHAR(50) DEFAULT '#ffffff',
   "startTime" VARCHAR(50),
   "endTime" VARCHAR(50)
 );
