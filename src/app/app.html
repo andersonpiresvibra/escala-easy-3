@@ -167,12 +167,7 @@
                 Escala
               </button>
 
-              <button (click)="activeSubTab.set('dashboard'); isDropdownOpen.set(false)"
-                      class="w-full text-left px-4 py-2 text-[10px] font-black uppercase transition-colors tracking-wider flex items-center gap-2 cursor-pointer border-none outline-none bg-transparent"
-                      [class]="activeSubTab() === 'dashboard' ? 'text-emerald-400 font-extrabold bg-[#0b1e36]/30' : 'text-slate-300 hover:bg-[#0b1e36]'">
-                <span class="material-icons text-sm" [class]="activeSubTab() === 'dashboard' ? 'text-emerald-400' : 'text-slate-400'">analytics</span>
-                Gestão de Fadiga
-              </button>
+
 
               <button (click)="activeSubTab.set('portal'); isDropdownOpen.set(false)"
                       class="w-full text-left px-4 py-2 text-[10px] font-black uppercase transition-colors tracking-wider flex items-center gap-2 cursor-pointer border-none outline-none bg-transparent"
@@ -721,276 +716,6 @@
                 }
               </tbody>
             </table>
-          </div>
-
-
-        </div>
-      }
-
-      <!-- SUB-TAB 7: DASHBOARD DE FADIGA E SUPORTE À DECISÃO -->
-      @if (activeSubTab() === 'dashboard') {
-        <div class="p-4 md:p-6 space-y-6 animate-fade-in font-sans w-full flex-1 overflow-y-auto scrollbar-thin bg-[#020813]" id="fatigue_dashboard_content">
-          
-          <!-- Title Banner -->
-          <div class="pb-3 border-b border-[#10213b] flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h3 class="font-black text-sm uppercase tracking-tight text-white flex items-center gap-1.5">
-                <span class="material-icons text-emerald-500 animate-pulse">security</span>
-                Painel Operacional de Segurança e Gestão de Fadiga
-              </h3>
-              <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">
-                Sistema avançado de suporte à decisão focado em saúde ocupacional e fadiga. Baterias individuais baseadas em horas reais de trabalho, turno e cronobiologia.
-              </p>
-            </div>
-            <div class="flex items-center gap-2 text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 px-3 py-1.5 rounded-lg font-mono font-black uppercase">
-              <span class="relative flex h-2 w-2">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span>Análise Ativa: {{ currentMonthName() }} 2026</span>
-            </div>
-          </div>
-
-          <!-- Team Metric Stats Banner -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="fatigue_team_stats_cards">
-            <!-- Stat 1: Avg Energy -->
-            <div class="bg-[#030a14] border border-[#10213b] rounded-xl p-4 flex items-center gap-4">
-              <div class="w-12 h-12 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                <span class="material-icons text-emerald-400 text-2xl">battery_charging_full</span>
-              </div>
-              <div class="min-w-0 flex-1">
-                <span class="block text-[8px] font-black uppercase text-slate-500 tracking-wider">Média de Energia</span>
-                <span class="text-xl font-mono font-black text-white leading-none mt-1 block">
-                  {{ teamStats().avgEnergy }}%
-                </span>
-                <div class="w-full bg-slate-800 h-1 rounded-full mt-2 overflow-hidden">
-                  <div class="bg-emerald-500 h-1 rounded-full" [style.width.%]="teamStats().avgEnergy"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Stat 2: Critical Risk -->
-            <div class="border rounded-xl p-4 flex items-center gap-4 transition-all"
-                 [class]="teamStats().critCount > 0 ? 'bg-red-950/10 border-red-500/30' : 'bg-[#030a14] border-[#10213b]'">
-              <div class="w-12 h-12 rounded-lg flex items-center justify-center shrink-0"
-                   [class]="teamStats().critCount > 0 ? 'bg-red-500/10 border border-red-500/20' : 'bg-slate-800/40'">
-                <span class="material-icons text-red-400 text-2xl" [class.animate-bounce]="teamStats().critCount > 0">error_outline</span>
-              </div>
-              <div class="min-w-0 flex-1">
-                <span class="block text-[8px] font-black uppercase text-slate-500 tracking-wider">Risco Crítico (&lt;30%)</span>
-                <span class="text-xl font-mono font-black leading-none mt-1 block"
-                      [class.text-red-400]="teamStats().critCount > 0"
-                      [class.text-white]="teamStats().critCount === 0">
-                  {{ teamStats().critCount }} <span class="text-[10px] font-sans font-bold text-slate-500">colab.</span>
-                </span>
-                <span class="text-[8px] font-bold block mt-1.5"
-                      [class.text-red-400]="teamStats().critCount > 0"
-                      [class.text-slate-500]="teamStats().critCount === 0">
-                  {{ teamStats().critCount > 0 ? 'Requer folga imediata' : 'Nenhum em estado crítico' }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Stat 3: Mandatory Rest -->
-            <div class="border rounded-xl p-4 flex items-center gap-4 transition-all"
-                 [class]="teamStats().limitCount > 0 ? 'bg-amber-950/10 border-amber-500/30' : 'bg-[#030a14] border-[#10213b]'">
-              <div class="w-12 h-12 rounded-lg flex items-center justify-center shrink-0"
-                   [class]="teamStats().limitCount > 0 ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-slate-800/40'">
-                <span class="material-icons text-amber-500 text-2xl" [class.animate-pulse]="teamStats().limitCount > 0">gavel</span>
-              </div>
-              <div class="min-w-0 flex-1">
-                <span class="block text-[8px] font-black uppercase text-slate-500 tracking-wider">Bloqueios de 5 Dias</span>
-                <span class="text-xl font-mono font-black leading-none mt-1 block"
-                      [class.text-amber-500]="teamStats().limitCount > 0"
-                      [class.text-white]="teamStats().limitCount === 0">
-                  {{ teamStats().limitCount }} <span class="text-[10px] font-sans font-bold text-slate-500">alertas</span>
-                </span>
-                <span class="text-[8px] font-bold block mt-1.5"
-                      [class.text-amber-500]="teamStats().limitCount > 0"
-                      [class.text-slate-500]="teamStats().limitCount === 0">
-                  {{ teamStats().limitCount > 0 ? 'Sequência de 5 dias consecutivos' : 'Em conformidade com a política' }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Stat 4: Hours Worked -->
-            <div class="bg-[#030a14] border border-[#10213b] rounded-xl p-4 flex items-center gap-4">
-              <div class="w-12 h-12 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-                <span class="material-icons text-blue-400 text-2xl">access_time</span>
-              </div>
-              <div class="min-w-0 flex-1">
-                <span class="block text-[8px] font-black uppercase text-slate-500 tracking-wider">Carga de Horas Total</span>
-                <span class="text-xl font-mono font-black text-white leading-none mt-1 block">
-                  {{ teamStats().totalHours }}h
-                </span>
-                <span class="text-[8px] text-slate-500 font-bold block mt-1.5">Trabalhadas no mês vigente</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Main Layout Grid: Split into Ranking and Heatmap -->
-          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            
-            <!-- LEFT COLUMN: APTITUDE RANKING (Span 1) -->
-            <div class="xl:col-span-1 space-y-4">
-              <div class="bg-[#030a14] border border-[#10213b] rounded-xl overflow-hidden shadow-xl flex flex-col h-[600px]">
-                <div class="bg-[#071426] px-4 py-3.5 border-b border-[#10213b] flex items-center justify-between shrink-0">
-                  <span class="text-[10px] font-black text-white uppercase tracking-wider flex items-center gap-2">
-                    <span class="material-icons text-emerald-500 text-sm">stars</span>
-                    Ranking de Aptidão Física
-                  </span>
-                  <span class="text-[8px] text-slate-400 font-bold uppercase">Mais aptos para escala</span>
-                </div>
-                
-                <!-- Scrollable list of ranked collaborators -->
-                <div class="flex-1 overflow-y-auto divide-y divide-[#10213b] scrollbar-thin">
-                  @let rankedList = scaleService.ordenarPorAptidao(scaleService.collaborators());
-                  @if (rankedList.length === 0) {
-                    <div class="p-8 text-center text-slate-500 italic text-[11px]">
-                      Nenhum colaborador encontrado para gerar o ranking.
-                    </div>
-                  } @else {
-                    @for (item of rankedList; track item.collab.id; let idx = $index) {
-                      <div class="p-3.5 hover:bg-[#0b1e36]/20 transition-all flex items-start gap-3 relative">
-                        
-                        <!-- Rank Medal/Badge -->
-                        <div class="shrink-0 w-6 h-6 rounded flex items-center justify-center font-mono font-black text-[10px] shadow border"
-                             [class]="idx === 0 ? 'bg-emerald-500 text-slate-950 border-emerald-400' : 'bg-emerald-900/30 text-emerald-400 border-[#10213b]'">
-                          {{ idx + 1 }}
-                        </div>
-
-                        <!-- Collaborator Avatar & Details -->
-                        <div class="flex-1 min-w-0 space-y-2">
-                          <div class="flex items-start justify-between gap-2">
-                            <div class="flex items-center gap-2 min-w-0">
-                              <img [src]="getCollabPhoto(item.collab)"
-                                   alt="Avatar"
-                                   referrerpolicy="no-referrer"
-                                   class="w-6 h-6 rounded-full object-cover border border-slate-700 bg-slate-900 shrink-0">
-                              <div class="min-w-0">
-                                <span class="block text-xs font-bold text-white truncate leading-tight">{{ item.collab.name }}</span>
-                                <span class="block text-[8px] text-slate-500 uppercase tracking-wide truncate mt-0.5">
-                                  {{ item.collab.role === 'LIDER' ? 'LÍDER TURNO' : item.collab.role }} · {{ item.collab.sector }}
-                                </span>
-                              </div>
-                            </div>
-                            
-                            <!-- Indicators Column -->
-                            <div class="flex flex-col items-end gap-1 shrink-0">
-                              <!-- Mandatory rest warning -->
-                              @if (item.energyData.alertaLimite) {
-                                <span class="bg-red-500/20 text-red-400 border border-red-500/30 px-1 py-0.5 rounded text-[7px] font-black uppercase tracking-wider animate-pulse flex items-center gap-0.5">
-                                  <span class="material-icons text-[8px]">warning</span>
-                                  Folga Obrigatória
-                                </span>
-                              }
-                              
-                              <!-- Overload Bank Hours Warning -->
-                              @if (item.energyData.bankHours > 0) {
-                                <span class="bg-amber-500/10 text-amber-400 border border-amber-500/25 px-1 py-0.5 rounded text-[7px] font-black uppercase tracking-wider flex items-center gap-0.5"
-                                      title="Sobrecarga crônica: acumulou {{ item.energyData.bankHours }}h de banco de horas no mês">
-                                  <span class="material-icons text-[8px]">hourglass_empty</span>
-                                  Sobrecarga (BH: {{ item.energyData.bankHours }}h)
-                                </span>
-                              }
-                            </div>
-                          </div>
-
-                          <!-- Horizontal battery bar -->
-                          <div class="space-y-1">
-                            <div class="flex items-center justify-between text-[9px] font-bold">
-                              <span class="text-slate-400 uppercase">Carga Ocupacional:</span>
-                              <span class="font-mono font-black" [class]="item.energyData.energy < 30 ? 'text-red-400' : (item.energyData.energy <= 60 ? 'text-amber-400' : 'text-emerald-400')">
-                                {{ item.energyData.energy }}% 
-                                @if (item.energyData.isDeficit) {
-                                  <span class="text-[8px] text-red-500 font-bold italic ml-1">(Déficit: -{{ item.energyData.deficitValue }}%)</span>
-                                }
-                              </span>
-                            </div>
-                            <div class="h-2 w-full bg-slate-900 border border-[#10213b] rounded-full overflow-hidden p-0.5">
-                              <div class="h-full rounded-full transition-all duration-300"
-                                   [class]="item.energyData.energy < 30 ? 'bg-red-500' : (item.energyData.energy <= 60 ? 'bg-amber-500' : 'bg-emerald-500')"
-                                   [style.width.%]="item.energyData.energy"></div>
-                            </div>
-                          </div>
-
-                          <!-- Additional Stats Row -->
-                          <div class="grid grid-cols-2 gap-2 text-[8px] font-bold font-mono text-slate-500 uppercase border-t border-[#10213b]/60 pt-1.5">
-                            <div>
-                              <span class="block">Horas Mês: <span class="text-slate-300">{{ item.energyData.totalHoursWorked }}h</span></span>
-                              <span class="block mt-0.5">Surg: <span class="text-slate-300">{{ item.energyData.maxConsecutiveWorkDays }} dias max</span></span>
-                            </div>
-                            <div class="text-right">
-                              <span class="block">Descanso Recente: <span class="text-emerald-400">{{ item.lastRestStreak }} dias</span></span>
-                              <span class="block mt-0.5">Status: <span [class]="item.energyData.energy < 30 ? 'text-red-400' : (item.energyData.energy <= 60 ? 'text-amber-400' : 'text-emerald-400')">{{ item.energyData.energyStatus }}</span></span>
-                            </div>
-                          </div>
-
-                        </div>
-                      </div>
-                    }
-                  }
-                </div>
-              </div>
-            </div>
-
-            <!-- RIGHT COLUMN: TEAM HEALTH HEATMAP (Span 2) -->
-            <div class="xl:col-span-2 space-y-4">
-              <div class="bg-[#030a14] border border-[#10213b] rounded-xl overflow-hidden shadow-xl flex flex-col h-[600px]" id="heatmap_container_card">
-                <div class="bg-[#071426] px-4 py-3 border-b border-[#10213b] flex items-center justify-between shrink-0">
-                  <span class="text-[10px] font-black text-white uppercase tracking-wider flex items-center gap-2">
-                    <span class="material-icons text-emerald-500 text-sm">dashboard</span>
-                    Visualizador de Fadiga Diária (Heatmap)
-                  </span>
-                  <div class="flex items-center gap-4 text-[8px] font-black uppercase text-slate-400">
-                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-emerald-500"></span> &gt;60% (Apto)</span>
-                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-amber-500"></span> 30-60% (Alerta)</span>
-                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-red-500"></span> &lt;30% (Fadigado)</span>
-                  </div>
-                </div>
-
-                <!-- Scrollable grid of collaborator heatmaps -->
-                <div class="flex-1 overflow-auto scrollbar-thin p-4 space-y-3">
-                  @let collabsList = scaleService.collaborators();
-                  @if (collabsList.length === 0) {
-                    <div class="p-8 text-center text-slate-500 italic text-[11px]">
-                      Nenhum colaborador encontrado para exibir o Heatmap.
-                    </div>
-                  } @else {
-                    @for (collab of collabsList; track collab.id) {
-                      @let dailyEnergy = scaleService.getDailyEnergyArray(collab);
-                      @let currentStats = scaleService.calculateEnergyAndFatigue(collab);
-                      <div class="flex items-center gap-3 border-b border-[#10213b]/40 pb-2.5 last:border-b-0 last:pb-0 select-none">
-                        <!-- Collaborator Mini Card -->
-                        <div class="w-36 shrink-0 min-w-0">
-                          <span class="block text-[11px] font-black text-white truncate leading-tight">{{ collab.name }}</span>
-                          <div class="flex items-center gap-1.5 mt-0.5">
-                            <span class="text-[7px] font-black bg-[#10213b] px-1 py-0.5 rounded text-slate-400 uppercase shrink-0">
-                              {{ collab.role }}
-                            </span>
-                            <span class="text-[8px] font-mono font-bold shrink-0"
-                                  [class]="currentStats.energy < 30 ? 'text-red-400' : (currentStats.energy <= 60 ? 'text-amber-400' : 'text-emerald-400')">
-                              {{ currentStats.energy }}%
-                            </span>
-                          </div>
-                        </div>
-
-                        <!-- 30-Day Heatmap Block Row -->
-                        <div class="flex-1 flex items-center gap-1 justify-start overflow-x-auto no-scrollbar py-1">
-                          @for (energyPct of dailyEnergy; track $index; let dIdx = $index) {
-                            <div class="w-6 h-6 rounded flex items-center justify-center shrink-0 text-[7px] font-black font-mono transition-all hover:scale-110 active:scale-95 cursor-help"
-                                 [class]="energyPct < 30 ? 'bg-red-500 text-slate-950' : (energyPct <= 60 ? 'bg-amber-500 text-slate-950' : 'bg-emerald-500 text-slate-950')"
-                                 [title]="collab.name + '\nDia ' + (dIdx + 1) + '\nEnergia: ' + energyPct + '%\nEscala: ' + (collab.scale[dIdx + 1] || '-')">
-                              {{ dIdx + 1 }}
-                            </div>
-                          }
-                        </div>
-                      </div>
-                    }
-                  }
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       }
@@ -1577,7 +1302,7 @@
           </div>
         </div>
       }
-           <!-- SUB-TAB 4: PAINEL OPERACIONAL DE COLABORADORES (CARDS & FADIGA) -->
+           <!-- SUB-TAB 4: PAINEL OPERACIONAL DE COLABORADORES -->
       @if (activeSubTab() === 'team') {
         <div class="flex-1 flex flex-col w-full gap-0 overflow-hidden animate-fade-in font-sans" id="team_gallery_tab_content">
           <!-- Page Header -->
@@ -2603,12 +2328,12 @@
 
               <!-- RIGHT CONTENT: CALENDAR & LEAVE REQUEST ENGINE -->
               <div class="lg:col-span-7 space-y-6">
-                <!-- PORTAL COLLABORATOR PERFIL & FADIGA WIDGETS -->
+                <!-- PORTAL COLLABORATOR PERFIL & WIDGETS -->
                 <div class="bg-[#030a14] border border-[#10213b] rounded-lg p-5 shadow-xl space-y-4">
                   <div class="pb-2 border-b border-[#10213b] flex items-center justify-between">
                     <h4 class="font-black text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
                       <span class="material-icons text-emerald-500 text-sm">health_and_safety</span>
-                      Monitoramento de Perfil &amp; Indicadores de Fadiga
+                      Monitoramento de Perfil &amp; Indicadores de Escala
                     </h4>
                     <span class="text-[8px] font-black uppercase text-slate-400 tracking-widest font-mono">Status Operacional</span>
                   </div>
@@ -2651,29 +2376,28 @@
                       }
                     </div>
 
-                    <!-- WIDGET 2: FATIGUE RISK INDICATOR -->
+                    <!-- WIDGET 2: WORK STREAK INDICATOR -->
                     <div class="p-4 bg-[#071426]/60 border border-[#10213b] rounded-lg flex flex-col justify-between space-y-3">
                       <div>
                         <span class="text-[9px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                          <span class="material-icons text-xs text-rose-400">warning</span>
-                          Índice de Fadiga
+                          <span class="material-icons text-xs text-emerald-400">schedule</span>
+                          Sequência de Trabalho
                         </span>
-                        <p class="text-[8px] text-slate-500 mt-0.5 leading-relaxed">Prevenção contra erros operacionais pátio.</p>
+                        <p class="text-[8px] text-slate-500 mt-0.5 leading-relaxed">Sequência de dias trabalhados consecutivos.</p>
                       </div>
 
                       <div class="flex items-center gap-2">
-                        <span class="text-xs font-black px-2 py-1 rounded font-mono uppercase tracking-widest border border-solid"
-                              [class]="loggedStats?.fatigueColor">
-                          {{ loggedStats?.fatigueRisk }}
+                        <span class="text-xs font-black px-2 py-1 rounded font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          {{ loggedStats?.maxWorkStreak }} Dias
                         </span>
                         <div class="flex flex-col min-w-0">
-                          <span class="text-white font-bold text-xs">{{ loggedStats?.maxWorkStreak }} dias seguidos</span>
-                          <span class="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-none mt-0.5">Maior sequência</span>
+                          <span class="text-white font-bold text-xs">Dias Seguidos</span>
+                          <span class="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-none mt-0.5">Frequência Ativa</span>
                         </div>
                       </div>
 
-                      <p class="text-[8px] text-slate-400 leading-tight block truncate font-medium" [title]="loggedStats?.fatigueDescription">
-                        {{ loggedStats?.fatigueDescription }}
+                      <p class="text-[8px] text-slate-400 leading-tight block truncate font-medium">
+                        Acompanhamento contínuo da jornada de trabalho planejada.
                       </p>
                     </div>
 
