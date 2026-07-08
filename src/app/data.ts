@@ -17,11 +17,11 @@ export interface Course {
 export interface Collaborator {
   id: string;
   name: string;
-  role: 'OPERADOR' | 'LIDER' | 'SUPERVISOR';
+  role: string;
   schedule: string; // e.g. '21:12 - 06:00'
   group: 'Manhã' | 'Tarde' | 'Madrugada' | 'Líderes' | 'Treinamento' | 'VIP'; // Keep for legacy compatibility during migration
   shift: 'MANHÃ' | 'TARDE' | 'MADRUGADA' | 'ADMINISTRATIVO' | 'NOITE' | 'TESTE'; // The primary shift block
-  sector: 'AERÓDROMO' | 'VIP' | 'TREINAMENTO'; // The physical patio/sector
+  sector: string; // The physical patio/sector
   bhBalance: number; // in hours
   score: number; // 0-100 base gamification
   importantDates: { label: string; date: string; priority: number }[]; // 5 vital dates

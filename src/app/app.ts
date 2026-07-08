@@ -393,6 +393,40 @@ export class App {
   selectedFilterSector = signal<string>('TODOS');
   selectedFilterShift = signal<string>('TODOS');
 
+  // Dynamic database-driven filter options (Single Source of Truth)
+  availableSectors = computed(() => {
+    const collabs = this.scaleService.collaborators();
+    const sectorsSet = new Set<string>();
+    collabs.forEach(c => {
+      if (c.sector) {
+        const s = c.sector.trim();
+        if (s) sectorsSet.add(s);
+      }
+    });
+    const arr = Array.from(sectorsSet);
+    return arr.length > 0 ? arr.sort((a, b) => a.localeCompare(b)) : ['Geral'];
+  });
+
+  availableRoles = computed(() => {
+    const collabs = this.scaleService.collaborators();
+    const rolesSet = new Set<string>();
+    collabs.forEach(c => {
+      if (c.role) {
+        const r = c.role.trim();
+        if (r) rolesSet.add(r);
+      }
+    });
+    const arr = Array.from(rolesSet);
+    if (arr.length === 0) {
+      return ['OPERADOR', 'LIDER', 'SUPERVISOR'];
+    }
+    return arr.sort((a, b) => a.localeCompare(b));
+  });
+
+  availableShifts = computed(() => {
+    return this.scaleService.shiftTypes();
+  });
+
   // Dedicated filters and sorting for "Quadro de Colaboradores" admin table
   adminSearchQuery = signal<string>('');
   adminFilterRole = signal<string>('TODOS');
@@ -417,11 +451,26 @@ export class App {
 
   collaboratorsCountBySector = computed(() => {
     const collabs = this.scaleService.collaborators();
-    const counts: { [key: string]: number } = { 'AERÓDROMO': 0, 'VIP': 0, 'TREINAMENTO': 0 };
+    const counts: { [key: string]: number } = {
+      'GERAL': 0,
+      'GESTÃO': 0,
+      'CENTRAL': 0,
+      'AERÓDROMO': 0,
+      'VIP': 0,
+      'TESTE': 0,
+      'MANUTENÇÃO': 0
+    };
     collabs.forEach(c => {
-      const s = (c.sector || '').toUpperCase().trim();
-      if (s in counts) {
-        counts[s]++;
+      let s = (c.sector || '').toUpperCase().trim();
+      if (s === 'GESTAO') s = 'GESTÃO';
+      if (s === 'MANUTENCAO') s = 'MANUTENÇÃO';
+      if (s === 'AERODROMO') s = 'AERÓDROMO';
+      if (s) {
+        if (s in counts) {
+          counts[s]++;
+        } else {
+          counts[s] = 1;
+        }
       }
     });
     return counts;
@@ -689,7 +738,7 @@ export class App {
     this.showToast('Visualização restrita ao turno da Noite.');
   }
 
-  // Filters computed list
+  // Filters computed list with custom ordering: LTs, Aeródromo, VIP's
   filteredCollaborators = computed(() => {
     const query = this.collabSearchQuery().toLowerCase().trim();
     const role = this.selectedFilterRole();
@@ -697,7 +746,7 @@ export class App {
     const shift = this.selectedFilterShift();
     const onlyNight = this.onlyNightShift();
 
-    return this.scaleService.collaborators().filter(c => {
+    const filtered = this.scaleService.collaborators().filter(c => {
       // If presentation mode is restricted, filter only Night Shift
       if (onlyNight) {
         const cShift = (c.shift || '').toUpperCase().trim();
@@ -706,12 +755,116 @@ export class App {
       }
 
       const matchesSearch = c.name.toLowerCase().includes(query) || c.group.toLowerCase().includes(query);
-      const matchesRole = role === 'TODOS' || c.role === role;
-      const matchesSector = sector === 'TODOS' || c.sector === sector;
-      const matchesShift = shift === 'TODOS' || c.shift === shift;
+      const matchesRole = role === 'TODOS' || 
+        (c.role || '').toUpperCase().trim() === role.toUpperCase().trim();
+      const normCollabSector = (c.sector || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+      const normFilterSector = sector.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+      const matchesSector = sector === 'TODOS' || normCollabSector === normFilterSector;
+      const matchesShift = shift === 'TODOS' || 
+        (c.shift || '').toUpperCase().trim() === shift.toUpperCase().trim();
       return matchesSearch && matchesRole && matchesSector && matchesShift;
     });
+
+    const sorted = [...filtered];
+    sorted.sort((a, b) => {
+      const getWeight = (c: any) => {
+        if (c.role === 'LIDER') return 1; // LTs first
+        const sec = (c.sector || '').toUpperCase().trim();
+        if (sec === 'GERAL') return 2;
+        if (sec === 'GESTÃO' || sec === 'GESTAO') return 3;
+        if (sec === 'CENTRAL') return 4;
+        if (sec === 'AERÓDROMO' || sec === 'AERODROMO') return 5;
+        if (sec === 'VIP') return 6;
+        if (sec === 'TESTE') return 7;
+        if (sec === 'MANUTENÇÃO' || sec === 'MANUTENCAO') return 8;
+        return 9; // Others
+      };
+      const wA = getWeight(a);
+      const wB = getWeight(b);
+      if (wA !== wB) return wA - wB;
+      // Secondary sort alphabetically
+      return a.name.localeCompare(b.name, 'pt-BR');
+    });
+
+    return sorted;
   });
+
+  filteredCounts = computed(() => {
+    const list = this.filteredCollaborators();
+    const operadores = list.filter(c => c.role === 'OPERADOR').length;
+    const lts = list.filter(c => c.role === 'LIDER').length;
+    const vips = list.filter(c => {
+      const sec = (c.sector || '').toUpperCase();
+      return sec === 'VIP';
+    }).length;
+    return { operadores, lts, vips };
+  });
+
+  getCollabFunction(collab: any): string {
+    if (!collab) return 'Operador';
+    if (collab.role === 'LIDER') return 'LT';
+    if (collab.role === 'SUPERVISOR') return 'Supervisor';
+    if (collab.sector) {
+      const sec = collab.sector.trim();
+      if (sec.toUpperCase() === 'VIP') return 'VIP';
+      return sec.charAt(0).toUpperCase() + sec.slice(1);
+    }
+    return collab.role || 'Operador';
+  }
+
+  getFunctionBadgeClass(collab: any): string {
+    if (!collab) return 'bg-slate-800 text-slate-400 border-slate-700';
+    const isLight = this.isLightTheme();
+    if (collab.role === 'LIDER') {
+      return isLight 
+        ? 'bg-amber-100 text-amber-800 border-amber-300' 
+        : 'bg-amber-950 text-amber-400 border-amber-800/40';
+    }
+    if (collab.role === 'SUPERVISOR') {
+      return isLight 
+        ? 'bg-purple-100 text-purple-800 border-purple-300' 
+        : 'bg-purple-950 text-purple-400 border-purple-800/40';
+    }
+    const sec = (collab.sector || '').toUpperCase().trim();
+    if (sec === 'VIP') {
+      return isLight 
+        ? 'bg-cyan-100 text-cyan-800 border-cyan-300' 
+        : 'bg-cyan-950 text-cyan-400 border-cyan-800/40';
+    }
+    if (sec === 'AERÓDROMO' || sec === 'AERODROMO') {
+      return isLight 
+        ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
+        : 'bg-emerald-950 text-emerald-400 border-emerald-800/40';
+    }
+    if (sec === 'GESTÃO' || sec === 'GESTAO') {
+      return isLight 
+        ? 'bg-blue-100 text-blue-800 border-blue-300' 
+        : 'bg-blue-950 text-blue-400 border-blue-800/40';
+    }
+    if (sec === 'CENTRAL') {
+      return isLight 
+        ? 'bg-indigo-100 text-indigo-800 border-indigo-300' 
+        : 'bg-indigo-950 text-indigo-400 border-indigo-800/40';
+    }
+    if (sec === 'GERAL') {
+      return isLight 
+        ? 'bg-teal-100 text-teal-800 border-teal-300' 
+        : 'bg-teal-950 text-teal-400 border-teal-800/40';
+    }
+    if (sec === 'TESTE') {
+      return isLight 
+        ? 'bg-rose-100 text-rose-800 border-rose-300' 
+        : 'bg-rose-950 text-rose-400 border-rose-800/40';
+    }
+    if (sec === 'MANUTENÇÃO' || sec === 'MANUTENCAO') {
+      return isLight 
+        ? 'bg-orange-100 text-orange-800 border-orange-300' 
+        : 'bg-orange-950 text-orange-400 border-orange-800/40';
+    }
+    return isLight 
+      ? 'bg-slate-100 text-slate-800 border-slate-300' 
+      : 'bg-slate-900 text-slate-300 border-slate-800/40';
+  }
 
   // Filters computed list for Login Selection
   loginCollaborators = computed(() => {
@@ -746,8 +899,10 @@ export class App {
         c.shift.toLowerCase().includes(query) || 
         c.sector.toLowerCase().includes(query);
 
-      const matchesRole = role === 'TODOS' || c.role === role;
-      const matchesShift = shift === 'TODOS' || c.shift === shift;
+      const matchesRole = role === 'TODOS' || 
+        (c.role || '').toUpperCase().trim() === role.toUpperCase().trim();
+      const matchesShift = shift === 'TODOS' || 
+        (c.shift || '').toUpperCase().trim() === shift.toUpperCase().trim();
 
       return matchesSearch && matchesRole && matchesShift;
     });
@@ -1454,10 +1609,10 @@ export class App {
 
   registerCollaborator(
     name: string,
-    role: 'OPERADOR' | 'LIDER' | 'SUPERVISOR',
+    role: string,
     group: string,
     shift: string,
-    sector: 'AERÓDROMO' | 'VIP' | 'TREINAMENTO',
+    sector: string,
     bh: number,
     score: number,
     photo?: string,
@@ -2134,10 +2289,10 @@ Verifique se os nomes no PDF correspondem aos nomes no sistema.`;
   saveEditedCollaborator(
     id: string,
     name: string,
-    role: 'OPERADOR' | 'LIDER' | 'SUPERVISOR',
+    role: string,
     group: string,
     shift: string,
-    sector: 'AERÓDROMO' | 'VIP' | 'TREINAMENTO',
+    sector: string,
     bh: number,
     score: number,
     photo?: string | null,

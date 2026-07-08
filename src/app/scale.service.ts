@@ -64,11 +64,11 @@ export interface FolgaRequest {
 export interface Collaborator {
   id: string;
   name: string;
-  role: 'OPERADOR' | 'LIDER' | 'SUPERVISOR';
+  role: string;
   hours: string;
   group: string;
   shift: string;
-  sector: 'AERÓDROMO' | 'VIP' | 'TREINAMENTO';
+  sector: string;
   bhBalance: number;
   score: number;
   photoUrl?: string;
@@ -112,7 +112,7 @@ export interface BackupHistory {
 export class ScaleService {
   // Selected state signals
   selectedCollabName = signal<string | null>(null);
-  currentRole = signal<'SUPERVISOR' | 'LIDER' | 'OPERADOR'>('SUPERVISOR');
+  currentRole = signal<string>('SUPERVISOR');
 
   // Real-time synchronization lists via signals
   collaborators = signal<Collaborator[]>([]);
@@ -459,7 +459,7 @@ export class ScaleService {
               row.shift === 'ADMINISTRATIVO' ? 'Administrativo' : 'Corporativo'
             ),
             shift: (row.shift === 'MADRUGADA' ? 'NOITE' : (row.shift || 'NOITE')),
-            sector: row.sector || 'AERÓDROMO',
+            sector: row.sector || 'Geral',
             bhBalance: row.bh_balance || 0,
             score: row.score || 90,
             scale: scale,
@@ -733,11 +733,11 @@ export class ScaleService {
 
   async addCollaborator(
     name: string,
-    role: 'OPERADOR' | 'LIDER' | 'SUPERVISOR',
+    role: string,
     hours: string,
     group: string,
     shift: string,
-    sector: 'AERÓDROMO' | 'VIP' | 'TREINAMENTO',
+    sector: string,
     bh: number,
     score: number,
     photo?: string,
@@ -905,6 +905,7 @@ export class ScaleService {
         if (upScaleRes.error) throw upScaleRes.error;
 
         this.syncSupabase();
+        this.addAuditHistory('ATUALIZACAO_COLABORADOR', `Dados do colaborador ${refreshedCol.name} atualizados no Supabase.`);
       } catch (err: any) {
         console.error('Error in updateCollaborator:', err);
         this.databaseError.set(`Falha ao atualizar colaborador: ${err.message || err.details || err.hint || JSON.stringify(err)}`);
@@ -912,9 +913,13 @@ export class ScaleService {
         this.syncSupabase();
       }
     } else {
-      setDoc(doc(this.db, 'collaborators', refreshedCol.id), refreshedCol).catch((err) => {
-        handleFirestoreError(err, OperationType.WRITE, `collaborators/${refreshedCol.id}`);
-      });
+      setDoc(doc(this.db, 'collaborators', refreshedCol.id), refreshedCol)
+        .then(() => {
+          this.addAuditHistory('ATUALIZACAO_COLABORADOR', `Dados do colaborador ${refreshedCol.name} atualizados no Firebase.`);
+        })
+        .catch((err) => {
+          handleFirestoreError(err, OperationType.WRITE, `collaborators/${refreshedCol.id}`);
+        });
     }
   }
 
@@ -1729,6 +1734,7 @@ export class ScaleService {
           }
         }
         await this.syncSupabase();
+        this.addAuditHistory('ATUALIZACAO_SIGLA', `Sigla ${sigla.code} (${sigla.label}) atualizada no Supabase.`);
       } catch (err: any) {
         console.error('Error in saveSiglaType (Supabase):', err);
         throw err;
@@ -1736,6 +1742,7 @@ export class ScaleService {
     } else {
       try {
         await setDoc(doc(this.db, 'siglaTypes', sigla.code), dbSigla);
+        this.addAuditHistory('ATUALIZACAO_SIGLA', `Sigla ${sigla.code} (${sigla.label}) atualizada no Firebase.`);
       } catch (err: any) {
         handleFirestoreError(err, OperationType.WRITE, `siglaTypes/${sigla.code}`);
         throw err;
@@ -1802,6 +1809,7 @@ export class ScaleService {
         this.collaborators.set(updatedCollabs);
 
         await this.syncSupabase();
+        this.addAuditHistory('ATUALIZACAO_CODIGO_SIGLA', `Código de sigla ${oldCode} renomeado para ${newCode} no Supabase.`);
       } catch (err: any) {
         console.error('Error renaming sigla code in Supabase:', err);
         throw err;
@@ -1830,6 +1838,7 @@ export class ScaleService {
         await deleteDoc(doc(this.db, 'siglaTypes', oldCode));
 
         this.collaborators.set(updatedCollabs);
+        this.addAuditHistory('ATUALIZACAO_CODIGO_SIGLA', `Código de sigla ${oldCode} renomeado para ${newCode} no Firebase.`);
       } catch (err: any) {
         console.error('Error renaming sigla code in Firebase:', err);
         throw err;
@@ -1868,13 +1877,18 @@ export class ScaleService {
           }
         }
         this.syncSupabase();
+        this.addAuditHistory('ATUALIZACAO_TURNO', `Turno ${shift.code} (${shift.label}) salvo/atualizado no Supabase.`);
       } catch (err: any) {
         console.error('Error in saveShiftType (Supabase):', err);
       }
     } else {
-      setDoc(doc(this.db, 'shiftTypes', shift.code), shift).catch((err) => {
-        handleFirestoreError(err, OperationType.WRITE, `shiftTypes/${shift.code}`);
-      });
+      setDoc(doc(this.db, 'shiftTypes', shift.code), shift)
+        .then(() => {
+          this.addAuditHistory('ATUALIZACAO_TURNO', `Turno ${shift.code} (${shift.label}) salvo/atualizado no Firebase.`);
+        })
+        .catch((err) => {
+          handleFirestoreError(err, OperationType.WRITE, `shiftTypes/${shift.code}`);
+        });
     }
   }
 
@@ -1884,13 +1898,18 @@ export class ScaleService {
         const res = await this.supabase.from('shift_types').delete().eq('code', code);
         if (res.error) throw res.error;
         this.syncSupabase();
+        this.addAuditHistory('REMOCAO_TURNO', `Turno ${code} removido do Supabase.`);
       } catch (err: any) {
         console.error(err);
       }
     } else {
-      deleteDoc(doc(this.db, 'shiftTypes', code)).catch((err) => {
-        handleFirestoreError(err, OperationType.DELETE, `shiftTypes/${code}`);
-      });
+      deleteDoc(doc(this.db, 'shiftTypes', code))
+        .then(() => {
+          this.addAuditHistory('REMOCAO_TURNO', `Turno ${code} removido do Firebase.`);
+        })
+        .catch((err) => {
+          handleFirestoreError(err, OperationType.DELETE, `shiftTypes/${code}`);
+        });
     }
   }
 

@@ -311,7 +311,43 @@
                   <span class="material-icons text-sm">chevron_right</span>
                 </button>
               </div>
-              
+
+              <!-- 3 Indicadores de Contagem de Colaboradores (Operadores, LTs, VIP) -->
+              <div class="flex items-center gap-3 select-none transition-all">
+                <!-- Operadores -->
+                <div class="flex flex-col items-center justify-center min-w-[85px] px-3.5 py-2 rounded-[5px] border transition-all duration-300 hover:scale-[1.02]"
+                     [style.background-color]="isLightTheme() ? '#ffffff' : '#071426'"
+                     [style.border-color]="isLightTheme() ? '#cbd5e1' : '#10213b'"
+                     [style.box-shadow]="isLightTheme() ? '0 1px 3px rgba(0,0,0,0.05)' : '0 2px 8px rgba(0,0,0,0.2)'">
+                  <span class="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-1 leading-none text-center">Operadores</span>
+                  <span class="font-mono text-lg font-black transition-all leading-none text-center"
+                        [class.text-slate-800]="isLightTheme()"
+                        [class.text-emerald-400]="!isLightTheme()">{{ filteredCounts().operadores }}</span>
+                </div>
+
+                <!-- LTs -->
+                <div class="flex flex-col items-center justify-center min-w-[85px] px-3.5 py-2 rounded-[5px] border transition-all duration-300 hover:scale-[1.02]"
+                     [style.background-color]="isLightTheme() ? '#ffffff' : '#071426'"
+                     [style.border-color]="isLightTheme() ? '#cbd5e1' : '#10213b'"
+                     [style.box-shadow]="isLightTheme() ? '0 1px 3px rgba(0,0,0,0.05)' : '0 2px 8px rgba(0,0,0,0.2)'">
+                  <span class="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-1 leading-none text-center">Lideres-LT</span>
+                  <span class="font-mono text-lg font-black transition-all leading-none text-center"
+                        [class.text-amber-600]="isLightTheme()"
+                        [class.text-amber-400]="!isLightTheme()">{{ filteredCounts().lts }}</span>
+                </div>
+
+                <!-- VIP -->
+                <div class="flex flex-col items-center justify-center min-w-[85px] px-3.5 py-2 rounded-[5px] border transition-all duration-300 hover:scale-[1.02]"
+                     [style.background-color]="isLightTheme() ? '#ffffff' : '#071426'"
+                     [style.border-color]="isLightTheme() ? '#cbd5e1' : '#10213b'"
+                     [style.box-shadow]="isLightTheme() ? '0 1px 3px rgba(0,0,0,0.05)' : '0 2px 8px rgba(0,0,0,0.2)'">
+                  <span class="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-1 leading-none text-center">VIP</span>
+                  <span class="font-mono text-lg font-black transition-all leading-none text-center"
+                        [class.text-cyan-600]="isLightTheme()"
+                        [class.text-cyan-400]="!isLightTheme()">{{ filteredCounts().vips }}</span>
+                </div>
+              </div>
+
               <!-- Sub-header Actions: Collapsible filters trigger and Options -->
               <div class="flex items-center gap-2.5">
                 <!-- Search query input -->
@@ -422,17 +458,19 @@
                         (change)="selectedFilterRole.set($any($event.target).value)"
                         class="bg-[#030a14] border border-[#10213b] text-white text-xs pl-2 pr-5 py-2 rounded-lg outline-none focus:border-emerald-500 hover:border-emerald-500 font-bold cursor-pointer transition-colors w-[140px]">
                   <option value="TODOS">Função</option>
-                  <option value="LIDER">LÍDERES DE TURNO (LT)</option>
-                  <option value="OPERADOR">OPERADORES</option>
+                  @for (role of availableRoles(); track role) {
+                    <option [value]="role">{{ role }}</option>
+                  }
                 </select>
 
                 <!-- Sector filter -->
                 <select [value]="selectedFilterSector()"
                         (change)="selectedFilterSector.set($any($event.target).value)"
                         class="bg-[#030a14] border border-[#10213b] text-white text-xs pl-2 pr-5 py-2 rounded-lg outline-none focus:border-emerald-500 hover:border-emerald-500 font-bold cursor-pointer transition-colors w-[140px]">
-                  <option value="TODOS">Pátios</option>
-                  <option value="AERÓDROMO">AERÓDROMO</option>
-                  <option value="VIP">VIP</option>
+                  <option value="TODOS">Setores</option>
+                  @for (sector of availableSectors(); track sector) {
+                    <option [value]="sector">{{ sector }}</option>
+                  }
                 </select>
 
                 <!-- Shift filter -->
@@ -440,9 +478,9 @@
                         (change)="selectedFilterShift.set($any($event.target).value)"
                         class="bg-[#030a14] border border-[#10213b] text-white text-xs pl-2 pr-5 py-2 rounded-lg outline-none focus:border-emerald-500 hover:border-emerald-500 font-bold cursor-pointer transition-colors w-[140px]">
                   <option value="TODOS">Turnos</option>
-                  <option value="MANHÃ">MANHÃ</option>
-                  <option value="TARDE">TARDE</option>
-                  <option value="NOITE">NOITE</option>
+                  @for (shift of availableShifts(); track shift.code) {
+                    <option [value]="shift.code">{{ shift.label }}</option>
+                  }
                 </select>
 
                 <!-- Clear filters button if any is active -->
@@ -529,12 +567,11 @@
               <thead>
                 <!-- Months & Header Days Row -->
                 <tr class="border-b border-[#10213b] bg-[#071426] text-slate-400 text-[8px] font-black tracking-widest uppercase select-none sticky top-0 z-30">
-                  <th class="py-2.5 px-5 md:px-7 min-w-[260px] sticky top-0 left-0 bg-[#071426] border-r border-[#10213b] z-40 shadow-md">
-                    <div class="flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-slate-400">
-                      <span>Colaborador</span>
-                      <div class="flex gap-4 items-center mr-2">
-                        <span>Horário</span>
-                      </div>
+                  <th class="py-2.5 px-5 md:px-6 min-w-[340px] sticky top-0 left-0 bg-[#071426] border-r border-[#10213b] z-40 shadow-md">
+                    <div class="grid grid-cols-12 gap-2 text-[10px] font-black uppercase tracking-wider text-slate-400 w-full items-center">
+                      <span class="col-span-6 text-left">Colaborador</span>
+                      <span class="col-span-3 text-center">Função</span>
+                      <span class="col-span-3 text-center">Turno</span>
                     </div>
                   </th>
                   @for (day of daysInMonth(); track day) {
@@ -575,10 +612,10 @@
                   @for (collab of filteredCollaborators(); track collab.id) {
                     <tr class="hover:bg-[#0b1e36]/10 transition-colors" [class.bg-amber-950]="editingRowCollabId() === collab.id">
                       <!-- Collab details sticky col -->
-                      <td class="py-1.5 pl-5 pr-4 md:pl-7 md:pr-5 sticky left-0 bg-[#030a14] border-r border-[#10213b] z-10 shadow-sm min-w-[260px]">
-                        <div class="flex items-center justify-between gap-4 w-full">
+                      <td class="py-1.5 pl-5 pr-4 md:pl-6 md:pr-4 sticky left-0 bg-[#030a14] border-r border-[#10213b] z-10 shadow-sm min-w-[340px]">
+                        <div class="grid grid-cols-12 gap-2 w-full items-center">
                           <!-- 1. COLABORADOR -->
-                          <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                          <div class="col-span-6 flex items-center gap-2 min-w-0">
                             <div class="relative shrink-0">
                               <img [src]="getCollabPhoto(collab)" 
                                    alt="Avatar"
@@ -591,9 +628,26 @@
                             </div>
                           </div>
 
-                          <!-- 2. HORÁRIO -->
-                          <div class="shrink-0 text-right min-w-[70px] font-mono text-[9px] font-black px-1.5 py-0.5 rounded border time-badge">
-                            {{ getCollabHours(collab) }}
+                          <!-- 2. FUNÇÃO -->
+                          <div class="col-span-3 text-center">
+                            <span class="px-2 py-0.5 rounded text-[8px] font-black tracking-wider uppercase inline-block font-sans text-center transition-all border"
+                                  [class]="getFunctionBadgeClass(collab)">
+                              {{ getCollabFunction(collab) }}
+                            </span>
+                          </div>
+
+                          <!-- 3. TURNO (with tooltip hover) -->
+                          <div class="col-span-3 flex justify-center">
+                            <div class="relative group cursor-pointer shrink-0 text-center min-w-[54px] font-mono text-[9px] font-black px-1.5 py-0.5 rounded border border-[#10213b]/60 text-emerald-400 bg-emerald-950/20 hover:bg-emerald-950/40 hover:border-emerald-500/50 transition-all">
+                              <span>{{ collab.shift }}</span>
+                              <!-- Floating Tooltip Box -->
+                              <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-[#071426] border border-emerald-500/30 text-white text-[9px] font-black rounded px-2 py-1 shadow-2xl whitespace-nowrap z-50 pointer-events-none transition-all">
+                                <div class="flex items-center gap-1">
+                                  <span class="material-icons text-[10px] text-emerald-400">schedule</span>
+                                  <span>Horário: {{ getCollabHours(collab) }}</span>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -1777,9 +1831,9 @@
                               (change)="adminFilterRole.set($any($event.target).value)"
                               class="bg-transparent text-slate-300 outline-none text-[11px] font-bold border-none cursor-pointer py-0.5 pl-0.5 pr-2">
                         <option value="TODOS">Cargos</option>
-                        <option value="OPERADOR">OPERADOR</option>
-                        <option value="LIDER">LÍDER DE TURNO</option>
-                        <option value="SUPERVISOR">SUPERVISOR</option>
+                        @for (role of availableRoles(); track role) {
+                          <option [value]="role">{{ role }}</option>
+                        }
                       </select>
                     </div>
 
@@ -1790,9 +1844,9 @@
                               (change)="adminFilterShift.set($any($event.target).value)"
                               class="bg-transparent text-slate-300 outline-none text-[11px] font-bold border-none cursor-pointer py-0.5 pl-0.5 pr-2">
                         <option value="TODOS">Turnos</option>
-                        <option value="MANHÃ">MANHÃ</option>
-                        <option value="TARDE">TARDE</option>
-                        <option value="NOITE">NOITE</option>
+                        @for (shift of availableShifts(); track shift.code) {
+                          <option [value]="shift.code">{{ shift.label }}</option>
+                        }
                       </select>
                     </div>
 
@@ -1933,27 +1987,35 @@
                           <!-- Cargo / Função -->
                           <div class="flex flex-col gap-1.5">
                             <label for="modal_collab_role" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Função / Cargo</label>
-                            <select id="modal_collab_role"
-                                    #editCollabRole
-                                    [value]="editingCollab() ? editingCollab()!.role : 'OPERADOR'"
-                                    class="bg-[#071426] text-white border border-[#10213b] focus:border-blue-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold">
-                              <option value="OPERADOR">OPERADOR (Abastecedor)</option>
-                              <option value="LIDER">LÍDER DE TURNO (LT)</option>
-                              <option value="SUPERVISOR">SUPERVISOR (Apoio)</option>
-                            </select>
+                            <input id="modal_collab_role"
+                                   #editCollabRole
+                                   type="text"
+                                   list="modal_role_list"
+                                   [value]="editingCollab() ? editingCollab()!.role : ''"
+                                   placeholder="Ex: OPERADOR, LIDER, SUPERVISOR..."
+                                   class="bg-[#071426] text-white border border-[#10213b] focus:border-emerald-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold placeholder:text-slate-600 w-full">
+                            <datalist id="modal_role_list">
+                              @for (role of availableRoles(); track role) {
+                                <option [value]="role"></option>
+                              }
+                            </datalist>
                           </div>
 
                           <!-- Setor Logístico -->
                           <div class="flex flex-col gap-1.5">
                             <label for="modal_collab_sector" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Setor Logístico</label>
-                            <select id="modal_collab_sector"
-                                    #editCollabSector
-                                    [value]="editingCollab() ? editingCollab()!.sector : 'AERÓDROMO'"
-                                    class="bg-[#071426] text-white border border-[#10213b] focus:border-blue-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold">
-                              <option value="AERÓDROMO">AERÓDROMO</option>
-                              <option value="VIP">VIP (Setor Executivo)</option>
-                              <option value="TREINAMENTO">TREINAMENTO</option>
-                            </select>
+                            <input id="modal_collab_sector"
+                                   #editCollabSector
+                                   type="text"
+                                   list="modal_sector_list"
+                                   [value]="editingCollab() ? editingCollab()!.sector : ''"
+                                   placeholder="Ex: Geral, Central, Gestão..."
+                                   class="bg-[#071426] text-white border border-[#10213b] focus:border-emerald-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold placeholder:text-slate-600 w-full">
+                            <datalist id="modal_sector_list">
+                              @for (sector of availableSectors(); track sector) {
+                                <option [value]="sector"></option>
+                              }
+                            </datalist>
                           </div>
 
                           <!-- Grupo de Trabalho (Ocultado) -->
