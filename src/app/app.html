@@ -314,6 +314,23 @@
               
               <!-- Sub-header Actions: Collapsible filters trigger and Options -->
               <div class="flex items-center gap-2.5">
+                <!-- Search query input -->
+                <div class="relative">
+                  <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm select-none">search</span>
+                  <input type="text"
+                         [value]="collabSearchQuery()"
+                         (input)="collabSearchQuery.set($any($event.target).value)"
+                         placeholder="Buscar colaborador..."
+                         class="bg-[#030a14] border border-[#10213b] text-white text-xs px-3 py-1.5 pl-8 pr-8 rounded-lg outline-none focus:border-emerald-500 placeholder:text-slate-600 font-semibold font-sans w-48">
+                  @if (collabSearchQuery()) {
+                    <button (click)="collabSearchQuery.set('')"
+                            class="absolute right-2.5 top-1/2 -translate-y-1/2 text-red-500 hover:text-red-400 transition-colors flex items-center justify-center cursor-pointer p-0.5 rounded-full hover:bg-red-500/10"
+                            title="Limpar busca">
+                      <span class="material-icons text-xs font-bold">close</span>
+                    </button>
+                  }
+                </div>
+
                 <!-- Collapsible Filters Toggle Button -->
                 <button (click)="showFilters.set(!showFilters())"
                         [class]="showFilters() ? 'bg-[#10b981] text-white border-emerald-500/30' : (activeFiltersCount() > 0 ? 'bg-[#071426] text-amber-400 border-amber-500/20' : 'bg-[#030a14] text-slate-300 border-[#10213b] hover:bg-[#0b1e36] hover:text-white')"
@@ -400,16 +417,6 @@
           <!-- Collapsible Filters Tray -->
             @if (showFilters()) {
               <div class="flex flex-wrap items-center gap-2.5 pt-3 border-t border-[#10213b] animate-fade-in" id="collapsible_filters_tray">
-                <!-- Search query input -->
-                <div class="relative">
-                  <span class="material-icons absolute left-3 top-2.5 text-slate-500 text-sm select-none">search</span>
-                  <input type="text"
-                         [value]="collabSearchQuery()"
-                         (input)="collabSearchQuery.set($any($event.target).value)"
-                         placeholder="Buscar colaborador..."
-                         class="bg-[#030a14] border border-[#10213b] text-white text-xs px-3 py-2 pl-8 rounded-lg outline-none focus:border-emerald-500 placeholder:text-slate-600 font-semibold font-sans w-48">
-                </div>
-
                 <!-- Role filter -->
                 <select [value]="selectedFilterRole()"
                         (change)="selectedFilterRole.set($any($event.target).value)"
@@ -518,7 +525,7 @@
 
           <!-- MATRIX TABULAR GRID -->
           <div class="flex-1 overflow-auto w-full bg-[#020813] border-b border-[#10213b]" id="matrix_table_scroll_container">
-            <table class="w-full text-left border-collapse select-none">
+            <table class="w-full min-h-full text-left border-collapse select-none">
               <thead>
                 <!-- Months & Header Days Row -->
                 <tr class="border-b border-[#10213b] bg-[#071426] text-slate-400 text-[8px] font-black tracking-widest uppercase select-none sticky top-0 z-30">
@@ -531,14 +538,22 @@
                     </div>
                   </th>
                   @for (day of daysInMonth(); track day) {
-                    <th class="py-1 px-1 text-center min-w-[32px] border-r border-[#10213b] sticky top-0 bg-[#071426] z-30 day-header-cell"
+                    <th class="py-1 px-1 text-center min-w-[32px] border-r border-[#10213b] sticky top-0 z-30 day-header-cell transition-all"
                         [class.special-day]="isDaySpecial(day)"
-                        [class.text-slate-200]="isDaySpecial(day)">
-                      <div class="flex flex-col items-center">
-                        <span>{{ day | number:'2.0-0' }}</span>
+                        [class.text-slate-200]="isDaySpecial(day)"
+                        [class.bg-[#0d2e1f]]="isToday(day)"
+                        [class.bg-[#071426]]="!isToday(day)"
+                        [class.border-x-2]="isToday(day)"
+                        [class.border-x-emerald-500]="isToday(day)">
+                      <div class="flex flex-col items-center justify-center">
+                        @if (isToday(day)) {
+                          <span class="text-[7px] font-black uppercase tracking-wider text-emerald-400 leading-none mb-1">Hoje</span>
+                        }
+                        <span [class.text-emerald-400]="isToday(day)" [class.font-black]="isToday(day)">{{ day | number:'2.0-0' }}</span>
                         <span class="text-[7px] font-bold mt-0.5" 
                               [class.text-[#10b981]]="isDaySpecial(day)"
-                              [class.special-label]="isDaySpecial(day)">{{ getDayOfWeekLabel(day) }}</span>
+                              [class.special-label]="isDaySpecial(day)"
+                              [class.text-emerald-400]="isToday(day)">{{ getDayOfWeekLabel(day) }}</span>
                       </div>
                     </th>
                   }
@@ -548,9 +563,13 @@
               <tbody class="divide-y divide-[#10213b] font-mono text-[10px]">
                 @if (filteredCollaborators().length === 0) {
                   <tr>
-                    <td [attr.colspan]="32" class="py-10 text-center text-slate-500 italic">
+                    <td [attr.colspan]="daysInMonth().length + 2" class="py-10 text-center text-slate-500 italic">
                       Nenhum colaborador corresponde aos filtros selecionados.
                     </td>
+                  </tr>
+                  <!-- Spacer row for empty state to keep layout structure stretched -->
+                  <tr class="h-full pointer-events-none select-none border-none">
+                    <td [attr.colspan]="daysInMonth().length + 2" class="p-0 border-none bg-transparent"></td>
                   </tr>
                 } @else {
                   @for (collab of filteredCollaborators(); track collab.id) {
@@ -584,10 +603,13 @@
                         @let cellValRaw = editingRowCollabId() === collab.id ? (editingRowScaleDraft()[day] || '-') : (collab.scale[day] || '-');
                         @let cellVal = (cellValRaw === '-') ? getShiftCode(collab.shift) : cellValRaw;
                         @let events = getSpecialEventsForDay(collab, day);
-                        <td class="py-1 px-0.5 text-center border-r border-[#10213b] relative cursor-pointer group-cell day-grid-cell"
+                        <td class="py-1 px-0.5 text-center border-r border-[#10213b] relative cursor-pointer group-cell day-grid-cell transition-all"
                             [class.special-day]="isDaySpecial(day)"
+                            [class.bg-emerald-500/10]="isToday(day)"
+                            [class.border-x-2]="isToday(day)"
+                            [class.border-x-emerald-500/40]="isToday(day)"
                             (click)="editingRowCollabId() === collab.id ? paintDraftCell(day) : (editingRowCollabId() !== null ? null : applyPaintbrush(collab.id, day))"
-                            [ngClass]="{ 'bg-[#10b981]/5': isDaySpecial(day) && (cellValRaw === 'X' || cellValRaw === '-') }">
+                            [ngClass]="{ 'bg-[#10b981]/5': isDaySpecial(day) && (cellValRaw === 'X' || cellValRaw === '-') && !isToday(day) }">
                           
                           <!-- Event tiny absolute top-right markers -->
                           @if (events.length > 0) {
@@ -644,6 +666,11 @@
                     </tr>
                   }
 
+                  <!-- Spacer row to absorb extra vertical space and push summary row to the bottom -->
+                  <tr class="h-full pointer-events-none select-none border-none">
+                    <td [attr.colspan]="daysInMonth().length + 2" class="p-0 border-none bg-transparent"></td>
+                  </tr>
+
                   <!-- SUMMARY RESUME ROW: EFETIVO DO DIA -->
                   <tr class="transition-colors font-mono font-black select-none sticky bottom-0 z-30 shadow-[0_-2px_10px_rgba(0,0,0,0.3)]"
                       [class.bg-[#051122]]="!isLightTheme()"
@@ -680,17 +707,23 @@
                     @for (day of daysInMonth(); track day) {
                       @let currentCount = dailyWorkingCounts()[day] || 0;
                       <td class="py-1 px-0.5 text-center sticky bottom-0 z-30 border-r"
-                          [class.border-[#10213b]]="!isLightTheme()"
+                          [class.border-[#10213b]]="!isLightTheme() && !isToday(day)"
                           [class.border-t-2]="true"
                           [class.border-[#10b981]/40]="!isLightTheme()"
-                          [class.bg-[#051122]]="!isLightTheme()"
-                          [class.bg-emerald-50/60]="isLightTheme()"
-                          [class.border-slate-100]="isLightTheme()"
+                          [class.bg-[#051122]]="!isLightTheme() && !isToday(day)"
+                          [class.bg-emerald-50/60]="isLightTheme() && !isToday(day)"
+                          [class.border-slate-100]="isLightTheme() && !isToday(day)"
                           [class.border-t-emerald-300]="isLightTheme()"
-                          [class.text-[#10b981]]="!isLightTheme() && currentCount > 0"
-                          [class.text-emerald-600]="isLightTheme() && currentCount > 0"
-                          [class.text-slate-500]="!isLightTheme() && currentCount === 0"
-                          [class.text-slate-300]="isLightTheme() && currentCount === 0"
+                          [class.text-[#10b981]]="!isLightTheme() && currentCount > 0 && !isToday(day)"
+                          [class.text-emerald-600]="isLightTheme() && currentCount > 0 && !isToday(day)"
+                          [class.text-slate-500]="!isLightTheme() && currentCount === 0 && !isToday(day)"
+                          [class.text-slate-300]="isLightTheme() && currentCount === 0 && !isToday(day)"
+                          [class.bg-[#0a2f1d]]="isToday(day) && !isLightTheme()"
+                          [class.bg-emerald-100]="isToday(day) && isLightTheme()"
+                          [class.text-emerald-400]="isToday(day) && !isLightTheme()"
+                          [class.text-emerald-800]="isToday(day) && isLightTheme()"
+                          [class.border-x-2]="isToday(day)"
+                          [class.border-x-emerald-500]="isToday(day)"
                           [title]="'Dia ' + day + ': ' + currentCount + ' colaboradores efetivos (T / horários)'">
                         <div class="w-full h-full min-h-[22px] flex items-center justify-center text-[10px] font-black">
                           {{ currentCount }}
@@ -779,8 +812,12 @@
                             </td>
                             <td class="py-3 px-4 text-center">
                               @if (shift.startTime && shift.endTime) {
-                                <span class="inline-flex items-center gap-1 bg-[#0b1e36] text-blue-300 font-mono font-bold px-2 py-1 rounded border border-[#1d3557] text-[11px]">
-                                  <span class="material-icons text-[10px] text-blue-400">schedule</span>
+                                <span class="inline-flex items-center gap-1 font-mono font-bold px-2 py-1 rounded border text-[11px] transition-all"
+                                      [style.background-color]="isLightTheme() ? '#F1F5F9' : '#0b1e36'"
+                                      [style.border-color]="isLightTheme() ? '#cbd5e1' : '#1d3557'"
+                                      [class.text-blue-800]="isLightTheme()"
+                                      [class.text-blue-300]="!isLightTheme()">
+                                  <span class="material-icons text-[10px]" [class.text-blue-600]="isLightTheme()" [class.text-blue-400]="!isLightTheme()">schedule</span>
                                   {{ shift.startTime }} ➔ {{ shift.endTime }}
                                 </span>
                               } @else {
@@ -788,7 +825,11 @@
                               }
                             </td>
                             <td class="py-3 px-4 text-center font-mono font-black text-slate-300">
-                              <span class="bg-[#0f172a] border border-[#1e293b] px-2 py-0.5 rounded">
+                              <span class="px-2 py-0.5 rounded border transition-all"
+                                    [style.background-color]="isLightTheme() ? '#F1F5F9' : '#0f172a'"
+                                    [style.border-color]="isLightTheme() ? '#cbd5e1' : '#1e293b'"
+                                    [class.text-slate-800]="isLightTheme()"
+                                    [class.text-slate-300]="!isLightTheme()">
                                 {{ shift.hours }}
                               </span>
                             </td>
@@ -796,7 +837,11 @@
                             <!-- Real-time Shift Allocation Stats -->
                             <td class="py-3 px-4">
                               <div class="flex flex-col gap-1 items-center justify-center">
-                                <span class="px-2 py-0.5 rounded text-[9px] font-black font-sans uppercase inline-flex items-center gap-1 bg-[#052e16]/40 text-emerald-400 border border-emerald-500/20"
+                                <span class="px-2 py-0.5 rounded text-[9px] font-black font-sans uppercase inline-flex items-center gap-1 border transition-all"
+                                      [style.background-color]="isLightTheme() ? '#F1F5F9' : 'rgba(5, 46, 22, 0.4)'"
+                                      [style.border-color]="isLightTheme() ? '#cbd5e1' : 'rgba(16, 185, 129, 0.2)'"
+                                      [class.text-emerald-700]="isLightTheme()"
+                                      [class.text-emerald-400]="!isLightTheme()"
                                       title="Colaboradores que pertencem a este turno como padrão">
                                   <span class="material-icons text-[10px]">people</span>
                                   {{ getCollaboratorCountForShift(shift.code) }} ativo(s)
@@ -950,8 +995,13 @@
                         <span class="material-icons text-[10px] text-blue-400">schedule</span>
                         Carga Calculada
                       </label>
-                      <div class="bg-[#0c1e35] border border-[#1a3458] rounded px-3 py-1 text-blue-300 font-mono font-black text-center text-xs shadow-inner flex items-center justify-center gap-1" style="height: 25px;">
-                        <span class="material-icons text-[10px] text-blue-400">timelapse</span>
+                      <div class="rounded px-3 py-1 font-mono font-black text-center text-xs shadow-inner flex items-center justify-center gap-1 transition-all"
+                           [style.background-color]="isLightTheme() ? '#ffffff' : '#0c1e35'"
+                           [style.border]="isLightTheme() ? '1px solid #cbd5e1' : '1px solid #1a3458'"
+                           [class.text-slate-800]="isLightTheme()"
+                           [class.text-blue-300]="!isLightTheme()"
+                           style="height: 25px;">
+                        <span class="material-icons text-[10px]" [class.text-blue-600]="isLightTheme()" [class.text-blue-400]="!isLightTheme()">timelapse</span>
                         <span>{{ calculatedShiftHours() }}</span>
                       </div>
                     </div>
@@ -1380,16 +1430,12 @@
                           <!-- Badges row -->
                           <div class="flex items-center gap-1.5 mt-1">
                             <span class="text-[8px] bg-[#0b1e36] text-blue-400 px-1 py-0.5 rounded font-black font-mono">{{ collab.group }}</span>
-                            <span class="text-[8px] text-slate-500 font-mono font-bold">BH: {{ collab.bhBalance >= 0 ? '+' : '' }}{{ collab.bhBalance }}h</span>
                           </div>
                         </div>
                       </div>
 
                       <!-- Right side: Score / Indicators -->
                       <div class="flex flex-col items-end gap-1 shrink-0">
-                        <span class="text-[10px] font-black font-mono text-emerald-400">{{ collab.score }}%</span>
-                        <span class="text-[8px] uppercase tracking-widest text-slate-500 font-bold">Score</span>
-                        
                         <!-- Mini indicator -->
                         <span class="w-2.5 h-2.5 rounded-full"
                               [style.background-color]="getShiftOrSiglaColor(collab.shift)"
@@ -1542,11 +1588,6 @@
                             <span class="material-icons text-[9px]">gavel</span>
                             🔴 5 DIAS - FOLGA OBRIGATÓRIA
                           </span>
-                        } @else if (energyStats.bankHours > 0) {
-                          <span class="text-amber-400 flex items-center gap-0.5" title="Banco de horas acumulado">
-                            <span class="material-icons text-[9px]">hourglass_empty</span>
-                            SOBRECARGA (BH: {{ energyStats.bankHours }}h)
-                          </span>
                         } @else {
                           <span class="text-emerald-400">CONDIÇÃO OPERACIONAL SEGURA</span>
                         }
@@ -1619,7 +1660,12 @@
                           @let events = getSpecialEventsForDay(selectedCol, day);
 
                           <button (click)="isChosenByMe ? (isPreByMe ? showToast('Folga automática de alta prioridade não pode ser removida.') : removeCollabFolgaDay(selectedCol, day)) : requestCollabFolgaDay(selectedCol, day)"
-                                  [class]="getCalendarDayClass(isChosenByMe, count)">
+                                  [class]="getCalendarDayClass(isChosenByMe, count)"
+                                  [class.ring-2]="isToday(day)"
+                                  [class.ring-emerald-400]="isToday(day)"
+                                  [class.ring-offset-2]="isToday(day)"
+                                  [class.ring-offset-[#020813]]="isToday(day) && !isLightTheme()"
+                                  [class.ring-offset-white]="isToday(day) && isLightTheme()">
                             
                             <div class="flex items-center justify-between w-full">
                               <span class="font-black font-mono text-[11px]"
@@ -1779,7 +1825,6 @@
                         <th class="py-3 px-4 md:px-6 bg-[#071426]">Função / Cargo</th>
                         <th class="py-3 px-4 md:px-6 bg-[#071426]">Turno</th>
                         <th class="py-3 px-4 md:px-6 bg-[#071426]">Setor</th>
-                        <th class="py-3 px-4 md:px-6 bg-[#071426] text-right">Score</th>
                         <th class="py-3 px-4 md:px-6 bg-[#071426] text-center">Ações</th>
                       </tr>
                     </thead>
@@ -1821,11 +1866,6 @@
                                     (collab.sector === 'AERÓDROMO' ? 'bg-[#0f172a] text-[#10b981]' : collab.sector === 'VIP' ? 'bg-[#1e1b4b] text-indigo-400' : 'bg-emerald-950 text-emerald-400')">
                               {{ collab.sector }}
                             </span>
-                          </td>
-
-                          <!-- Score -->
-                          <td class="py-3.5 px-4 md:px-6 text-right font-mono font-bold text-slate-200">
-                            {{ collab.score }}%
                           </td>
 
                           <!-- Ações -->
@@ -1910,7 +1950,7 @@
                                     #editCollabSector
                                     [value]="editingCollab() ? editingCollab()!.sector : 'AERÓDROMO'"
                                     class="bg-[#071426] text-white border border-[#10213b] focus:border-blue-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold">
-                              <option value="AERÓDROMO">AERÓDROMO (Pátio Principal)</option>
+                              <option value="AERÓDROMO">AERÓDROMO</option>
                               <option value="VIP">VIP (Setor Executivo)</option>
                               <option value="TREINAMENTO">TREINAMENTO</option>
                             </select>
@@ -1939,7 +1979,7 @@
                           </div>
 
                           <!-- Score (%) -->
-                          <div class="flex flex-col gap-1.5">
+                          <div class="hidden flex-col gap-1.5">
                             <label for="modal_collab_score" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Score (%)</label>
                             <input id="modal_collab_score"
                                    #editCollabScore
@@ -1961,45 +2001,64 @@
                         </div>
 
                         <!-- Seção Datas Especiais (Máx 5 com prioridades) -->
-                        <div class="p-4 bg-[#071426]/50 border border-[#10213b] rounded-lg space-y-3">
-                          <div class="flex items-center justify-between border-b border-[#10213b] pb-2">
-                            <span class="block text-[9px] font-black uppercase tracking-wider text-slate-400">Datas Especiais &amp; Prioridades</span>
-                            <span class="text-[8px] bg-[#10213b] text-amber-500 px-2 py-0.5 rounded font-bold uppercase">P1 (Maior) a P5 (Menor)</span>
+                        <div class="p-4 rounded-lg space-y-3 transition-all border"
+                             [style.background-color]="isLightTheme() ? '#ffffff' : 'rgba(7, 20, 38, 0.5)'"
+                             [style.border-color]="isLightTheme() ? '#cbd5e1' : '#10213b'"
+                             [style.box-shadow]="isLightTheme() ? '0 8px 16px -4px rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' : 'none'">
+                          <div class="flex items-center justify-between border-b pb-2 transition-colors"
+                               [style.border-color]="isLightTheme() ? '#f1f5f9' : '#10213b'">
+                            <span class="block text-[9px] font-black uppercase tracking-wider"
+                                  [class.text-slate-500]="isLightTheme()"
+                                  [class.text-slate-400]="!isLightTheme()">Datas Especiais &amp; Prioridades</span>
+                            <span class="text-[8px] px-2 py-0.5 rounded font-bold uppercase transition-colors"
+                                  [style.background-color]="isLightTheme() ? '#f8fafc' : '#10213b'"
+                                  [style.color]="isLightTheme() ? '#b45309' : '#f59e0b'"
+                                  [style.border]="isLightTheme() ? '1px solid #cbd5e1' : 'none'">P1 (Maior) a P5 (Menor)</span>
                           </div>
                           
                           <!-- Linha Data Especial 1 (Prioridade 1) -->
                           <div class="grid grid-cols-12 gap-2">
                             <input type="text" #editCollabSD1Desc [value]="editingCollab() && editingCollab()!.specialDates[0] ? editingCollab()!.specialDates[0].description : ''" placeholder="Ex: Aniv. Casamento" class="col-span-6 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
                             <input type="date" #editCollabSD1Date [value]="editingCollab() && editingCollab()!.specialDates[0] ? editingCollab()!.specialDates[0].date : ''" class="col-span-4 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
-                            <div class="col-span-2 text-center text-[10px] font-black text-amber-500 bg-[#071426] border border-[#10213b] py-1.5 rounded-lg flex items-center justify-center">P1</div>
+                            <div class="col-span-2 text-center text-[10px] font-black text-amber-500 py-1.5 rounded-lg flex items-center justify-center border transition-all"
+                                 [style.background-color]="isLightTheme() ? '#f8fafc' : '#071426'"
+                                 [style.border-color]="isLightTheme() ? '#cbd5e1' : '#10213b'">P1</div>
                           </div>
 
                           <!-- Linha Data Especial 2 (Prioridade 2) -->
                           <div class="grid grid-cols-12 gap-2">
                             <input type="text" #editCollabSD2Desc [value]="editingCollab() && editingCollab()!.specialDates[1] ? editingCollab()!.specialDates[1].description : ''" placeholder="Ex: Aniv. Filho" class="col-span-6 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
                             <input type="date" #editCollabSD2Date [value]="editingCollab() && editingCollab()!.specialDates[1] ? editingCollab()!.specialDates[1].date : ''" class="col-span-4 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
-                            <div class="col-span-2 text-center text-[10px] font-black text-amber-500 bg-[#071426] border border-[#10213b] py-1.5 rounded-lg flex items-center justify-center">P2</div>
+                            <div class="col-span-2 text-center text-[10px] font-black text-amber-500 py-1.5 rounded-lg flex items-center justify-center border transition-all"
+                                 [style.background-color]="isLightTheme() ? '#f8fafc' : '#071426'"
+                                 [style.border-color]="isLightTheme() ? '#cbd5e1' : '#10213b'">P2</div>
                           </div>
 
                           <!-- Linha Data Especial 3 (Prioridade 3) -->
                           <div class="grid grid-cols-12 gap-2">
                             <input type="text" #editCollabSD3Desc [value]="editingCollab() && editingCollab()!.specialDates[2] ? editingCollab()!.specialDates[2].description : ''" placeholder="Ex: Aniv. Cônjuge" class="col-span-6 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
                             <input type="date" #editCollabSD3Date [value]="editingCollab() && editingCollab()!.specialDates[2] ? editingCollab()!.specialDates[2].date : ''" class="col-span-4 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
-                            <div class="col-span-2 text-center text-[10px] font-black text-amber-500 bg-[#071426] border border-[#10213b] py-1.5 rounded-lg flex items-center justify-center">P3</div>
+                            <div class="col-span-2 text-center text-[10px] font-black text-amber-500 py-1.5 rounded-lg flex items-center justify-center border transition-all"
+                                 [style.background-color]="isLightTheme() ? '#f8fafc' : '#071426'"
+                                 [style.border-color]="isLightTheme() ? '#cbd5e1' : '#10213b'">P3</div>
                           </div>
 
                           <!-- Linha Data Especial 4 (Prioridade 4) -->
                           <div class="grid grid-cols-12 gap-2">
                             <input type="text" #editCollabSD4Desc [value]="editingCollab() && editingCollab()!.specialDates[3] ? editingCollab()!.specialDates[3].description : ''" placeholder="Ex: Aniversário Mãe" class="col-span-6 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
                             <input type="date" #editCollabSD4Date [value]="editingCollab() && editingCollab()!.specialDates[3] ? editingCollab()!.specialDates[3].date : ''" class="col-span-4 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
-                            <div class="col-span-2 text-center text-[10px] font-black text-amber-500 bg-[#071426] border border-[#10213b] py-1.5 rounded-lg flex items-center justify-center">P4</div>
+                            <div class="col-span-2 text-center text-[10px] font-black text-amber-500 py-1.5 rounded-lg flex items-center justify-center border transition-all"
+                                 [style.background-color]="isLightTheme() ? '#f8fafc' : '#071426'"
+                                 [style.border-color]="isLightTheme() ? '#cbd5e1' : '#10213b'">P4</div>
                           </div>
 
                           <!-- Linha Data Especial 5 (Prioridade 5) -->
                           <div class="grid grid-cols-12 gap-2">
                             <input type="text" #editCollabSD5Desc [value]="editingCollab() && editingCollab()!.specialDates[4] ? editingCollab()!.specialDates[4].description : ''" placeholder="Ex: Outra Data Magna" class="col-span-6 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
                             <input type="date" #editCollabSD5Date [value]="editingCollab() && editingCollab()!.specialDates[4] ? editingCollab()!.specialDates[4].date : ''" class="col-span-4 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
-                            <div class="col-span-2 text-center text-[10px] font-black text-amber-500 bg-[#071426] border border-[#10213b] py-1.5 rounded-lg flex items-center justify-center">P5</div>
+                            <div class="col-span-2 text-center text-[10px] font-black text-amber-500 py-1.5 rounded-lg flex items-center justify-center border transition-all"
+                                 [style.background-color]="isLightTheme() ? '#f8fafc' : '#071426'"
+                                 [style.border-color]="isLightTheme() ? '#cbd5e1' : '#10213b'">P5</div>
                           </div>
                         </div>
 
@@ -2043,7 +2102,8 @@
                       <!-- Footer Buttons -->
                       <div class="p-5 border-t border-[#10213b] bg-[#071426] flex items-center justify-end gap-3">
                         <button (click)="cancelEditingCollab()"
-                                class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-black text-xs px-5 py-2.5 rounded-lg uppercase tracking-wider cursor-pointer border-none transition-all outline-none">
+                                [style.color]="'#ffffff'"
+                                class="bg-slate-800 hover:bg-slate-700 text-white font-black text-xs px-5 py-2.5 rounded-lg uppercase tracking-wider cursor-pointer border-none transition-all outline-none">
                           Cancelar
                         </button>
                         
@@ -2233,12 +2293,6 @@
                     <div>
                       <span class="text-slate-500 uppercase tracking-wider font-bold block text-[8px]">Setor Logístico:</span>
                       <span class="text-emerald-400 font-black">{{ logged.sector }}</span>
-                    </div>
-                    <div>
-                      <span class="text-slate-500 uppercase tracking-wider font-bold block text-[8px]">Saldo de Banco de Horas:</span>
-                      <span class="text-white font-black font-mono" [class.text-red-400]="logged.bhBalance < 0" [class.text-emerald-400]="logged.bhBalance > 0">
-                        {{ logged.bhBalance }}h
-                      </span>
                     </div>
                   </div>
                 </div>
@@ -2508,7 +2562,11 @@
                       <button (click)="isChosenByMe ? (isPreByMe ? showToast('Folga automática de alta prioridade não pode ser removida.') : removePortalFolgaDay(day)) : requestPortalFolgaDay(day)"
                               class="p-2 border rounded-lg flex flex-col justify-between gap-1 transition-all cursor-pointer h-16 min-w-0 outline-none text-left shadow-sm"
                               [ngClass]="isChosenByMe ? 'bg-emerald-600 border-emerald-500 shadow-md shadow-emerald-600/15 text-white' :
-                                         (count >= 2 ? 'bg-rose-950/20 border-rose-500/30 hover:bg-rose-950/40 text-rose-300' : 'bg-[#071426] border-[#10213b] hover:border-slate-700/60 hover:bg-[#071426]/80 text-slate-300')">
+                                         (count >= 2 ? 'bg-rose-950/20 border-rose-500/30 hover:bg-rose-950/40 text-rose-300' : 'bg-[#071426] border-[#10213b] hover:border-slate-700/60 hover:bg-[#071426]/80 text-slate-300')"
+                              [class.ring-2]="isToday(day)"
+                              [class.ring-emerald-400]="isToday(day)"
+                              [class.ring-offset-2]="isToday(day)"
+                              [class.ring-offset-[#020813]]="isToday(day)">
                         
                         <div class="flex items-center justify-between w-full">
                           <span class="font-black font-mono text-[11px]"

@@ -248,7 +248,6 @@ export const SIGLAS: ShiftType[] = [
   { code: 'T', label: 'Turno', color: 'bg-white text-slate-800 border-slate-300 font-bold hover:bg-slate-50', discounts: false, category: 'TURNO', cannotDelete: true, colorName: 'branco' },
   { code: 'X', label: 'Folga', color: 'bg-green-600 text-white border-green-700 font-bold hover:bg-green-700', discounts: true, category: 'FOLGAS', cannotDelete: true, colorName: 'verde' },
   { code: 'F', label: 'Férias', color: 'bg-white text-slate-400 border-slate-300 font-bold hover:bg-slate-50', discounts: true, category: 'FERIAS', cannotDelete: true, colorName: 'branco' },
-  { code: 'BH', label: 'Banco de Horas', color: 'bg-green-600 text-white border-green-700 font-bold hover:bg-green-700', discounts: true, category: 'FOLGAS', cannotDelete: true, colorName: 'verde' },
   { code: 'AT', label: 'Atestado Médico', color: 'bg-slate-700 text-white border-slate-800 font-bold hover:bg-slate-800', discounts: true, category: 'AFASTAMENTO_SAUDE', cannotDelete: true, colorName: 'cinza-escuro' },
   { code: 'FO', label: 'Folga Operacional', color: 'bg-green-600 text-white border-green-700 font-bold hover:bg-green-700', discounts: true, category: 'FOLGAS', cannotDelete: true, colorName: 'verde' },
   { code: 'CP', label: 'CIPA (Obrigatório)', color: 'bg-yellow-500 text-slate-900 border-yellow-655 font-bold hover:bg-yellow-600', discounts: true, category: 'REUNIOES', cannotDelete: true, colorName: 'amarelo' },

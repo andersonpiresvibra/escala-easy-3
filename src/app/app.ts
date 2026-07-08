@@ -791,6 +791,13 @@ export class App {
     return this.isDayWeekend(day) || this.isDayHoliday(day);
   }
 
+  isToday(day: number): boolean {
+    const today = new Date();
+    return today.getDate() === day &&
+           today.getMonth() === this.selectedMonthIndex() &&
+           today.getFullYear() === 2026;
+  }
+
   getOffsetDaysArray(): number[] {
     const startDay = this.monthsList[this.selectedMonthIndex()].startDayOfWeek;
     return Array.from({ length: startDay }, (_, i) => i);

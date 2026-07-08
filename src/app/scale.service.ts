@@ -1458,7 +1458,6 @@ export class ScaleService {
     let energy = 100;
     let consecutiveWorkDays = 0;
     let maxConsecutiveWorkDays = 0;
-    let bankHours = collab.bhBalance || 0;
     let totalHoursWorked = 0;
     let alertaLimite = false;
     const daysCount = 30; // June 2026 has 30 days
@@ -1528,7 +1527,7 @@ export class ScaleService {
       colorClass,
       badgeColor,
       energyStatus,
-      bankHours
+      bankHours: 0
     };
   }
 
@@ -1587,9 +1586,6 @@ export class ScaleService {
       }
       if (b.lastRestStreak !== a.lastRestStreak) {
         return b.lastRestStreak - a.lastRestStreak;
-      }
-      if (a.energyData.bankHours !== b.energyData.bankHours) {
-        return a.energyData.bankHours - b.energyData.bankHours;
       }
       return a.collab.name.localeCompare(b.collab.name);
     });
