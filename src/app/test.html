@@ -1,0 +1,5 @@
+<select [value]="myVal">
+  @for (o of ops; track o) {
+    <option [value]="o">{{o}}</option>
+  }
+</select>

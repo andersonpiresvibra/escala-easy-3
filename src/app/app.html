@@ -283,14 +283,14 @@
                           id="btn_month_picker_trigger"
                           class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-emerald-500/20 bg-[#071426] hover:bg-[#0b1e36] hover:border-emerald-500/40 text-white cursor-pointer transition-all border-none outline-none">
                     <span class="material-icons text-base select-none" [style.color]="isLightTheme() ? '#347660' : '#BAF5CE'">calendar_month</span>
-                    <span id="txt_month_picker_label" class="font-black text-xs uppercase tracking-wider" [style.color]="isLightTheme() ? '#347660' : '#BAF5CE'" [style.background-color]="isLightTheme() ? '#ffffff' : 'transparent'">{{ currentMonthName() }} 2026</span>
+                    <span id="txt_month_picker_label" class="font-black text-xs uppercase tracking-wider" [style.color]="isLightTheme() ? '#347660' : '#BAF5CE'" [style.background-color]="isLightTheme() ? '#ffffff' : 'transparent'">{{ currentMonthName() }} {{ currentYear() }}</span>
                     <span class="material-icons text-[10px] transition-transform duration-200" [class.rotate-180]="isMonthPickerOpen()" [style.color]="isLightTheme() ? '#347660' : '#BAF5CE'">expand_more</span>
                   </button>
 
                   <!-- Month Selection Grid Dropdown -->
                   @if (isMonthPickerOpen()) {
                     <div (click)="$event.stopPropagation()" class="absolute left-0 mt-2 w-64 rounded-xl bg-[#071426] border border-[#10213b] p-3 shadow-2xl z-50 animate-fade-in" id="month_picker_dropdown">
-                      <div class="text-[9px] font-black uppercase text-slate-400 tracking-wider mb-2.5 px-1">Selecione o Mês da Escala (2026)</div>
+                      <div class="text-[9px] font-black uppercase text-slate-400 tracking-wider mb-2.5 px-1">Selecione o Mês da Escala ({{ currentYear() }})</div>
                       <div class="grid grid-cols-3 gap-1.5">
                         @for (m of monthsList; track m.name; let idx = $index) {
                           <button (click)="selectMonth(idx)"
@@ -397,7 +397,7 @@
                           <!-- Editar em massa -->
                           <button (click)="togglePaintbrushPanel(); isMatrixOptionsOpen.set(false)"
                                   class="w-full text-left px-4 py-2 text-[10px] font-black uppercase transition-colors tracking-wider flex items-center gap-2 cursor-pointer border-none outline-none bg-transparent"
-                                  [class]="showPaintbrushPanel() ? 'text-amber-500 hover:bg-[#0b1e36]/30' : 'text-slate-300 hover:bg-[#0b1e36]'">
+                                  [class]="showPaintbrushPanel() ? 'text-amber-500 hover:bg-emerald-950/40' : 'text-slate-300 hover:bg-[#0b1e36]'">
                             <span class="material-icons text-sm" [class]="showPaintbrushPanel() ? 'text-amber-400' : 'text-slate-400'">edit_calendar</span>
                             {{ showPaintbrushPanel() ? 'Fechar Edição em Massa' : 'Editar em Massa' }}
                           </button>
@@ -567,12 +567,13 @@
               <thead>
                 <!-- Months & Header Days Row -->
                 <tr class="border-b border-[#10213b] bg-[#071426] text-slate-400 text-[8px] font-black tracking-widest uppercase select-none sticky top-0 z-30">
-                  <th class="py-2.5 px-5 md:px-6 min-w-[340px] sticky top-0 left-0 bg-[#071426] border-r border-[#10213b] z-40 shadow-md">
+                  <th class="py-2.5 px-5 md:px-6 min-w-[440px] sticky top-0 left-0 bg-[#071426] border-r border-[#10213b] z-40 shadow-md">
                     <div class="grid grid-cols-12 gap-2 text-[10px] font-black uppercase tracking-wider text-slate-400 w-full items-center">
-                      <span class="col-span-6 text-left">Colaborador</span>
-                      <span class="col-span-3 text-center">Função</span>
-                      <span class="col-span-3 text-center">Turno</span>
-                    </div>
+    <span class="col-span-4 text-left">Colaborador</span>
+    <span class="col-span-3 text-center">Função</span>
+    <span class="col-span-2 text-center">Turno</span>
+    <span class="col-span-3 text-center">Horário</span>
+  </div>
                   </th>
                   @for (day of daysInMonth(); track day) {
                     <th class="py-1 px-1 text-center min-w-[32px] border-r border-[#10213b] sticky top-0 z-30 day-header-cell transition-all"
@@ -610,12 +611,12 @@
                   </tr>
                 } @else {
                   @for (collab of filteredCollaborators(); track collab.id) {
-                    <tr class="hover:bg-[#0b1e36]/10 transition-colors" [class.bg-amber-950]="editingRowCollabId() === collab.id">
+                    <tr class="hover:bg-emerald-950/40 transition-colors" [class.bg-amber-950]="editingRowCollabId() === collab.id">
                       <!-- Collab details sticky col -->
-                      <td class="py-1.5 pl-5 pr-4 md:pl-6 md:pr-4 sticky left-0 bg-[#030a14] border-r border-[#10213b] z-10 shadow-sm min-w-[340px]">
+                      <td class="py-1.5 pl-5 pr-4 md:pl-6 md:pr-4 sticky left-0 bg-[#030a14] border-r border-[#10213b] z-10 shadow-sm min-w-[440px]">
                         <div class="grid grid-cols-12 gap-2 w-full items-center">
                           <!-- 1. COLABORADOR -->
-                          <div class="col-span-6 flex items-center gap-2 min-w-0">
+                          <div class="col-span-4 flex items-center gap-2 min-w-0">
                             <div class="relative shrink-0">
                               <img [src]="getCollabPhoto(collab)" 
                                    alt="Avatar"
@@ -630,16 +631,16 @@
 
                           <!-- 2. FUNÇÃO -->
                           <div class="col-span-3 text-center">
-                            <span class="px-2 py-0.5 rounded text-[8px] font-black tracking-wider uppercase inline-block font-sans text-center transition-all border"
+                            <span class="text-[8px] font-black tracking-wider uppercase inline-block font-sans text-center transition-all"
                                   [class]="getFunctionBadgeClass(collab)">
                               {{ getCollabFunction(collab) }}
                             </span>
                           </div>
 
                           <!-- 3. TURNO (with tooltip hover) -->
-                          <div class="col-span-3 flex justify-center">
-                            <div class="relative group cursor-pointer shrink-0 text-center min-w-[54px] font-mono text-[9px] font-black px-1.5 py-0.5 rounded border border-[#10213b]/60 text-emerald-400 bg-emerald-950/20 hover:bg-emerald-950/40 hover:border-emerald-500/50 transition-all">
-                              <span>{{ collab.shift }}</span>
+                          <div class="col-span-2 flex justify-center">
+                            <div class="relative group cursor-pointer shrink-0 text-center min-w-[54px] font-mono text-[9px] font-black px-1.5 py-0.5 text-emerald-400 transition-all">
+                              <span>{{ getShiftLabel(collab) }}</span>
                               <!-- Floating Tooltip Box -->
                               <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-[#071426] border border-emerald-500/30 text-white text-[9px] font-black rounded px-2 py-1 shadow-2xl whitespace-nowrap z-50 pointer-events-none transition-all">
                                 <div class="flex items-center gap-1">
@@ -648,6 +649,11 @@
                                 </div>
                               </div>
                             </div>
+                          </div>
+
+                          <!-- 4. HORÁRIO -->
+                          <div class="col-span-3 text-center text-[10px] font-mono font-bold text-slate-300">
+                            {{ getCollabHours(collab) }}
                           </div>
                         </div>
                       </td>
@@ -850,7 +856,7 @@
                       </thead>
                       <tbody class="divide-y divide-[#10213b] text-xs">
                         @for (shift of scaleService.shiftTypes(); track shift.code) {
-                          <tr class="hover:bg-[#0b1e36]/30 transition-colors">
+                          <tr class="hover:bg-emerald-950/40 transition-colors">
                             <td class="py-3 px-4 font-mono">
                               <span class="inline-flex items-center justify-center w-11 py-1 rounded font-black text-xs shadow-md border border-white/5"
                                     [style.background-color]="shift.color"
@@ -934,7 +940,7 @@
                   <span class="material-icons text-blue-400">psychology</span>
                   <div class="text-[10px] text-slate-400 leading-relaxed">
                     <span class="text-white font-bold block mb-0.5">Automação de Alocação de Pista:</span>
-                    Quando você cria ou edita um turno, ele se torna imediatamente elegível para alocação de equipe. Se você mover um colaborador de turno, o sistema recalculará sua escala de {{ currentMonthName() }} 2026, convertendo suas antigas jornadas para o novo turno em lote.
+                    Quando você cria ou edita um turno, ele se torna imediatamente elegível para alocação de equipe. Se você mover um colaborador de turno, o sistema recalculará sua escala de {{ currentMonthName() }} {{ currentYear() }}, convertendo suas antigas jornadas para o novo turno em lote.
                   </div>
                 </div>
               </div>
@@ -1189,7 +1195,7 @@
                       </thead>
                       <tbody class="divide-y divide-[#10213b] text-xs">
                         @for (sigla of scaleService.siglaTypes(); track sigla.code) {
-                          <tr class="hover:bg-[#0b1e36]/30 transition-colors">
+                          <tr class="hover:bg-emerald-950/40 transition-colors">
                             <td class="py-3 px-4 font-mono">
                               <span class="inline-flex items-center justify-center w-11 py-1 rounded font-black text-xs shadow-md border border-white/5"
                                     [style.background-color]="sigla.color"
@@ -1472,8 +1478,8 @@
                           <!-- Pulse indicator for online status simulation or shift badge -->
                           <span class="absolute -bottom-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-slate-950 border border-[#10213b] text-[8px] font-bold font-mono"
                                 [style.color]="getShiftOrSiglaColor(collab.shift)"
-                                title="Turno: {{ collab.shift }}">
-                            {{ collab.shift | slice:0:1 }}
+                                title="Turno: {{ getShiftLabel(collab) }}">
+                            {{ getShiftLabel(collab) | slice:0:1 }}
                           </span>
                         </div>
                         
@@ -1493,7 +1499,7 @@
                         <!-- Mini indicator -->
                         <span class="w-2.5 h-2.5 rounded-full"
                               [style.background-color]="getShiftOrSiglaColor(collab.shift)"
-                              [title]="'Alocado no turno de código ' + collab.shift"></span>
+                              [title]="'Alocado no turno ' + getShiftLabel(collab)"></span>
                       </div>
                     </div>
                   }
@@ -1553,7 +1559,7 @@
                         <!-- Simulated active status label -->
                         <span class="text-[9px] font-bold text-slate-500 mt-2 flex items-center gap-1">
                           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                          Operador Ativo no Sistema · Escala de {{ currentMonthName() }} 2026
+                          Operador Ativo no Sistema · Escala de {{ currentMonthName() }} {{ currentYear() }}
                         </span>
                       </div>
                     </div>
@@ -1579,7 +1585,7 @@
                           <span class="material-icons text-xs text-emerald-400">equalizer</span>
                           Aproveitamento Escala
                         </span>
-                        <p class="text-[8px] text-slate-500 mt-0.5 leading-relaxed">Dias ativos escalados em {{ currentMonthName() }} de 2026.</p>
+                        <p class="text-[8px] text-slate-500 mt-0.5 leading-relaxed">Dias ativos escalados em {{ currentMonthName() }} de {{ currentYear() }}.</p>
                       </div>
 
                       <div class="flex items-end justify-between">
@@ -1677,13 +1683,13 @@
 
                   </div>
 
-                  <!-- July 2026 Days Off / Work Calendar section -->
+                  <!-- July {{ currentYear() }} Days Off / Work Calendar section -->
                   <div class="pt-5 border-t border-[#10213b] space-y-4">
                     <div class="bg-[#030a14] border border-[#10213b] rounded-xl p-5 shadow-xl space-y-4">
                       <div>
                         <h4 class="font-black text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
                           <span class="material-icons text-[#10b981] text-sm">calendar_month</span>
-                          Calendário de Escala de Folgas - {{ currentMonthName() }} 2026
+                          Calendário de Escala de Folgas - {{ currentMonthName() }} {{ currentYear() }}
                         </h4>
                         <p class="text-[9px] text-slate-400 mt-1">
                           Clique em um dia para solicitar ou remover folga para <strong>{{ selectedCol.name }}</strong>. Os dias em vermelho atingiram a cota máxima de 2 colaboradores.
@@ -1876,15 +1882,16 @@
                     <thead class="sticky top-0 bg-[#071426] z-10 shadow-md">
                       <tr class="border-b border-[#10213b] text-slate-400 uppercase text-[9px] font-black tracking-wider">
                         <th class="py-3 px-4 md:px-6 bg-[#071426]">Colaborador</th>
-                        <th class="py-3 px-4 md:px-6 bg-[#071426]">Função / Cargo</th>
-                        <th class="py-3 px-4 md:px-6 bg-[#071426]">Turno</th>
+                        <th class="py-3 px-4 md:px-6 bg-[#071426]">Função</th>
                         <th class="py-3 px-4 md:px-6 bg-[#071426]">Setor</th>
+                        <th class="py-3 px-4 md:px-6 bg-[#071426]">Turno</th>
+                        <th class="py-3 px-4 md:px-6 bg-[#071426]">Horário</th>
                         <th class="py-3 px-4 md:px-6 bg-[#071426] text-center">Ações</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-[#10213b]">
                       @for (collab of adminCollaborators(); track collab.id) {
-                        <tr class="hover:bg-[#0b1e36]/30 transition-colors text-xs font-medium">
+                        <tr class="hover:bg-emerald-950/40 transition-colors text-xs font-medium">
                           <!-- Colaborador Nome -->
                           <td class="py-3.5 px-4 md:px-6">
                             <div class="flex items-center gap-3">
@@ -1901,16 +1908,13 @@
 
                           <!-- Função / Cargo -->
                           <td class="py-3.5 px-4 md:px-6">
-                            <span class="px-2 py-0.5 rounded text-[9px] font-black tracking-wider uppercase inline-block font-sans"
+                            <span class="text-[9px] font-black tracking-wider uppercase inline-block font-sans"
                                   [class]="isLightTheme() ? 
-                                    (collab.role === 'SUPERVISOR' ? 'bg-purple-600 text-white' : collab.role === 'LIDER' ? 'bg-amber-500 text-white' : 'bg-emerald-500 text-white') : 
-                                    (collab.role === 'SUPERVISOR' ? 'bg-purple-950 text-purple-400 border border-purple-800/30' : collab.role === 'LIDER' ? 'bg-amber-950 text-amber-400 border border-amber-800/30' : 'bg-emerald-950 text-emerald-400 border border-emerald-800/30')">
+                                    (collab.role === 'SUPERVISOR' ? 'text-purple-700' : collab.role === 'LIDER' ? 'text-amber-700' : 'text-emerald-700') : 
+                                    (collab.role === 'SUPERVISOR' ? 'text-purple-400' : collab.role === 'LIDER' ? 'text-amber-400' : 'text-emerald-400')">
                               {{ collab.role === 'LIDER' ? 'LÍDER DE TURNO' : collab.role }}
                             </span>
                           </td>
-
-                          <!-- Turno -->
-                          <td class="py-3.5 px-4 md:px-6 font-mono uppercase text-slate-400 font-bold">{{ collab.shift }}</td>
 
                           <!-- Setor -->
                           <td class="py-3.5 px-4 md:px-6">
@@ -1920,6 +1924,17 @@
                                     (collab.sector === 'AERÓDROMO' ? 'bg-[#0f172a] text-[#10b981]' : collab.sector === 'VIP' ? 'bg-[#1e1b4b] text-indigo-400' : 'bg-emerald-950 text-emerald-400')">
                               {{ collab.sector }}
                             </span>
+                          </td>
+
+                          <!-- Turno -->
+                          <td class="py-3.5 px-4 md:px-6 font-mono uppercase text-slate-400 font-bold">{{ getShiftLabel(collab) }}</td>
+
+                          <!-- Horário -->
+                          <td class="py-3.5 px-4 md:px-6 font-mono text-[9px] text-slate-400 font-bold">
+                            <div class="flex items-center gap-1">
+                              <span class="material-icons text-[10px] text-emerald-400">schedule</span>
+                              <span>{{ getCollabHours(collab) }}</span>
+                            </div>
                           </td>
 
                           <!-- Ações -->
@@ -1972,10 +1987,39 @@
                       <div class="p-6 overflow-y-auto space-y-5 text-xs text-slate-300">
                         
                         <!-- Form Fields Grid -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
                           
-                          <!-- Nome Completo -->
-                          <div class="flex flex-col gap-1.5 col-span-2">
+                          <!-- Linha 1: Foto, Nome, Aniversário -->
+                          <div class="col-span-1 md:col-span-2 flex flex-col gap-1.5 items-center justify-center">
+                            <label class="font-black text-[9px] uppercase tracking-wider text-slate-400">Foto</label>
+                            <div class="relative group rounded-full overflow-hidden w-10 h-10 cursor-pointer shrink-0 border border-emerald-500/20 bg-slate-900 shadow-sm">
+                              @if (newCollabPhotoData()) {
+                                <img [src]="newCollabPhotoData()" 
+                                     alt="Prévia da foto" 
+                                     class="w-full h-full object-cover">
+                                <button (click)="newCollabPhotoData.set(null); $event.stopPropagation()"
+                                        class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity border-none cursor-pointer"
+                                        title="Remover foto">
+                                  <span class="material-icons text-base">delete</span>
+                                </button>
+                              } @else {
+                                <img [src]="editingCollab() ? getCollabPhoto(editingCollab()) : getCollabPhoto({id: 'new', name: editCollabName.value || 'Novo'})" 
+                                     alt="Avatar"
+                                     referrerpolicy="no-referrer"
+                                     class="w-full h-full object-cover">
+                                <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                                  <span class="material-icons text-xs">add_a_photo</span>
+                                </div>
+                                <input type="file"
+                                       (change)="onCollabPhotoSelected($event)"
+                                       accept="image/*"
+                                       class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                       title="Alterar foto">
+                              }
+                            </div>
+                          </div>
+
+                          <div class="flex flex-col gap-1.5 col-span-1 md:col-span-7 justify-center">
                             <label for="modal_collab_name" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Nome Completo</label>
                             <input id="modal_collab_name"
                                    #editCollabName
@@ -1984,38 +2028,73 @@
                                    class="bg-[#071426] text-white border border-[#10213b] focus:border-blue-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold placeholder:text-slate-600">
                           </div>
 
-                          <!-- Cargo / Função -->
-                          <div class="flex flex-col gap-1.5">
-                            <label for="modal_collab_role" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Função / Cargo</label>
-                            <input id="modal_collab_role"
-                                   #editCollabRole
-                                   type="text"
-                                   list="modal_role_list"
-                                   [value]="editingCollab() ? editingCollab()!.role : ''"
-                                   placeholder="Ex: OPERADOR, LIDER, SUPERVISOR..."
-                                   class="bg-[#071426] text-white border border-[#10213b] focus:border-emerald-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold placeholder:text-slate-600 w-full">
-                            <datalist id="modal_role_list">
-                              @for (role of availableRoles(); track role) {
-                                <option [value]="role"></option>
-                              }
-                            </datalist>
+                          <div class="flex flex-col gap-1.5 col-span-1 md:col-span-3 justify-center">
+                            <label for="modal_collab_birthday" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Data de Aniv.</label>
+                            <input id="modal_collab_birthday"
+                                   #editCollabBirthday
+                                   type="date"
+                                   [value]="editingCollab() ? editingCollab()!.birthday : ''"
+                                   class="bg-[#071426] text-white border border-[#10213b] focus:border-blue-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold">
                           </div>
 
-                          <!-- Setor Logístico -->
-                          <div class="flex flex-col gap-1.5">
-                            <label for="modal_collab_sector" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Setor Logístico</label>
-                            <input id="modal_collab_sector"
-                                   #editCollabSector
-                                   type="text"
-                                   list="modal_sector_list"
-                                   [value]="editingCollab() ? editingCollab()!.sector : ''"
-                                   placeholder="Ex: Geral, Central, Gestão..."
-                                   class="bg-[#071426] text-white border border-[#10213b] focus:border-emerald-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold placeholder:text-slate-600 w-full">
-                            <datalist id="modal_sector_list">
-                              @for (sector of availableSectors(); track sector) {
-                                <option [value]="sector"></option>
+                          <!-- Linha 2: Função, Setor, Turno -->
+                          <div class="flex flex-col gap-1.5 col-span-1 md:col-span-4 relative">
+  <div class="flex items-center justify-between">
+    <label for="modal_collab_role" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Função / Cargo</label>
+    <button type="button" (click)="isNewRoleMode.set(!isNewRoleMode())" class="text-[8.5px] font-bold text-emerald-400 hover:text-emerald-300">
+      {{ isNewRoleMode() ? 'Selecionar da lista' : '+ Nova Função' }}
+    </button>
+  </div>
+  <select id="modal_collab_role_select"
+         #editCollabRoleSelect
+         [class.hidden]="isNewRoleMode()"
+         class="bg-[#071426] text-white border border-[#10213b] focus:border-emerald-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold w-full">
+    @for (role of availableRoles(); track role) {
+      <option [value]="role" [selected]="editingCollab()?.role === role">{{ role }}</option>
+    }
+  </select>
+  <input id="modal_collab_role_input"
+         #editCollabRoleInput
+         type="text"
+         [value]="editingCollab() ? editingCollab()!.role : ''"
+         [class.hidden]="!isNewRoleMode()"
+         placeholder="Digite a nova função..."
+         class="bg-[#071426] text-white border border-[#10213b] focus:border-emerald-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold placeholder:text-slate-600 w-full">
+</div>
+
+                          <div class="flex flex-col gap-1.5 col-span-1 md:col-span-4 relative">
+  <div class="flex items-center justify-between">
+    <label for="modal_collab_sector" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Setor Logístico</label>
+    <button type="button" (click)="isNewSectorMode.set(!isNewSectorMode())" class="text-[8.5px] font-bold text-emerald-400 hover:text-emerald-300">
+      {{ isNewSectorMode() ? 'Selecionar da lista' : '+ Novo Setor' }}
+    </button>
+  </div>
+  <select id="modal_collab_sector_select"
+          #editCollabSectorSelect
+          [class.hidden]="isNewSectorMode()"
+          class="bg-[#071426] text-white border border-[#10213b] focus:border-emerald-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold w-full">
+    @for (sector of availableSectors(); track sector) {
+      <option [value]="sector" [selected]="editingCollab()?.sector === sector">{{ sector }}</option>
+    }
+  </select>
+  <input id="modal_collab_sector_input"
+         #editCollabSectorInput
+         type="text"
+         [value]="editingCollab() ? editingCollab()!.sector : ''"
+         [class.hidden]="!isNewSectorMode()"
+         placeholder="Digite o novo setor..."
+         class="bg-[#071426] text-white border border-[#10213b] focus:border-emerald-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold placeholder:text-slate-600 w-full">
+</div>
+
+                          <div class="flex flex-col gap-1.5 col-span-1 md:col-span-4">
+                            <label for="modal_collab_shift" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Turno</label>
+                            <select id="modal_collab_shift"
+                                    #editCollabShift
+                                    class="bg-[#071426] text-white border border-[#10213b] focus:border-blue-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold">
+                              @for (shiftType of scaleService.shiftTypes(); track shiftType.code) {
+                                <option [value]="shiftType.label" [selected]="editingCollab()?.shift === shiftType.label || editingCollab()?.shift === shiftType.code">{{ shiftType.label }}</option>
                               }
-                            </datalist>
+                            </select>
                           </div>
 
                           <!-- Grupo de Trabalho (Ocultado) -->
@@ -2027,19 +2106,6 @@
                             </select>
                           </div>
 
-                          <!-- Turno de Referência -->
-                          <div class="flex flex-col gap-1.5">
-                            <label for="modal_collab_shift" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Turno de Referência</label>
-                            <select id="modal_collab_shift"
-                                    #editCollabShift
-                                    [value]="editingCollab() ? editingCollab()!.shift : (scaleService.shiftTypes()[0]?.code || 'M')"
-                                    class="bg-[#071426] text-white border border-[#10213b] focus:border-blue-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold">
-                              @for (shiftType of scaleService.shiftTypes(); track shiftType.code) {
-                                <option [value]="shiftType.code">{{ shiftType.code }} - {{ shiftType.label }}</option>
-                              }
-                            </select>
-                          </div>
-
                           <!-- Score (%) -->
                           <div class="hidden flex-col gap-1.5">
                             <label for="modal_collab_score" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Score (%)</label>
@@ -2048,16 +2114,6 @@
                                    type="number"
                                    [value]="editingCollab() ? editingCollab()!.score : 100"
                                    class="bg-[#071426] text-white border border-[#10213b] focus:border-emerald-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold font-mono">
-                          </div>
-
-                          <!-- Data de Aniversário -->
-                          <div class="flex flex-col gap-1.5">
-                            <label for="modal_collab_birthday" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Data de Aniversário</label>
-                            <input id="modal_collab_birthday"
-                                   #editCollabBirthday
-                                   type="date"
-                                   [value]="editingCollab() ? editingCollab()!.birthday : ''"
-                                   class="bg-[#071426] text-white border border-[#10213b] focus:border-blue-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold">
                           </div>
 
                         </div>
@@ -2124,41 +2180,6 @@
                           </div>
                         </div>
 
-                        <!-- Foto de Perfil (Envio de Foto) -->
-                        <div class="flex flex-col gap-1.5">
-                          <label class="font-black text-[9px] uppercase tracking-wider text-slate-400">Foto de Perfil (Opcional)</label>
-                          <div class="flex items-center gap-3 bg-[#071426] border border-[#10213b] rounded-lg p-3 relative overflow-hidden group">
-                            @if (newCollabPhotoData()) {
-                              <div class="relative w-12 h-12 shrink-0 rounded-lg overflow-hidden border border-emerald-500/35 bg-slate-900">
-                                <img [src]="newCollabPhotoData()" 
-                                     alt="Prévia da foto" 
-                                     class="w-full h-full object-cover">
-                                <button (click)="newCollabPhotoData.set(null); $event.stopPropagation()"
-                                        class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity border-none cursor-pointer"
-                                        title="Remover foto">
-                                  <span class="material-icons text-base">delete</span>
-                                </button>
-                              </div>
-                              <div class="flex-1 min-w-0">
-                                <span class="text-[10px] text-emerald-400 font-bold block truncate">Imagem selecionada</span>
-                                <span class="text-[8px] text-slate-500 block">Pronta para salvar</span>
-                              </div>
-                            } @else {
-                              <div class="w-12 h-12 rounded-lg bg-slate-900 border border-[#10213b] flex items-center justify-center text-slate-600 shrink-0">
-                                <span class="material-icons text-xl">add_a_photo</span>
-                              </div>
-                              <div class="flex-1 min-w-0">
-                                <span class="text-[10px] text-slate-400 font-bold block">Clique para enviar foto</span>
-                                <span class="text-[8px] text-slate-500 block">Suporta JPG, JPEG ou PNG</span>
-                              </div>
-                              <input type="file"
-                                     (change)="onCollabPhotoSelected($event)"
-                                     accept="image/*"
-                                     class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
-                            }
-                          </div>
-                        </div>
-
                       </div>
 
                       <!-- Footer Buttons -->
@@ -2170,13 +2191,13 @@
                         </button>
                         
                         @if (editingCollab()) {
-                          <button (click)="saveEditedCollaborator(editingCollab()!.id, editCollabName.value, $any(editCollabRole.value), $any(editCollabGroup.value), $any(editCollabShift.value), $any(editCollabSector.value), 0, +editCollabScore.value || 100, newCollabPhotoData(), editCollabBirthday.value, editCollabSD1Desc.value, editCollabSD1Date.value, editCollabSD2Desc.value, editCollabSD2Date.value, editCollabSD3Desc.value, editCollabSD3Date.value, editCollabSD4Desc.value, editCollabSD4Date.value, editCollabSD5Desc.value, editCollabSD5Date.value)"
+                          <button (click)="saveEditedCollaborator(editingCollab()!.id, editCollabName.value, $any(isNewRoleMode() ? editCollabRoleInput.value : editCollabRoleSelect.value), $any(editCollabGroup.value), $any(editCollabShift.value), $any(isNewSectorMode() ? editCollabSectorInput.value : editCollabSectorSelect.value), 0, +editCollabScore.value || 100, newCollabPhotoData(), editCollabBirthday.value, editCollabSD1Desc.value, editCollabSD1Date.value, editCollabSD2Desc.value, editCollabSD2Date.value, editCollabSD3Desc.value, editCollabSD3Date.value, editCollabSD4Desc.value, editCollabSD4Date.value, editCollabSD5Desc.value, editCollabSD5Date.value)"
                                   class="bg-[#10b981] hover:bg-emerald-600 text-white font-black text-xs px-5 py-2.5 rounded-lg uppercase tracking-wider cursor-pointer border-none shadow-lg shadow-emerald-500/15 flex items-center gap-1.5 select-none transition-all outline-none">
                             <span class="material-icons text-sm">save</span>
                             Salvar Alterações
                           </button>
                         } @else {
-                          <button (click)="registerCollaborator(editCollabName.value, $any(editCollabRole.value), $any(editCollabGroup.value), $any(editCollabShift.value), $any(editCollabSector.value), 0, +editCollabScore.value || 100, newCollabPhotoData() || undefined, editCollabBirthday.value, editCollabSD1Desc.value, editCollabSD1Date.value, editCollabSD2Desc.value, editCollabSD2Date.value, editCollabSD3Desc.value, editCollabSD3Date.value, editCollabSD4Desc.value, editCollabSD4Date.value, editCollabSD5Desc.value, editCollabSD5Date.value); editCollabName.value = ''; editCollabBirthday.value = ''; editCollabSD1Desc.value = ''; editCollabSD1Date.value = ''; editCollabSD2Desc.value = ''; editCollabSD2Date.value = ''; editCollabSD3Desc.value = ''; editCollabSD3Date.value = ''; editCollabSD4Desc.value = ''; editCollabSD4Date.value = ''; editCollabSD5Desc.value = ''; editCollabSD5Date.value = ''; newCollabPhotoData.set(null)"
+                          <button (click)="registerCollaborator(editCollabName.value, $any(isNewRoleMode() ? editCollabRoleInput.value : editCollabRoleSelect.value), $any(editCollabGroup.value), $any(editCollabShift.value), $any(isNewSectorMode() ? editCollabSectorInput.value : editCollabSectorSelect.value), 0, +editCollabScore.value || 100, newCollabPhotoData() || undefined, editCollabBirthday.value, editCollabSD1Desc.value, editCollabSD1Date.value, editCollabSD2Desc.value, editCollabSD2Date.value, editCollabSD3Desc.value, editCollabSD3Date.value, editCollabSD4Desc.value, editCollabSD4Date.value, editCollabSD5Desc.value, editCollabSD5Date.value); editCollabName.value = ''; editCollabBirthday.value = ''; editCollabSD1Desc.value = ''; editCollabSD1Date.value = ''; editCollabSD2Desc.value = ''; editCollabSD2Date.value = ''; editCollabSD3Desc.value = ''; editCollabSD3Date.value = ''; editCollabSD4Desc.value = ''; editCollabSD4Date.value = ''; editCollabSD5Desc.value = ''; editCollabSD5Date.value = ''; newCollabPhotoData.set(null)"
                                   class="bg-[#10b981] hover:bg-emerald-600 text-white font-black text-xs px-5 py-2.5 rounded-lg uppercase tracking-wider cursor-pointer border-none shadow-lg shadow-emerald-500/15 flex items-center gap-1.5 select-none transition-all outline-none">
                             <span class="material-icons text-sm">person_add_alt</span>
                             Cadastrar Colaborador
@@ -2225,7 +2246,7 @@
                 <div class="flex items-center justify-between pb-2 border-b border-[#10213b]/60">
                   <h4 class="font-black text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
                     <span class="material-icons text-amber-500 text-sm">gavel</span>
-                    Regulamento de Escolha de Folgas - Mês de {{ currentMonthName() }}/2026
+                    Regulamento de Escolha de Folgas - Mês de {{ currentMonthName() }}/{{ currentYear() }}
                   </h4>
                   <button (click)="isPortalRulesOpen.set(false)" class="text-slate-400 hover:text-white bg-transparent border-none cursor-pointer outline-none flex items-center justify-center">
                     <span class="material-icons text-xs">close</span>
@@ -2551,7 +2572,7 @@
                     <h4 class="font-black text-xs text-white uppercase tracking-wider">
                       Minhas Folgas Selecionadas ({{ logged.folgaRequests?.length || 0 }}/3)
                     </h4>
-                    <span class="text-[9px] text-slate-400 font-medium">{{ currentMonthName() }} de 2026</span>
+                    <span class="text-[9px] text-slate-400 font-medium">{{ currentMonthName() }} de {{ currentYear() }}</span>
                   </div>
 
                   @if (!logged.folgaRequests || logged.folgaRequests.length === 0) {
@@ -2565,7 +2586,7 @@
                           }
                           <div>
                             <span class="text-xs font-black text-white font-mono block">
-                              {{ req.date.split('-')[2] }}/{{ (selectedMonthIndex() + 1).toString().padStart(2, '0') }}/2026
+                              {{ req.date.split('-')[2] }}/{{ (selectedMonthIndex() + 1).toString().padStart(2, '0') }}/{{ currentYear() }}
                             </span>
                             <span class="text-[9px] font-bold block mt-0.5" [class.text-emerald-400]="req.isPreSelected" [class.text-slate-400]="!req.isPreSelected">
                               {{ req.isPreSelected ? '★ Auto Pré-Selecionada' : '● Solicitada Manual' }}
@@ -2591,7 +2612,7 @@
                   <div>
                     <h4 class="font-black text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
                       <span class="material-icons text-emerald-500 text-sm">calendar_month</span>
-                      Calendário de Escala de Folgas - {{ currentMonthName() }} 2026
+                      Calendário de Escala de Folgas - {{ currentMonthName() }} {{ currentYear() }}
                     </h4>
                     <p class="text-[9px] text-slate-400 mt-1">
                       Clique em um dia para solicitar ou remover folga. Os dias em vermelho atingiram a cota máxima de 2 colaboradores.
@@ -2733,7 +2754,7 @@
         <!-- Details -->
         <div class="text-xs space-y-3 select-none">
           <p class="text-[10px] text-slate-400 leading-relaxed">
-            Você está propondo uma permuta de turno para o dia <span class="text-white font-black font-mono bg-emerald-950 text-emerald-400 border border-emerald-800/30 px-1.5 py-0.5 rounded">{{ permutaSelectedDay() }}/06/2026</span>.
+            Você está propondo uma permuta de turno para o dia <span class="text-white font-black font-mono bg-emerald-950 text-emerald-400 border border-emerald-800/30 px-1.5 py-0.5 rounded">{{ permutaSelectedDay() }}/{{ (selectedMonthIndex() + 1).toString().padStart(2, "0") }}/{{ currentYear() }}</span>.
             Seu turno atual é: <span class="text-white font-black font-mono bg-[#10b981] px-1 py-0.5 rounded ml-1">{{ logC.scale[permutaSelectedDay()] || 'X' }}</span>.
           </p>
 
@@ -2865,7 +2886,7 @@
                       </div>
                       <div class="flex items-center gap-2 shrink-0">
                         <span class="text-[8px] bg-[#10213b] text-slate-400 px-1 py-0.5 rounded font-mono">{{ usr.collab.role }}</span>
-                        <span class="text-[8px] bg-emerald-950 text-emerald-400 px-1 py-0.5 rounded font-mono">{{ usr.collab.shift }}</span>
+                        <span class="text-[8px] bg-emerald-950 text-emerald-400 px-1 py-0.5 rounded font-mono">{{ getShiftLabel(usr.collab) }}</span>
                       </div>
                     </div>
                   }
@@ -3004,7 +3025,7 @@ CREATE TABLE IF NOT EXISTS public.escala_diaria (
 CREATE TABLE IF NOT EXISTS public.sigla_types (
   code VARCHAR(50) PRIMARY KEY,
   label VARCHAR(255) NOT NULL,
-  color VARCHAR(50) NOT NULL,
+  color VARCHAR(255) NOT NULL,
   description TEXT
 );
 
@@ -3012,7 +3033,7 @@ CREATE TABLE IF NOT EXISTS public.shift_types (
   code VARCHAR(50) PRIMARY KEY,
   label VARCHAR(255) NOT NULL,
   hours VARCHAR(50) NOT NULL,
-  color VARCHAR(50) NOT NULL,
+  color VARCHAR(255) NOT NULL,
   "startTime" VARCHAR(50),
   "endTime" VARCHAR(50)
 );

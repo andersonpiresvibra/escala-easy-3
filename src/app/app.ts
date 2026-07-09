@@ -112,11 +112,15 @@ export class App {
   public isPortalCollabListOpen = signal<boolean>(false);
   public isPortalRulesOpen = signal<boolean>(false);
   public isCollabModalOpen = signal<boolean>(false);
+  public isNewSectorMode = signal<boolean>(false);
+  public isNewRoleMode = signal<boolean>(false);
 
   public openCreateCollabModal(): void {
     this.editingCollab.set(null);
     this.newCollabPhotoData.set(null);
     this.isCollabModalOpen.set(true);
+    this.isNewSectorMode.set(false);
+    this.isNewRoleMode.set(false);
   }
 
   // Simulated Day of Month (1 to 30) for Folga request window check
@@ -308,12 +312,17 @@ export class App {
     const foundByLabel = this.scaleService.shiftTypes().find(st => st.label.toUpperCase().trim() === norm);
     if (foundByLabel) return foundByLabel.code;
 
-    if (norm === 'MANHÃ' || norm === 'M') return 'M';
-    if (norm === 'TARDE' || norm === 'T') return 'T';
-    if (norm === 'NOITE' || norm === 'MADRUGADA' || norm === 'N') return 'N';
-    if (norm === 'ADMINISTRATIVO' || norm === 'ADM') return 'ADM';
+    return norm;
+  }
 
-    return 'M';
+    getShiftLabel(collab: any): string {
+    if (!collab || !collab.shift) return '-';
+    const sCode = collab.shift.trim().toUpperCase();
+    const shiftType = this.scaleService.shiftTypes().find(s => 
+      s.code.trim().toUpperCase() === sCode || 
+      s.label.trim().toUpperCase() === sCode
+    );
+    return shiftType ? shiftType.label : collab.shift;
   }
 
   getCollabHours(collab: any): string {
@@ -396,31 +405,26 @@ export class App {
   // Dynamic database-driven filter options (Single Source of Truth)
   availableSectors = computed(() => {
     const collabs = this.scaleService.collaborators();
-    const sectorsSet = new Set<string>();
+    const sectorsSet = new Set<string>(['Geral']);
     collabs.forEach(c => {
       if (c.sector) {
         const s = c.sector.trim();
         if (s) sectorsSet.add(s);
       }
     });
-    const arr = Array.from(sectorsSet);
-    return arr.length > 0 ? arr.sort((a, b) => a.localeCompare(b)) : ['Geral'];
+    return Array.from(sectorsSet).sort((a, b) => a.localeCompare(b));
   });
 
   availableRoles = computed(() => {
     const collabs = this.scaleService.collaborators();
-    const rolesSet = new Set<string>();
+    const rolesSet = new Set<string>(['OPERADOR', 'LIDER', 'SUPERVISOR']);
     collabs.forEach(c => {
       if (c.role) {
         const r = c.role.trim();
         if (r) rolesSet.add(r);
       }
     });
-    const arr = Array.from(rolesSet);
-    if (arr.length === 0) {
-      return ['OPERADOR', 'LIDER', 'SUPERVISOR'];
-    }
-    return arr.sort((a, b) => a.localeCompare(b));
+    return Array.from(rolesSet).sort((a, b) => a.localeCompare(b));
   });
 
   availableShifts = computed(() => {
@@ -478,21 +482,22 @@ export class App {
 
   // Month Selection and Navigation System
   monthsList = [
-    { name: 'Janeiro', days: 31, startDayOfWeek: 4, shortName: 'JAN' },
-    { name: 'Fevereiro', days: 28, startDayOfWeek: 0, shortName: 'FEV' },
-    { name: 'Março', days: 31, startDayOfWeek: 0, shortName: 'MAR' },
-    { name: 'Abril', days: 30, startDayOfWeek: 3, shortName: 'ABR' },
-    { name: 'Maio', days: 31, startDayOfWeek: 5, shortName: 'MAI' },
-    { name: 'Junho', days: 30, startDayOfWeek: 1, shortName: 'JUN' },
-    { name: 'Julho', days: 31, startDayOfWeek: 3, shortName: 'JUL' },
-    { name: 'Agosto', days: 31, startDayOfWeek: 6, shortName: 'AGO' },
-    { name: 'Setembro', days: 30, startDayOfWeek: 2, shortName: 'SET' },
-    { name: 'Outubro', days: 31, startDayOfWeek: 4, shortName: 'OUT' },
-    { name: 'Novembro', days: 30, startDayOfWeek: 0, shortName: 'NOV' },
-    { name: 'Dezembro', days: 31, startDayOfWeek: 2, shortName: 'DEZ' }
+    { name: 'Janeiro', shortName: 'JAN' },
+    { name: 'Fevereiro', shortName: 'FEV' },
+    { name: 'Março', shortName: 'MAR' },
+    { name: 'Abril', shortName: 'ABR' },
+    { name: 'Maio', shortName: 'MAI' },
+    { name: 'Junho', shortName: 'JUN' },
+    { name: 'Julho', shortName: 'JUL' },
+    { name: 'Agosto', shortName: 'AGO' },
+    { name: 'Setembro', shortName: 'SET' },
+    { name: 'Outubro', shortName: 'OUT' },
+    { name: 'Novembro', shortName: 'NOV' },
+    { name: 'Dezembro', shortName: 'DEZ' }
   ];
 
-  selectedMonthIndex = signal<number>(6); // Default is July (index 6)
+  selectedMonthIndex = signal<number>(new Date().getMonth());
+  currentYear = signal<number>(new Date().getFullYear());
   isMonthPickerOpen = signal<boolean>(false);
   showFilters = signal<boolean>(false);
 
@@ -510,7 +515,9 @@ export class App {
 
   // Days list for the selected month dynamically calculated as a signal
   daysInMonth = computed(() => {
-    const count = this.monthsList[this.selectedMonthIndex()].days;
+    const year = this.currentYear();
+    const month = this.selectedMonthIndex();
+    const count = new Date(year, month + 1, 0).getDate();
     return Array.from({ length: count }, (_, i) => i + 1);
   });
 
@@ -569,7 +576,7 @@ export class App {
     {
       id: 'n_1',
       type: 'publish',
-      message: 'Escala oficial de trabalho publicada para Junho de 2026.',
+      message: 'Escala oficial de trabalho publicada para Junho de this.currentYear().',
       timestamp: 'Hoje, 10:15',
       read: false
     },
@@ -688,7 +695,7 @@ export class App {
     effect(() => {
       const month = this.selectedMonthIndex() + 1;
       this.scaleService.activeMonth.set(month);
-      this.scaleService.activeYear.set(2026); // Standard 2026 year for UI
+      this.scaleService.activeYear.set(this.currentYear()); // Standard this.currentYear() year for UI
       if (this.scaleService.activeDb() === 'supabase') {
         this.scaleService.syncSupabase();
       }
@@ -813,57 +820,37 @@ export class App {
   }
 
   getFunctionBadgeClass(collab: any): string {
-    if (!collab) return 'bg-slate-800 text-slate-400 border-slate-700';
+    if (!collab) return 'text-slate-400';
     const isLight = this.isLightTheme();
     if (collab.role === 'LIDER') {
-      return isLight 
-        ? 'bg-amber-100 text-amber-800 border-amber-300' 
-        : 'bg-amber-950 text-amber-400 border-amber-800/40';
+      return isLight ? 'text-amber-700' : 'text-amber-400';
     }
     if (collab.role === 'SUPERVISOR') {
-      return isLight 
-        ? 'bg-purple-100 text-purple-800 border-purple-300' 
-        : 'bg-purple-950 text-purple-400 border-purple-800/40';
+      return isLight ? 'text-purple-700' : 'text-purple-400';
     }
     const sec = (collab.sector || '').toUpperCase().trim();
     if (sec === 'VIP') {
-      return isLight 
-        ? 'bg-cyan-100 text-cyan-800 border-cyan-300' 
-        : 'bg-cyan-950 text-cyan-400 border-cyan-800/40';
+      return isLight ? 'text-cyan-700' : 'text-cyan-400';
     }
     if (sec === 'AERÓDROMO' || sec === 'AERODROMO') {
-      return isLight 
-        ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
-        : 'bg-emerald-950 text-emerald-400 border-emerald-800/40';
+      return isLight ? 'text-emerald-700' : 'text-emerald-400';
     }
     if (sec === 'GESTÃO' || sec === 'GESTAO') {
-      return isLight 
-        ? 'bg-blue-100 text-blue-800 border-blue-300' 
-        : 'bg-blue-950 text-blue-400 border-blue-800/40';
+      return isLight ? 'text-blue-700' : 'text-blue-400';
     }
     if (sec === 'CENTRAL') {
-      return isLight 
-        ? 'bg-indigo-100 text-indigo-800 border-indigo-300' 
-        : 'bg-indigo-950 text-indigo-400 border-indigo-800/40';
+      return isLight ? 'text-indigo-700' : 'text-indigo-400';
     }
     if (sec === 'GERAL') {
-      return isLight 
-        ? 'bg-teal-100 text-teal-800 border-teal-300' 
-        : 'bg-teal-950 text-teal-400 border-teal-800/40';
+      return isLight ? 'text-teal-700' : 'text-teal-400';
     }
     if (sec === 'TESTE') {
-      return isLight 
-        ? 'bg-rose-100 text-rose-800 border-rose-300' 
-        : 'bg-rose-950 text-rose-400 border-rose-800/40';
+      return isLight ? 'text-rose-700' : 'text-rose-400';
     }
     if (sec === 'MANUTENÇÃO' || sec === 'MANUTENCAO') {
-      return isLight 
-        ? 'bg-orange-100 text-orange-800 border-orange-300' 
-        : 'bg-orange-950 text-orange-400 border-orange-800/40';
+      return isLight ? 'text-orange-700' : 'text-orange-400';
     }
-    return isLight 
-      ? 'bg-slate-100 text-slate-800 border-slate-300' 
-      : 'bg-slate-900 text-slate-300 border-slate-800/40';
+    return isLight ? 'text-slate-700' : 'text-slate-300';
   }
 
   // Filters computed list for Login Selection
@@ -918,13 +905,13 @@ export class App {
   // Get Day of Week Name
   getDayOfWeekLabel(day: number): string {
     const weekDays = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
-    const startDay = this.monthsList[this.selectedMonthIndex()].startDayOfWeek;
+    const startDay = new Date(this.currentYear(), this.selectedMonthIndex(), 1).getDay();
     const index = (day - 1 + startDay) % 7; 
     return weekDays[index];
   }
 
   isDayWeekend(day: number): boolean {
-    const startDay = this.monthsList[this.selectedMonthIndex()].startDayOfWeek;
+    const startDay = new Date(this.currentYear(), this.selectedMonthIndex(), 1).getDay();
     const index = (day - 1 + startDay) % 7;
     return index === 6 || index === 0; // Saturday & Sunday
   }
@@ -950,11 +937,11 @@ export class App {
     const today = new Date();
     return today.getDate() === day &&
            today.getMonth() === this.selectedMonthIndex() &&
-           today.getFullYear() === 2026;
+           today.getFullYear() === this.currentYear();
   }
 
   getOffsetDaysArray(): number[] {
-    const startDay = this.monthsList[this.selectedMonthIndex()].startDayOfWeek;
+    const startDay = new Date(this.currentYear(), this.selectedMonthIndex(), 1).getDay();
     return Array.from({ length: startDay }, (_, i) => i);
   }
 
@@ -1428,7 +1415,7 @@ export class App {
     }
 
     // Try finding in shiftTypes first
-    const shift = this.scaleService.shiftTypes().find(s => s.code.trim().toUpperCase() === upperCode);
+    const shift = this.scaleService.shiftTypes().find(s => s.code.trim().toUpperCase() === upperCode || s.label.trim().toUpperCase() === upperCode);
     if (shift) {
       if (this.isLightTheme()) {
         return this.getLightVibrantColor(shift.color, upperCode);
@@ -1501,7 +1488,7 @@ export class App {
     }
 
     // Try finding in shiftTypes first
-    const shift = this.scaleService.shiftTypes().find(s => s.code.trim().toUpperCase() === upperCode);
+    const shift = this.scaleService.shiftTypes().find(s => s.code.trim().toUpperCase() === upperCode || s.label.trim().toUpperCase() === upperCode);
     if (shift && shift.textColor) {
       return shift.textColor;
     }
@@ -1632,11 +1619,8 @@ export class App {
 
     const getShiftCode = (s: string): string => {
       const norm = (s || '').toUpperCase().trim();
-      if (norm === 'M' || norm === 'T' || norm === 'N' || norm === 'ADM') return norm;
-      if (norm === 'MADRUGADA' || norm === 'NOITE') return 'N';
-      if (norm === 'TARDE') return 'T';
-      if (norm === 'ADMINISTRATIVO') return 'ADM';
-      return 'M';
+      const st = this.scaleService.shiftTypes().find(x => x.code.toUpperCase().trim() === norm || x.label.toUpperCase().trim() === norm);
+      return st ? st.code : norm;
     };
 
     const newShiftCode = getShiftCode(shift);
@@ -1657,6 +1641,8 @@ export class App {
       specialDates
     );
     this.isCollabModalOpen.set(false);
+    this.isNewSectorMode.set(false);
+    this.isNewRoleMode.set(false);
   }
 
   savePortalSpecialDates(birthday: string, specialDates: SpecialDate[]) {
@@ -1699,7 +1685,7 @@ export class App {
   }
 
   getFolgaRequestCount(day: number): number {
-    const dateStr = `2026-06-${String(day).padStart(2, '0')}`;
+    const dateStr = `${this.currentYear()}-${String(this.selectedMonthIndex() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     let count = 0;
     for (const collab of this.scaleService.collaborators()) {
       if (collab.folgaRequests) {
@@ -1712,7 +1698,7 @@ export class App {
   }
 
   getCollaboratorsForFolga(day: number): string[] {
-    const dateStr = `2026-06-${String(day).padStart(2, '0')}`;
+    const dateStr = `${this.currentYear()}-${String(this.selectedMonthIndex() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const names: string[] = [];
     for (const collab of this.scaleService.collaborators()) {
       if (collab.folgaRequests && collab.folgaRequests.some(r => r.date === dateStr)) {
@@ -1725,14 +1711,14 @@ export class App {
   isChosenByLogged(day: number): boolean {
     const collab = this.getLoggedCollab();
     if (!collab || !collab.folgaRequests) return false;
-    const dateStr = `2026-06-${String(day).padStart(2, '0')}`;
+    const dateStr = `${this.currentYear()}-${String(this.selectedMonthIndex() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     return collab.folgaRequests.some(r => r.date === dateStr);
   }
 
   isPreSelectedByLogged(day: number): boolean {
     const collab = this.getLoggedCollab();
     if (!collab || !collab.folgaRequests) return false;
-    const dateStr = `2026-06-${String(day).padStart(2, '0')}`;
+    const dateStr = `${this.currentYear()}-${String(this.selectedMonthIndex() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     return collab.folgaRequests.some(r => r.date === dateStr && r.isPreSelected);
   }
 
@@ -1758,29 +1744,29 @@ export class App {
   }
 
   requestPortalFolgaDay(day: number) {
-    const dateStr = `2026-06-${String(day).padStart(2, '0')}`;
+    const dateStr = `${this.currentYear()}-${String(this.selectedMonthIndex() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     this.requestPortalFolga(dateStr);
   }
 
   removePortalFolgaDay(day: number) {
-    const dateStr = `2026-06-${String(day).padStart(2, '0')}`;
+    const dateStr = `${this.currentYear()}-${String(this.selectedMonthIndex() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     this.removePortalFolga(dateStr);
   }
 
   isChosenByCollab(collab: Collaborator, day: number): boolean {
     if (!collab || !collab.folgaRequests) return false;
-    const dateStr = `2026-06-${String(day).padStart(2, '0')}`;
+    const dateStr = `${this.currentYear()}-${String(this.selectedMonthIndex() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     return collab.folgaRequests.some(r => r.date === dateStr);
   }
 
   isPreSelectedByCollab(collab: Collaborator, day: number): boolean {
     if (!collab || !collab.folgaRequests) return false;
-    const dateStr = `2026-06-${String(day).padStart(2, '0')}`;
+    const dateStr = `${this.currentYear()}-${String(this.selectedMonthIndex() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     return collab.folgaRequests.some(r => r.date === dateStr && r.isPreSelected);
   }
 
   requestCollabFolgaDay(collab: Collaborator, day: number) {
-    const dateStr = `2026-06-${String(day).padStart(2, '0')}`;
+    const dateStr = `${this.currentYear()}-${String(this.selectedMonthIndex() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const result = this.scaleService.requestFolga(collab.id, dateStr, this.simulatedDayOfMonth());
     if (!result.success) {
       this.showToast(result.message);
@@ -1790,7 +1776,7 @@ export class App {
   }
 
   removeCollabFolgaDay(collab: Collaborator, day: number) {
-    const dateStr = `2026-06-${String(day).padStart(2, '0')}`;
+    const dateStr = `${this.currentYear()}-${String(this.selectedMonthIndex() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const result = this.scaleService.removeFolga(collab.id, dateStr, this.simulatedDayOfMonth());
     if (!result.success) {
       this.showToast(result.message);
@@ -2277,6 +2263,8 @@ Verifique se os nomes no PDF correspondem aos nomes no sistema.`;
     this.editingCollab.set(collab);
     this.newCollabPhotoData.set(collab.photo || null);
     this.isCollabModalOpen.set(true);
+    this.isNewSectorMode.set(false);
+    this.isNewRoleMode.set(false);
     this.showToast(`Modo Edição: Editando ${collab.name}`);
   }
 
@@ -2284,6 +2272,8 @@ Verifique se os nomes no PDF correspondem aos nomes no sistema.`;
     this.editingCollab.set(null);
     this.newCollabPhotoData.set(null);
     this.isCollabModalOpen.set(false);
+    this.isNewSectorMode.set(false);
+    this.isNewRoleMode.set(false);
   }
 
   saveEditedCollaborator(
@@ -2323,11 +2313,8 @@ Verifique se os nomes no PDF correspondem aos nomes no sistema.`;
 
     const getShiftCode = (s: string): string => {
       const norm = (s || '').toUpperCase().trim();
-      if (norm === 'M' || norm === 'T' || norm === 'N' || norm === 'ADM') return norm;
-      if (norm === 'MADRUGADA' || norm === 'NOITE') return 'N';
-      if (norm === 'TARDE') return 'T';
-      if (norm === 'ADMINISTRATIVO') return 'ADM';
-      return 'M';
+      const st = this.scaleService.shiftTypes().find(x => x.code.toUpperCase().trim() === norm || x.label.toUpperCase().trim() === norm);
+      return st ? st.code : norm;
     };
 
     const oldShiftCode = getShiftCode(target.shift);

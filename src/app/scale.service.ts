@@ -72,7 +72,7 @@ export interface Collaborator {
   bhBalance: number;
   score: number;
   photoUrl?: string;
-  scale: { [day: number]: string }; // Day 1 to 30 of June 2026
+  scale: { [day: number]: string }; // Day 1 to 30 of June new Date().getFullYear()
   photo?: string;
   birthday?: string; // Format: "YYYY-MM-DD"
   specialDates?: SpecialDate[];
@@ -186,7 +186,7 @@ export class ScaleService {
     (localStorage.getItem('active_db') as 'firebase' | 'supabase') || 'supabase'
   );
   activeMonth = signal<number>(7); // Default is July (7)
-  activeYear = signal<number>(2026); // Default is 2026
+  activeYear = signal<number>(new Date().getFullYear()); // Default is new Date().getFullYear()
   supabaseUrl = signal<string>(this.getInitialSupabaseUrl());
   supabaseKey = signal<string>(this.getInitialSupabaseKey());
   databaseError = signal<string | null>(null);
@@ -215,16 +215,8 @@ export class ScaleService {
   private firebaseUnsubscribes: (() => void)[] = [];
 
   constructor() {
-    const storedDb = localStorage.getItem('active_db');
-    if (storedDb === 'firebase' || storedDb === 'supabase') {
-      this.activeDb.set(storedDb);
-    } else if (supabaseEnv && supabaseEnv.url && supabaseEnv.key) {
-      this.activeDb.set('supabase');
-      localStorage.setItem('active_db', 'supabase');
-    } else {
-      this.activeDb.set('firebase');
-      localStorage.setItem('active_db', 'firebase');
-    }
+    this.activeDb.set('supabase');
+    localStorage.setItem('active_db', 'supabase');
     
     if (this.activeDb() === 'firebase') {
       this.initFirebaseSync();
@@ -1465,7 +1457,7 @@ export class ScaleService {
     let maxConsecutiveWorkDays = 0;
     let totalHoursWorked = 0;
     let alertaLimite = false;
-    const daysCount = 30; // June 2026 has 30 days
+    const daysCount = 30; // Dynamic days
     
     for (let d = 1; d <= daysCount; d++) {
       const val = (scale[d] || '-').toUpperCase().trim();
