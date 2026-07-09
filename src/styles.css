@@ -5,3 +5,11 @@ body {
   margin: 0;
   padding: 0;
 }
+
+app-root:nth-of-type(1) > div#main_app_layout:nth-of-type(1) > main:nth-of-type(1) > section#primary_workspace_tabs:nth-of-type(1) > div#shifts_tab_content:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > h3:nth-of-type(1) {
+  color: #ffffff !important;
+}
+
+app-root:nth-of-type(1) > div#main_app_layout:nth-of-type(1) > main:nth-of-type(1) > section#primary_workspace_tabs:nth-of-type(1) > div#shifts_tab_content:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > h3:nth-of-type(1) > span:nth-of-type(1) {
+  color: #ffffff !important;
+}

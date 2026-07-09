@@ -459,7 +459,7 @@
                         class="bg-[#030a14] border border-[#10213b] text-white text-xs pl-2 pr-5 py-2 rounded-lg outline-none focus:border-emerald-500 hover:border-emerald-500 font-bold cursor-pointer transition-colors w-[140px]">
                   <option value="TODOS">Função</option>
                   @for (role of availableRoles(); track role) {
-                    <option [value]="role">{{ role }}</option>
+                    <option [value]="role" [selected]="editingCollab()?.role?.trim() === role">{{ role }}</option>
                   }
                 </select>
 
@@ -469,7 +469,7 @@
                         class="bg-[#030a14] border border-[#10213b] text-white text-xs pl-2 pr-5 py-2 rounded-lg outline-none focus:border-emerald-500 hover:border-emerald-500 font-bold cursor-pointer transition-colors w-[140px]">
                   <option value="TODOS">Setores</option>
                   @for (sector of availableSectors(); track sector) {
-                    <option [value]="sector">{{ sector }}</option>
+                    <option [value]="sector" [selected]="editingCollab()?.sector?.trim() === sector">{{ sector }}</option>
                   }
                 </select>
 
@@ -567,23 +567,22 @@
               <thead>
                 <!-- Months & Header Days Row -->
                 <tr class="border-b border-[#10213b] bg-[#071426] text-slate-400 text-[8px] font-black tracking-widest uppercase select-none sticky top-0 z-30">
-                  <th class="py-2.5 px-5 md:px-6 min-w-[440px] sticky top-0 left-0 bg-[#071426] border-r border-[#10213b] z-40 shadow-md">
+                  <th class="py-2.5 px-3 min-w-[220px] max-w-[220px] w-[220px] sticky top-0 left-0 bg-[#071426] border-r border-[#10213b] z-40 shadow-md">
                     <div class="grid grid-cols-12 gap-2 text-[10px] font-black uppercase tracking-wider text-slate-400 w-full items-center">
-    <span class="col-span-4 text-left">Colaborador</span>
-    <span class="col-span-3 text-center">Função</span>
+    <span class="col-span-6 text-left">Colaborador</span>
+    <span class="col-span-4 text-center">Função</span>
     <span class="col-span-2 text-center">Turno</span>
-    <span class="col-span-3 text-center">Horário</span>
   </div>
                   </th>
                   @for (day of daysInMonth(); track day) {
-                    <th class="py-1 px-1 text-center min-w-[32px] border-r border-[#10213b] sticky top-0 z-30 day-header-cell transition-all"
+                    <th class="p-0 text-center w-[40px] min-w-[40px] max-w-[40px] h-[40px] border-r border-[#10213b] sticky top-0 z-30 day-header-cell transition-all"
                         [class.special-day]="isDaySpecial(day)"
                         [class.text-slate-200]="isDaySpecial(day)"
                         [class.bg-[#0d2e1f]]="isToday(day)"
                         [class.bg-[#071426]]="!isToday(day)"
                         [class.border-x-2]="isToday(day)"
                         [class.border-x-emerald-500]="isToday(day)">
-                      <div class="flex flex-col items-center justify-center">
+                      <div class="flex flex-col items-center justify-center w-full h-full">
                         @if (isToday(day)) {
                           <span class="text-[7px] font-black uppercase tracking-wider text-emerald-400 leading-none mb-1">Hoje</span>
                         }
@@ -613,10 +612,10 @@
                   @for (collab of filteredCollaborators(); track collab.id) {
                     <tr class="hover:bg-emerald-950/40 transition-colors" [class.bg-amber-950]="editingRowCollabId() === collab.id">
                       <!-- Collab details sticky col -->
-                      <td class="py-1.5 pl-5 pr-4 md:pl-6 md:pr-4 sticky left-0 bg-[#030a14] border-r border-[#10213b] z-10 shadow-sm min-w-[440px]">
+                      <td class="py-1.5 px-3 sticky left-0 bg-[#030a14] border-r border-[#10213b] z-10 shadow-sm min-w-[220px] max-w-[220px] w-[220px]">
                         <div class="grid grid-cols-12 gap-2 w-full items-center">
                           <!-- 1. COLABORADOR -->
-                          <div class="col-span-4 flex items-center gap-2 min-w-0">
+                          <div class="col-span-6 flex items-center gap-2 min-w-0">
                             <div class="relative shrink-0">
                               <img [src]="getCollabPhoto(collab)" 
                                    alt="Avatar"
@@ -630,7 +629,7 @@
                           </div>
 
                           <!-- 2. FUNÇÃO -->
-                          <div class="col-span-3 text-center">
+                          <div class="col-span-4 text-center">
                             <span class="text-[8px] font-black tracking-wider uppercase inline-block font-sans text-center transition-all"
                                   [class]="getFunctionBadgeClass(collab)">
                               {{ getCollabFunction(collab) }}
@@ -651,10 +650,7 @@
                             </div>
                           </div>
 
-                          <!-- 4. HORÁRIO -->
-                          <div class="col-span-3 text-center text-[10px] font-mono font-bold text-slate-300">
-                            {{ getCollabHours(collab) }}
-                          </div>
+                          
                         </div>
                       </td>
 
@@ -663,7 +659,7 @@
                         @let cellValRaw = editingRowCollabId() === collab.id ? (editingRowScaleDraft()[day] || '-') : (collab.scale[day] || '-');
                         @let cellVal = (cellValRaw === '-') ? getShiftCode(collab.shift) : cellValRaw;
                         @let events = getSpecialEventsForDay(collab, day);
-                        <td class="py-1 px-0.5 text-center border-r border-[#10213b] relative cursor-pointer group-cell day-grid-cell transition-all"
+                        <td class="p-0 text-center w-[40px] min-w-[40px] max-w-[40px] h-[40px] border-r border-[#10213b] relative cursor-pointer group-cell day-grid-cell transition-all"
                             [class.special-day]="isDaySpecial(day)"
                             [class.bg-emerald-500/10]="isToday(day)"
                             [class.border-x-2]="isToday(day)"
@@ -683,7 +679,7 @@
                           }
 
                           <!-- Render dynamic cell colors based on values (either draft or saved) -->
-                          <div class="w-full h-full min-h-[22px] flex items-center justify-center font-bold text-[9px] transition-transform"
+                          <div class="w-full h-full flex items-center justify-center font-bold text-[9px] transition-transform"
                                [style.background-color]="getShiftOrSiglaColor(cellVal, day)"
                                [style.color]="getShiftOrSiglaTextColor(cellVal)"
                                [class.ring-2]="editingRowCollabId() === collab.id"
@@ -737,7 +733,7 @@
                       [class.bg-emerald-50/60]="isLightTheme()"
                       id="matrix_summary_row">
                     <!-- Column 1: Header / Title -->
-                    <td class="py-2.5 pl-5 pr-4 md:pl-7 md:pr-5 sticky left-0 bottom-0 z-40 shadow-md min-w-[260px]"
+                    <td class="py-2.5 px-3 sticky left-0 bottom-0 z-40 shadow-md min-w-[220px] max-w-[220px] w-[220px]"
                         [class.bg-[#07172e]]="!isLightTheme()"
                         [class.border-r]="true"
                         [class.border-[#10213b]]="!isLightTheme()"
@@ -766,7 +762,7 @@
                     <!-- Month Calendar Cells with Daily Working Counts -->
                     @for (day of daysInMonth(); track day) {
                       @let currentCount = dailyWorkingCounts()[day] || 0;
-                      <td class="py-1 px-0.5 text-center sticky bottom-0 z-30 border-r"
+                      <td class="p-0 text-center w-[40px] min-w-[40px] max-w-[40px] h-[40px] sticky bottom-0 z-30 border-r"
                           [class.border-[#10213b]]="!isLightTheme() && !isToday(day)"
                           [class.border-t-2]="true"
                           [class.border-[#10b981]/40]="!isLightTheme()"
@@ -785,7 +781,7 @@
                           [class.border-x-2]="isToday(day)"
                           [class.border-x-emerald-500]="isToday(day)"
                           [title]="'Dia ' + day + ': ' + currentCount + ' colaboradores efetivos (T / horários)'">
-                        <div class="w-full h-full min-h-[22px] flex items-center justify-center text-[10px] font-black">
+                        <div class="w-full h-full flex items-center justify-center text-[10px] font-black">
                           {{ currentCount }}
                         </div>
                       </td>
@@ -818,8 +814,8 @@
           <!-- FIXED HEADER -->
           <div class="p-4 md:p-6 pb-3 border-b border-[#10213b] flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0" style="height: 44px; background-color: #10B981; color: #ffffff;">
             <div>
-              <h3 class="font-black text-sm uppercase tracking-tight flex items-center gap-1.5" style="color: #ffffff;">
-                <span class="material-icons text-blue-400" style="color: #ffffff;">tune</span>
+              <h3 class="font-black text-sm uppercase tracking-tight text-white flex items-center gap-1.5">
+                <span class="material-icons text-white">tune</span>
                 Painel de Gerenciamento de Turnos
               </h3>
             </div>
@@ -1159,7 +1155,7 @@
           <!-- FIXED HEADER -->
           <div class="p-4 md:p-6 pb-3 border-b border-[#10213b] flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0" style="height: 44px; background-color: #10B981; color: #ffffff;">
             <div>
-              <h3 class="font-black text-sm uppercase tracking-tight flex items-center gap-1.5" style="color: #ffffff;">
+              <h3 class="font-black text-sm uppercase tracking-tight text-white flex items-center gap-1.5">
                 <span class="material-icons text-blue-400" style="color: #ffffff;">label</span>
                 Gerenciamento de Siglas
               </h3>
@@ -1838,7 +1834,7 @@
                               class="bg-transparent text-slate-300 outline-none text-[11px] font-bold border-none cursor-pointer py-0.5 pl-0.5 pr-2">
                         <option value="TODOS">Cargos</option>
                         @for (role of availableRoles(); track role) {
-                          <option [value]="role">{{ role }}</option>
+                          <option [value]="role" [selected]="editingCollab()?.role?.trim() === role">{{ role }}</option>
                         }
                       </select>
                     </div>
@@ -1885,7 +1881,7 @@
                         <th class="py-3 px-4 md:px-6 bg-[#071426]">Função</th>
                         <th class="py-3 px-4 md:px-6 bg-[#071426]">Setor</th>
                         <th class="py-3 px-4 md:px-6 bg-[#071426]">Turno</th>
-                        <th class="py-3 px-4 md:px-6 bg-[#071426]">Horário</th>
+                        
                         <th class="py-3 px-4 md:px-6 bg-[#071426] text-center">Ações</th>
                       </tr>
                     </thead>
@@ -1929,13 +1925,7 @@
                           <!-- Turno -->
                           <td class="py-3.5 px-4 md:px-6 font-mono uppercase text-slate-400 font-bold">{{ getShiftLabel(collab) }}</td>
 
-                          <!-- Horário -->
-                          <td class="py-3.5 px-4 md:px-6 font-mono text-[9px] text-slate-400 font-bold">
-                            <div class="flex items-center gap-1">
-                              <span class="material-icons text-[10px] text-emerald-400">schedule</span>
-                              <span>{{ getCollabHours(collab) }}</span>
-                            </div>
-                          </td>
+                          
 
                           <!-- Ações -->
                           <td class="py-3.5 px-4 md:px-6 text-center flex items-center justify-center gap-1.5">
@@ -2047,10 +2037,11 @@
   </div>
   <select id="modal_collab_role_select"
          #editCollabRoleSelect
+         [value]="(editingCollab()?.role || 'OPERADOR').trim()"
          [class.hidden]="isNewRoleMode()"
          class="bg-[#071426] text-white border border-[#10213b] focus:border-emerald-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold w-full">
     @for (role of availableRoles(); track role) {
-      <option [value]="role" [selected]="editingCollab()?.role === role">{{ role }}</option>
+      <option [value]="role" [selected]="editingCollab()?.role?.trim() === role">{{ role }}</option>
     }
   </select>
   <input id="modal_collab_role_input"
@@ -2071,10 +2062,11 @@
   </div>
   <select id="modal_collab_sector_select"
           #editCollabSectorSelect
+          [value]="(editingCollab()?.sector || availableSectors()[0]).trim()"
           [class.hidden]="isNewSectorMode()"
           class="bg-[#071426] text-white border border-[#10213b] focus:border-emerald-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold w-full">
     @for (sector of availableSectors(); track sector) {
-      <option [value]="sector" [selected]="editingCollab()?.sector === sector">{{ sector }}</option>
+      <option [value]="sector" [selected]="editingCollab()?.sector?.trim() === sector">{{ sector }}</option>
     }
   </select>
   <input id="modal_collab_sector_input"
@@ -2090,9 +2082,10 @@
                             <label for="modal_collab_shift" class="font-black text-[9px] uppercase tracking-wider text-slate-400">Turno</label>
                             <select id="modal_collab_shift"
                                     #editCollabShift
+                                    [value]="editingCollab() ? getShiftLabel(editingCollab()) : (scaleService.shiftTypes()[0]?.label || 'M')"
                                     class="bg-[#071426] text-white border border-[#10213b] focus:border-blue-500 outline-none rounded-lg px-3 py-2 text-xs font-semibold">
                               @for (shiftType of scaleService.shiftTypes(); track shiftType.code) {
-                                <option [value]="shiftType.label" [selected]="editingCollab()?.shift === shiftType.label || editingCollab()?.shift === shiftType.code">{{ shiftType.label }}</option>
+                                <option [value]="shiftType.label" [selected]="editingCollab()?.shift?.trim() === shiftType.label.trim() || editingCollab()?.shift?.trim() === shiftType.code.trim()">{{ shiftType.label }}</option>
                               }
                             </select>
                           </div>
