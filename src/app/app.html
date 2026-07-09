@@ -567,10 +567,10 @@
               <thead>
                 <!-- Months & Header Days Row -->
                 <tr class="border-b border-[#10213b] bg-[#071426] text-slate-400 text-[8px] font-black tracking-widest uppercase select-none sticky top-0 z-30">
-                  <th class="py-2.5 px-3 min-w-[220px] max-w-[220px] w-[220px] sticky top-0 left-0 bg-[#071426] border-r border-[#10213b] z-40 shadow-md">
+                  <th class="py-2.5 px-3 w-[310px] min-w-[310px] max-w-[310px] md:w-[360px] md:min-w-[360px] md:max-w-[360px] sticky top-0 left-0 bg-[#071426] border-r border-[#10213b] z-40 shadow-md">
                     <div class="grid grid-cols-12 gap-2 text-[10px] font-black uppercase tracking-wider text-slate-400 w-full items-center">
-    <span class="col-span-6 text-left">Colaborador</span>
-    <span class="col-span-4 text-center">Função</span>
+    <span class="col-span-8 text-left">Colaborador</span>
+    <span class="col-span-2 text-center">Função</span>
     <span class="col-span-2 text-center">Turno</span>
   </div>
                   </th>
@@ -612,10 +612,10 @@
                   @for (collab of filteredCollaborators(); track collab.id) {
                     <tr class="hover:bg-emerald-950/40 transition-colors" [class.bg-amber-950]="editingRowCollabId() === collab.id">
                       <!-- Collab details sticky col -->
-                      <td class="py-1.5 px-3 sticky left-0 bg-[#030a14] border-r border-[#10213b] z-10 shadow-sm min-w-[220px] max-w-[220px] w-[220px]">
+                      <td class="py-1.5 px-3 sticky left-0 bg-[#030a14] border-r border-[#10213b] z-10 shadow-sm w-[310px] min-w-[310px] max-w-[310px] md:w-[360px] md:min-w-[360px] md:max-w-[360px]">
                         <div class="grid grid-cols-12 gap-2 w-full items-center">
                           <!-- 1. COLABORADOR -->
-                          <div class="col-span-6 flex items-center gap-2 min-w-0">
+                          <div class="col-span-8 flex items-center gap-2 min-w-0">
                             <div class="relative shrink-0">
                               <img [src]="getCollabPhoto(collab)" 
                                    alt="Avatar"
@@ -629,7 +629,7 @@
                           </div>
 
                           <!-- 2. FUNÇÃO -->
-                          <div class="col-span-4 text-center">
+                          <div class="col-span-2 text-center">
                             <span class="text-[8px] font-black tracking-wider uppercase inline-block font-sans text-center transition-all"
                                   [class]="getFunctionBadgeClass(collab)">
                               {{ getCollabFunction(collab) }}
@@ -733,7 +733,7 @@
                       [class.bg-emerald-50/60]="isLightTheme()"
                       id="matrix_summary_row">
                     <!-- Column 1: Header / Title -->
-                    <td class="py-2.5 px-3 sticky left-0 bottom-0 z-40 shadow-md min-w-[220px] max-w-[220px] w-[220px]"
+                    <td class="py-2.5 px-3 sticky left-0 bottom-0 z-40 shadow-md w-[310px] min-w-[310px] max-w-[310px] md:w-[360px] md:min-w-[360px] md:max-w-[360px]"
                         [class.bg-[#07172e]]="!isLightTheme()"
                         [class.border-r]="true"
                         [class.border-[#10213b]]="!isLightTheme()"
@@ -1896,7 +1896,7 @@
                                    referrerpolicy="no-referrer"
                                    class="w-7 h-7 rounded-full object-cover border border-emerald-500/20 bg-slate-900 shadow-sm shrink-0">
                               <div class="flex flex-col">
-                                <span class="font-bold text-white block">{{ collab.name }}</span>
+                                <span class="font-bold text-white block whitespace-nowrap">{{ collab.name }}</span>
                                 <span class="text-[8px] text-slate-500 font-mono block">ID: {{ collab.id }}</span>
                               </div>
                             </div>
@@ -2111,68 +2111,7 @@
 
                         </div>
 
-                        <!-- Seção Datas Especiais (Máx 5 com prioridades) -->
-                        <div class="p-4 rounded-lg space-y-3 transition-all border"
-                             [style.background-color]="isLightTheme() ? '#ffffff' : 'rgba(7, 20, 38, 0.5)'"
-                             [style.border-color]="isLightTheme() ? '#cbd5e1' : '#10213b'"
-                             [style.box-shadow]="isLightTheme() ? '0 8px 16px -4px rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' : 'none'">
-                          <div class="flex items-center justify-between border-b pb-2 transition-colors"
-                               [style.border-color]="isLightTheme() ? '#f1f5f9' : '#10213b'">
-                            <span class="block text-[9px] font-black uppercase tracking-wider"
-                                  [class.text-slate-500]="isLightTheme()"
-                                  [class.text-slate-400]="!isLightTheme()">Datas Especiais &amp; Prioridades</span>
-                            <span class="text-[8px] px-2 py-0.5 rounded font-bold uppercase transition-colors"
-                                  [style.background-color]="isLightTheme() ? '#f8fafc' : '#10213b'"
-                                  [style.color]="isLightTheme() ? '#b45309' : '#f59e0b'"
-                                  [style.border]="isLightTheme() ? '1px solid #cbd5e1' : 'none'">P1 (Maior) a P5 (Menor)</span>
-                          </div>
-                          
-                          <!-- Linha Data Especial 1 (Prioridade 1) -->
-                          <div class="grid grid-cols-12 gap-2">
-                            <input type="text" #editCollabSD1Desc [value]="editingCollab() && editingCollab()!.specialDates[0] ? editingCollab()!.specialDates[0].description : ''" placeholder="Ex: Aniv. Casamento" class="col-span-6 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
-                            <input type="date" #editCollabSD1Date [value]="editingCollab() && editingCollab()!.specialDates[0] ? editingCollab()!.specialDates[0].date : ''" class="col-span-4 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
-                            <div class="col-span-2 text-center text-[10px] font-black text-amber-500 py-1.5 rounded-lg flex items-center justify-center border transition-all"
-                                 [style.background-color]="isLightTheme() ? '#f8fafc' : '#071426'"
-                                 [style.border-color]="isLightTheme() ? '#cbd5e1' : '#10213b'">P1</div>
-                          </div>
-
-                          <!-- Linha Data Especial 2 (Prioridade 2) -->
-                          <div class="grid grid-cols-12 gap-2">
-                            <input type="text" #editCollabSD2Desc [value]="editingCollab() && editingCollab()!.specialDates[1] ? editingCollab()!.specialDates[1].description : ''" placeholder="Ex: Aniv. Filho" class="col-span-6 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
-                            <input type="date" #editCollabSD2Date [value]="editingCollab() && editingCollab()!.specialDates[1] ? editingCollab()!.specialDates[1].date : ''" class="col-span-4 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
-                            <div class="col-span-2 text-center text-[10px] font-black text-amber-500 py-1.5 rounded-lg flex items-center justify-center border transition-all"
-                                 [style.background-color]="isLightTheme() ? '#f8fafc' : '#071426'"
-                                 [style.border-color]="isLightTheme() ? '#cbd5e1' : '#10213b'">P2</div>
-                          </div>
-
-                          <!-- Linha Data Especial 3 (Prioridade 3) -->
-                          <div class="grid grid-cols-12 gap-2">
-                            <input type="text" #editCollabSD3Desc [value]="editingCollab() && editingCollab()!.specialDates[2] ? editingCollab()!.specialDates[2].description : ''" placeholder="Ex: Aniv. Cônjuge" class="col-span-6 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
-                            <input type="date" #editCollabSD3Date [value]="editingCollab() && editingCollab()!.specialDates[2] ? editingCollab()!.specialDates[2].date : ''" class="col-span-4 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
-                            <div class="col-span-2 text-center text-[10px] font-black text-amber-500 py-1.5 rounded-lg flex items-center justify-center border transition-all"
-                                 [style.background-color]="isLightTheme() ? '#f8fafc' : '#071426'"
-                                 [style.border-color]="isLightTheme() ? '#cbd5e1' : '#10213b'">P3</div>
-                          </div>
-
-                          <!-- Linha Data Especial 4 (Prioridade 4) -->
-                          <div class="grid grid-cols-12 gap-2">
-                            <input type="text" #editCollabSD4Desc [value]="editingCollab() && editingCollab()!.specialDates[3] ? editingCollab()!.specialDates[3].description : ''" placeholder="Ex: Aniversário Mãe" class="col-span-6 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
-                            <input type="date" #editCollabSD4Date [value]="editingCollab() && editingCollab()!.specialDates[3] ? editingCollab()!.specialDates[3].date : ''" class="col-span-4 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
-                            <div class="col-span-2 text-center text-[10px] font-black text-amber-500 py-1.5 rounded-lg flex items-center justify-center border transition-all"
-                                 [style.background-color]="isLightTheme() ? '#f8fafc' : '#071426'"
-                                 [style.border-color]="isLightTheme() ? '#cbd5e1' : '#10213b'">P4</div>
-                          </div>
-
-                          <!-- Linha Data Especial 5 (Prioridade 5) -->
-                          <div class="grid grid-cols-12 gap-2">
-                            <input type="text" #editCollabSD5Desc [value]="editingCollab() && editingCollab()!.specialDates[4] ? editingCollab()!.specialDates[4].description : ''" placeholder="Ex: Outra Data Magna" class="col-span-6 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
-                            <input type="date" #editCollabSD5Date [value]="editingCollab() && editingCollab()!.specialDates[4] ? editingCollab()!.specialDates[4].date : ''" class="col-span-4 bg-[#071426] text-white border border-[#10213b] rounded-lg px-2.5 py-1.5 text-[10px] font-medium outline-none focus:border-blue-500">
-                            <div class="col-span-2 text-center text-[10px] font-black text-amber-500 py-1.5 rounded-lg flex items-center justify-center border transition-all"
-                                 [style.background-color]="isLightTheme() ? '#f8fafc' : '#071426'"
-                                 [style.border-color]="isLightTheme() ? '#cbd5e1' : '#10213b'">P5</div>
-                          </div>
-                        </div>
-
+                        <!-- Seção de Datas Especiais foi movida para o Portal do Colaborador -->
                       </div>
 
                       <!-- Footer Buttons -->
@@ -2184,13 +2123,13 @@
                         </button>
                         
                         @if (editingCollab()) {
-                          <button (click)="saveEditedCollaborator(editingCollab()!.id, editCollabName.value, $any(isNewRoleMode() ? editCollabRoleInput.value : editCollabRoleSelect.value), $any(editCollabGroup.value), $any(editCollabShift.value), $any(isNewSectorMode() ? editCollabSectorInput.value : editCollabSectorSelect.value), 0, +editCollabScore.value || 100, newCollabPhotoData(), editCollabBirthday.value, editCollabSD1Desc.value, editCollabSD1Date.value, editCollabSD2Desc.value, editCollabSD2Date.value, editCollabSD3Desc.value, editCollabSD3Date.value, editCollabSD4Desc.value, editCollabSD4Date.value, editCollabSD5Desc.value, editCollabSD5Date.value)"
+                          <button (click)="saveEditedCollaborator(editingCollab()!.id, editCollabName.value, $any(isNewRoleMode() ? editCollabRoleInput.value : editCollabRoleSelect.value), $any(editCollabGroup.value), $any(editCollabShift.value), $any(isNewSectorMode() ? editCollabSectorInput.value : editCollabSectorSelect.value), 0, +editCollabScore.value || 100, newCollabPhotoData(), editCollabBirthday.value, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined)"
                                   class="bg-[#10b981] hover:bg-emerald-600 text-white font-black text-xs px-5 py-2.5 rounded-lg uppercase tracking-wider cursor-pointer border-none shadow-lg shadow-emerald-500/15 flex items-center gap-1.5 select-none transition-all outline-none">
                             <span class="material-icons text-sm">save</span>
                             Salvar Alterações
                           </button>
                         } @else {
-                          <button (click)="registerCollaborator(editCollabName.value, $any(isNewRoleMode() ? editCollabRoleInput.value : editCollabRoleSelect.value), $any(editCollabGroup.value), $any(editCollabShift.value), $any(isNewSectorMode() ? editCollabSectorInput.value : editCollabSectorSelect.value), 0, +editCollabScore.value || 100, newCollabPhotoData() || undefined, editCollabBirthday.value, editCollabSD1Desc.value, editCollabSD1Date.value, editCollabSD2Desc.value, editCollabSD2Date.value, editCollabSD3Desc.value, editCollabSD3Date.value, editCollabSD4Desc.value, editCollabSD4Date.value, editCollabSD5Desc.value, editCollabSD5Date.value); editCollabName.value = ''; editCollabBirthday.value = ''; editCollabSD1Desc.value = ''; editCollabSD1Date.value = ''; editCollabSD2Desc.value = ''; editCollabSD2Date.value = ''; editCollabSD3Desc.value = ''; editCollabSD3Date.value = ''; editCollabSD4Desc.value = ''; editCollabSD4Date.value = ''; editCollabSD5Desc.value = ''; editCollabSD5Date.value = ''; newCollabPhotoData.set(null)"
+                          <button (click)="registerCollaborator(editCollabName.value, $any(isNewRoleMode() ? editCollabRoleInput.value : editCollabRoleSelect.value), $any(editCollabGroup.value), $any(editCollabShift.value), $any(isNewSectorMode() ? editCollabSectorInput.value : editCollabSectorSelect.value), 0, +editCollabScore.value || 100, newCollabPhotoData() || undefined, editCollabBirthday.value, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined); editCollabName.value = ''; editCollabBirthday.value = ''; newCollabPhotoData.set(null)"
                                   class="bg-[#10b981] hover:bg-emerald-600 text-white font-black text-xs px-5 py-2.5 rounded-lg uppercase tracking-wider cursor-pointer border-none shadow-lg shadow-emerald-500/15 flex items-center gap-1.5 select-none transition-all outline-none">
                             <span class="material-icons text-sm">person_add_alt</span>
                             Cadastrar Colaborador
@@ -2209,70 +2148,26 @@
       @if (activeSubTab() === 'portal') {
         <div class="p-4 md:p-6 lg:p-8 space-y-6 animate-fade-in font-sans w-full flex-1 overflow-y-auto scrollbar-thin max-w-full" id="portal_tab_content">
           <!-- SIMULATION BAR & QUICK SWITCH -->
-          <div class="bg-[#030a14] border border-[#10213b] rounded-lg p-5 shadow-xl space-y-4">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#10213b]/60">
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <h3 class="font-black text-sm text-white uppercase tracking-wider">Sessão do Colaborador</h3>
+          @if (!getLoggedCollab()) {
+            <div class="bg-[#030a14] border border-[#10213b] rounded-lg p-5 shadow-xl space-y-4">
+              <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#10213b]/60">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <h3 class="font-black text-sm text-white uppercase tracking-wider">Sessão do Colaborador</h3>
+                  </div>
+                  <p class="text-[10px] text-slate-400 mt-1">
+                    Selecione qualquer colaborador cadastrado na base para simular sua seção pessoal e realizar escolhas de folgas.
+                  </p>
                 </div>
-                <p class="text-[10px] text-slate-400 mt-1">
-                  Selecione qualquer colaborador cadastrado na frota para simular sua seção pessoal e realizar escolhas de folgas.
-                </p>
               </div>
 
-              <!-- Simulated Date (Day of Month) & Rules Toggle -->
-              <div class="flex flex-wrap items-center gap-3 shrink-0">
-                <button id="btn_portal_regulamento"
-                        (click)="isPortalRulesOpen.set(!isPortalRulesOpen())"
-                        class="px-3.5 py-2 bg-[#10b981] hover:bg-emerald-600 text-white rounded-lg border border-[#10213b] flex items-center gap-1.5 transition-all outline-none cursor-pointer text-xs font-black select-none">
-                  <span class="material-icons text-sm text-white">info</span>
-                  <span>Regulamento</span>
-                  <span class="material-icons text-xs transition-transform duration-200" [class.rotate-180]="isPortalRulesOpen()">expand_more</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- COLLAPSIBLE REGULATIONS SECTION -->
-            @if (isPortalRulesOpen()) {
-              <div class="p-5 bg-slate-900/50 border border-amber-500/20 rounded-lg space-y-3 animate-fade-in">
-                <div class="flex items-center justify-between pb-2 border-b border-[#10213b]/60">
-                  <h4 class="font-black text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <span class="material-icons text-amber-500 text-sm">gavel</span>
-                    Regulamento de Escolha de Folgas - Mês de {{ currentMonthName() }}/{{ currentYear() }}
-                  </h4>
-                  <button (click)="isPortalRulesOpen.set(false)" class="text-slate-400 hover:text-white bg-transparent border-none cursor-pointer outline-none flex items-center justify-center">
-                    <span class="material-icons text-xs">close</span>
-                  </button>
-                </div>
-                <ul class="text-[10px] text-slate-300 space-y-2 list-none p-0 m-0 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
-                  <li class="flex items-start gap-2">
-                    <span class="text-emerald-400 font-bold">✔</span>
-                    <span><strong>Limite de Escolhas:</strong> Você pode escolher no máximo <strong>3 dias</strong> de folga por mês.</span>
-                  </li>
-                  <li class="flex items-start gap-2">
-                    <span class="text-emerald-400 font-bold">✔</span>
-                    <span><strong>Janela de Escolhas:</strong> Disponível estritamente do <strong>dia 1 ao dia 10</strong> do mês anterior. No 11º dia em diante, a opção fica bloqueada.</span>
-                  </li>
-                  <li class="flex items-start gap-2">
-                    <span class="text-emerald-400 font-bold">✔</span>
-                    <span><strong>Garantia de Antiguidade:</strong> No máximo <strong>2 colaboradores</strong> podem escolher a mesma data. Quem escolher primeiro garante a preferência!</span>
-                  </li>
-                  <li class="flex items-start gap-2">
-                    <span class="text-amber-400 font-bold">★</span>
-                    <span><strong>Aniversário:</strong> O seu aniversário é uma data especial e inegociável, garantindo sua folga automaticamente se cair no mês ativo!</span>
-                  </li>
-                </ul>
-              </div>
-            }
-
-            <!-- Operators Cards Grid -->
-            @if (!getLoggedCollab()) {
+              <!-- Operators Cards Grid -->
               <div>
                 <div class="flex items-center justify-between mb-3">
                   <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-1">
                     <span class="material-icons text-xs text-emerald-500">people</span>
-                    Quadro de Colaboradores de Pátio
+                    Quadro de Colaboradores
                   </span>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-4">
@@ -2309,23 +2204,8 @@
                   }
                 </div>
               </div>
-            } @else {
-              @let logged = getLoggedCollab()!;
-              <div class="flex items-center justify-between p-3 bg-emerald-950/10 border border-emerald-500/20 rounded-lg">
-                <div class="flex items-center gap-3">
-                  <img [src]="getCollabPhoto(logged)" alt="Avatar" referrerpolicy="no-referrer" class="w-8 h-8 rounded-full border border-emerald-400">
-                  <div>
-                    <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider">Simulando Sessão:</span>
-                    <h4 class="font-black text-sm text-emerald-400 m-0">{{ logged.name }}</h4>
-                  </div>
-                </div>
-                <button id="btn_voltar_lista" (click)="logout()" class="px-3 py-1.5 bg-[#10b981] hover:bg-emerald-600 text-white border border-emerald-500/20 rounded-lg cursor-pointer flex items-center gap-1.5 transition-all outline-none font-black text-[10px] uppercase tracking-wider">
-                  <span class="material-icons text-sm text-white">arrow_back</span>
-                  Voltar para Lista
-                </button>
-              </div>
-            }
-          </div>
+            </div>
+          }
 
           @if (getLoggedCollab()) {
             @let logged = getLoggedCollab()!;
@@ -2339,25 +2219,40 @@
                 <div class="bg-[#030a14] border border-[#10213b] rounded-lg p-5 shadow-xl space-y-4 relative overflow-hidden">
                   <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-500/5 to-transparent rounded-full -mr-8 -mt-8 pointer-events-none"></div>
                   
-                  <div class="flex items-center gap-4">
-                    <div class="w-16 h-16 rounded-full border border-emerald-500/30 overflow-hidden bg-slate-900 shadow-lg">
-                      @if (logged.photoUrl) {
-                        <img [src]="logged.photoUrl" alt="Foto do Colaborador" class="w-full h-full object-cover">
-                      } @else {
-                        <div class="w-full h-full flex items-center justify-center text-slate-500 font-bold bg-slate-950 text-lg uppercase">
-                          {{ logged.name.charAt(0) }}
+                  <div class="flex items-start justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                      <div class="relative group w-16 h-16 rounded-full border border-emerald-500/30 overflow-hidden bg-slate-900 shadow-lg shrink-0 cursor-pointer">
+                        @if (logged.photoUrl || logged.photo) {
+                          <img [src]="getCollabPhoto(logged)" alt="Foto do Colaborador" class="w-full h-full object-cover">
+                        } @else {
+                          <div class="w-full h-full flex items-center justify-center text-slate-500 font-bold bg-slate-950 text-lg uppercase">
+                            {{ logged.name.charAt(0) }}
+                          </div>
+                        }
+                        <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity">
+                          <span class="material-icons text-sm mb-0.5">add_a_photo</span>
+                          <span class="text-[7px] font-black uppercase tracking-wider">Alterar</span>
                         </div>
-                      }
-                    </div>
-                    <div>
-                      <h4 class="font-black text-base text-white tracking-tight">{{ logged.name }}</h4>
-                      <div class="flex items-center gap-1.5 mt-0.5">
-                        <span class="text-[9px] font-black uppercase bg-[#10213b] text-emerald-400 px-2 py-0.5 rounded">
-                          {{ logged.role }}
-                        </span>
-                        <span class="text-[9px] text-slate-400 font-mono">ID: {{ logged.id }}</span>
+                        <input type="file"
+                               (change)="onPortalPhotoSelected($event)"
+                               accept="image/*"
+                               class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                               title="Alterar foto">
+                      </div>
+                      <div>
+                        <h4 class="font-black text-base text-white tracking-tight">{{ logged.name }}</h4>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                          <span class="text-[9px] font-black uppercase bg-[#10213b] text-emerald-400 px-2 py-0.5 rounded">
+                            {{ logged.role }}
+                          </span>
+                          <span class="text-[9px] text-slate-400 font-mono">ID: {{ logged.id }}</span>
+                        </div>
                       </div>
                     </div>
+                    <button id="btn_voltar_lista" (click)="logout()" class="px-3 py-1.5 bg-transparent hover:bg-emerald-950/40 text-emerald-400 border border-emerald-500/30 rounded-lg cursor-pointer flex items-center gap-1.5 transition-all outline-none font-black text-[10px] uppercase tracking-wider shrink-0 relative z-10 mt-2">
+                      <span class="material-icons text-sm">logout</span>
+                      Sair da Sessão
+                    </button>
                   </div>
 
                   <div class="grid grid-cols-2 gap-3 pt-3 border-t border-[#10213b]/60 text-[10px]">
@@ -2602,15 +2497,57 @@
 
                 <!-- DYNAMIC CALENDAR SELECTOR -->
                 <div class="bg-[#030a14] border border-[#10213b] rounded-xl p-5 shadow-xl space-y-4">
-                  <div>
-                    <h4 class="font-black text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
-                      <span class="material-icons text-emerald-500 text-sm">calendar_month</span>
-                      Calendário de Escala de Folgas - {{ currentMonthName() }} {{ currentYear() }}
-                    </h4>
-                    <p class="text-[9px] text-slate-400 mt-1">
-                      Clique em um dia para solicitar ou remover folga. Os dias em vermelho atingiram a cota máxima de 2 colaboradores.
-                    </p>
+                  <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 pb-2 border-b border-[#10213b]/60">
+                    <div>
+                      <h4 class="font-black text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <span class="material-icons text-emerald-500 text-sm">calendar_month</span>
+                        Calendário de Escala de Folgas - {{ currentMonthName() }} {{ currentYear() }}
+                      </h4>
+                      <p class="text-[9px] text-slate-400 mt-1">
+                        Clique em um dia para solicitar ou remover folga. Os dias em vermelho atingiram a cota máxima de 2 colaboradores.
+                      </p>
+                    </div>
+                    <button id="btn_portal_regulamento"
+                            (click)="isPortalRulesOpen.set(!isPortalRulesOpen())"
+                            class="px-3.5 py-1.5 bg-[#10b981] hover:bg-emerald-600 text-white rounded-lg border border-emerald-500/20 flex items-center gap-1.5 transition-all outline-none cursor-pointer text-[10px] font-black uppercase tracking-wider select-none shrink-0">
+                      <span class="material-icons text-sm text-white">gavel</span>
+                      <span>Regulamento</span>
+                      <span class="material-icons text-xs transition-transform duration-200" [class.rotate-180]="isPortalRulesOpen()">expand_more</span>
+                    </button>
                   </div>
+
+                  <!-- COLLAPSIBLE REGULATIONS SECTION -->
+                  @if (isPortalRulesOpen()) {
+                    <div class="p-5 bg-slate-900/50 border border-amber-500/20 rounded-lg space-y-3 animate-fade-in mt-4 mb-4">
+                      <div class="flex items-center justify-between pb-2 border-b border-[#10213b]/60">
+                        <h4 class="font-black text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
+                          <span class="material-icons text-amber-500 text-sm">gavel</span>
+                          Regulamento de Escolha de Folgas - Mês de {{ currentMonthName() }}/{{ currentYear() }}
+                        </h4>
+                        <button (click)="isPortalRulesOpen.set(false)" class="text-slate-400 hover:text-white bg-transparent border-none cursor-pointer outline-none flex items-center justify-center">
+                          <span class="material-icons text-xs">close</span>
+                        </button>
+                      </div>
+                      <ul class="text-[10px] text-slate-300 space-y-2 list-none p-0 m-0 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
+                        <li class="flex items-start gap-2">
+                          <span class="text-emerald-400 font-bold">✔</span>
+                          <span><strong>Limite de Escolhas:</strong> Você pode escolher no máximo <strong>3 dias</strong> de folga por mês.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                          <span class="text-emerald-400 font-bold">✔</span>
+                          <span><strong>Janela de Escolhas:</strong> Disponível estritamente do <strong>dia 1 ao dia 10</strong> do mês anterior. No 11º dia em diante, a opção fica bloqueada.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                          <span class="text-emerald-400 font-bold">✔</span>
+                          <span><strong>Garantia de Antiguidade:</strong> No máximo <strong>2 colaboradores</strong> podem escolher a mesma data. Quem escolher primeiro garante a preferência!</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                          <span class="text-amber-400 font-bold">★</span>
+                          <span><strong>Aniversário:</strong> O seu aniversário é uma data especial e inegociável, garantindo sua folga automaticamente se cair no mês ativo!</span>
+                        </li>
+                      </ul>
+                    </div>
+                  }
 
                   <!-- Calendar Days Grid -->
                   <div class="grid grid-cols-7 gap-2 text-center text-xs">

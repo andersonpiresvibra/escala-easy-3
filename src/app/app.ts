@@ -114,6 +114,7 @@ export class App {
   public isCollabModalOpen = signal<boolean>(false);
   public isNewSectorMode = signal<boolean>(false);
   public isNewRoleMode = signal<boolean>(false);
+  public newCollabPhotoData = signal<string | null>(null);
 
   public openCreateCollabModal(): void {
     this.editingCollab.set(null);
@@ -349,6 +350,9 @@ export class App {
   }
 
   getCollabPhoto(collab: any): string {
+    if (collab && (collab.photoUrl || collab.photo)) {
+      return collab.photoUrl || collab.photo;
+    }
     const isLight = this.isLightTheme();
     const bgFill = isLight ? '#f1f5f9' : '#0b1a30';
     const borderStroke = isLight ? '#cbd5e1' : '#10213b';
@@ -618,9 +622,6 @@ export class App {
   newSiglaComputaAusencia = signal<boolean>(false);
   editingSiglaCode = signal<string | null>(null);
 
-  // New collaborator photo upload state
-  newCollabPhotoData = signal<string | null>(null);
-
   // Lists for hour and minute dropdowns
   hoursList = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
   minutesList = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
@@ -683,15 +684,6 @@ export class App {
     if (typeof document !== 'undefined') {
       document.body.classList.add('light-theme');
     }
-    effect(() => {
-      const collabs = this.scaleService.collaborators();
-      if (collabs.length > 0 && !this.hasInitiallyLogged()) {
-        // Auto select/log in the first collaborator only once at startup
-        this.selectedSimulatedCollabId.set(collabs[0].id);
-        this.hasInitiallyLogged.set(true);
-      }
-    });
-
     effect(() => {
       const month = this.selectedMonthIndex() + 1;
       this.scaleService.activeMonth.set(month);
@@ -2395,10 +2387,58 @@ Verifique se os nomes no PDF correspondem aos nomes no sistema.`;
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
           this.newCollabPhotoData.set(dataUrl);
         } else {
           this.newCollabPhotoData.set(e.target.result);
+        }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  onPortalPhotoSelected(event: any) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const collab = this.getLoggedCollab();
+    if (!collab) return;
+
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 120;
+        const MAX_HEIGHT = 120;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          const updatedCollab: Collaborator = {
+            ...collab,
+            photo: dataUrl,
+            photoUrl: dataUrl
+          };
+          this.scaleService.updateCollaborator(updatedCollab);
+          this.showToast('Foto de perfil atualizada com sucesso!');
         }
       };
       img.src = e.target.result;

@@ -455,6 +455,8 @@ export class ScaleService {
             bhBalance: row.bh_balance || 0,
             score: row.score || 90,
             scale: scale,
+            photoUrl: row.photo_url || row.photo || '',
+            photo: row.photo_url || row.photo || '',
             birthday: row.birthday || '',
             specialDates: typeof row.special_dates === 'string' ? JSON.parse(row.special_dates) : (row.special_dates || []),
             folgaRequests: typeof row.folga_requests === 'string' ? JSON.parse(row.folga_requests) : (row.folga_requests || [])
@@ -782,6 +784,7 @@ export class ScaleService {
           sector: newCollab.sector,
           bh_balance: newCollab.bhBalance,
           score: newCollab.score,
+          photo_url: newCollab.photoUrl || newCollab.photo || null,
           birthday: newCollab.birthday || null,
           special_dates: newCollab.specialDates || null,
           folga_requests: newCollab.folgaRequests || null
@@ -876,6 +879,7 @@ export class ScaleService {
           sector: refreshedCol.sector,
           bh_balance: refreshedCol.bhBalance,
           score: refreshedCol.score,
+          photo_url: refreshedCol.photoUrl || refreshedCol.photo || null,
           birthday: refreshedCol.birthday || null,
           special_dates: refreshedCol.specialDates || null,
           folga_requests: refreshedCol.folgaRequests || null
@@ -944,6 +948,7 @@ export class ScaleService {
             sector: refreshed.sector,
             bh_balance: refreshed.bhBalance,
             score: refreshed.score,
+            photo_url: refreshed.photoUrl || refreshed.photo || null,
             birthday: refreshed.birthday || null,
             special_dates: refreshed.specialDates || null,
             folga_requests: []
@@ -1032,6 +1037,7 @@ export class ScaleService {
             sector: refreshed.sector,
             bh_balance: refreshed.bhBalance,
             score: refreshed.score,
+            photo_url: refreshed.photoUrl || refreshed.photo || null,
             birthday: refreshed.birthday || null,
             special_dates: refreshed.specialDates || null,
             folga_requests: refreshed.folgaRequests || null
