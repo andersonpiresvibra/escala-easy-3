@@ -448,6 +448,7 @@ export class App {
   public authMode = signal<'LOGIN' | 'SIGNUP'>('LOGIN');
   public isImportModalOpen = signal<boolean>(false);
   public isDbModalOpen = signal<boolean>(false);
+  public isSolicitarFolgaModalOpen = signal<boolean>(false);
 
   // Database Connection Indicator
   dbStatus = signal<'checking' | 'connected' | 'error'>('connected');
@@ -555,6 +556,162 @@ export class App {
     });
     return counts;
   });
+
+  // Signals and helper methods for selected collaborator details (Important Dates, Folgas, Team of the Day)
+  selectedCollabTeamDayTab = signal<'today' | 'tomorrow' | 'other'>('today');
+  selectedCollabTeamDayOther = signal<number>(new Date().getDate());
+
+  getImportantDatesForCollab(collab: any): { dateLabel: string; label: string; icon: string; color: string; details: string; priorityLabel?: string; rawDate: string; isBirthday?: boolean; priorityValue?: number }[] {
+    if (!collab) return [];
+    const dates: { dateLabel: string; label: string; icon: string; color: string; details: string; priorityLabel?: string; rawDate: string; isBirthday?: boolean; priorityValue?: number }[] = [];
+    
+    // Birthday
+    if (collab.birthday) {
+      const parts = collab.birthday.split('-');
+      if (parts.length === 3) {
+        const m = parseInt(parts[1], 10);
+        const d = parseInt(parts[2], 10);
+        const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        
+        dates.push({
+          dateLabel: `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}`,
+          label: 'Aniversário',
+          icon: 'cake',
+          color: 'text-rose-500 bg-rose-500/10 border-rose-500/20 text-rose-500',
+          details: 'Folga regulamentar assegurada',
+          rawDate: collab.birthday,
+          isBirthday: true,
+          priorityValue: 0 // Highest priority
+        });
+      }
+    }
+
+    // Special dates
+    if (collab.specialDates && Array.isArray(collab.specialDates)) {
+      for (const sd of collab.specialDates) {
+        if (!sd.date || !sd.description) continue;
+        const parts = sd.date.split('-');
+        if (parts.length === 3) {
+          const m = parseInt(parts[1], 10);
+          const d = parseInt(parts[2], 10);
+          const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+          
+          const descLower = sd.description.toLowerCase();
+          let icon = 'celebration';
+          let color = 'text-amber-500 bg-amber-500/10 border-amber-500/20 text-amber-500';
+          
+          if (descLower.includes('casamento') || descLower.includes('aliança') || descLower.includes('alianca') || descLower.includes('wedding') || descLower.includes('bodas') || descLower.includes('marido') || descLower.includes('esposa') || descLower.includes('conjuge') || descLower.includes('cônjuge') || descLower.includes('noivado')) {
+            icon = 'favorite';
+            color = 'text-red-500 bg-red-500/10 border-red-500/20 text-red-500';
+          } else if (descLower.includes('filho') || descLower.includes('filha') || descLower.includes('criança') || descLower.includes('crianca') || descLower.includes('bebe') || descLower.includes('bebê') || descLower.includes('nascimento') || descLower.includes('child') || descLower.includes('baby') || descLower.includes('maternidade') || descLower.includes('paternidade')) {
+            icon = 'child_care';
+            color = 'text-blue-500 bg-blue-500/10 border-blue-500/20 text-blue-500';
+          }
+
+          dates.push({
+            dateLabel: `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}`,
+            label: sd.description,
+            icon,
+            color,
+            details: 'Preferência de escala',
+            priorityLabel: `P${sd.priority || 1}`,
+            rawDate: sd.date,
+            isBirthday: false,
+            priorityValue: sd.priority || 1
+          });
+        }
+      }
+    }
+
+    return dates.sort((a, b) => (a.priorityValue || 0) - (b.priorityValue || 0));
+  }
+
+  getRequestedFolgasForCollab(collab: any): { day: number; formattedDate: string; isApproved: boolean; count: number; details: string }[] {
+    if (!collab || !collab.folgaRequests || !Array.isArray(collab.folgaRequests)) return [];
+    
+    const result: { day: number; formattedDate: string; isApproved: boolean; count: number; details: string }[] = [];
+    
+    for (const fr of collab.folgaRequests) {
+      if (!fr.date) continue;
+      const parts = fr.date.split('-');
+      if (parts.length === 3) {
+        const m = parseInt(parts[1], 10);
+        const d = parseInt(parts[2], 10);
+        const count = this.getFolgaRequestCount(d);
+        const scaleVal = collab.scale ? (collab.scale[d] || 'X') : 'X';
+        const isApproved = scaleVal === 'F';
+        
+        if (isApproved) continue; // Do not show approved ones
+        
+        result.push({
+          day: d,
+          formattedDate: `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}`,
+          isApproved,
+          count,
+          details: 'Pendente'
+        });
+      }
+    }
+    
+    return result.sort((a, b) => a.day - b.day);
+  }
+
+  getFolgaRequestSlots(collab: any) {
+    const requests = this.getRequestedFolgasForCollab(collab);
+    const slots = [];
+    for (let i = 0; i < 3; i++) {
+      if (i < requests.length) {
+        slots.push({ ...requests[i], isEmpty: false, id: `req-${requests[i].day}` });
+      } else {
+        slots.push({ isEmpty: true, id: `empty-${i}` });
+      }
+    }
+    return slots;
+  }
+
+  getCollabTeamForDay(collab: any, dayOffset: number | 'other'): any[] {
+    if (!collab) return [];
+    
+    let targetDay = new Date().getDate();
+    if (dayOffset === 'other') {
+      targetDay = this.selectedCollabTeamDayOther();
+    } else {
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() + dayOffset);
+      targetDay = targetDate.getDate();
+    }
+    
+    const myShiftCode = this.getCollabEffectiveShiftForDay(collab, targetDay);
+    if (!myShiftCode || myShiftCode === 'FOLGA' || !this.isWorkDay(collab, targetDay)) {
+      const baseShift = (collab.shift || '').trim().toUpperCase();
+      return this.scaleService.collaborators().filter(c => {
+        if (!this.isWorkDay(c, targetDay)) return false;
+        return this.getCollabEffectiveShiftForDay(c, targetDay) === baseShift;
+      });
+    }
+    
+    return this.scaleService.collaborators().filter(c => {
+      if (!this.isWorkDay(c, targetDay)) return false;
+      return this.getCollabEffectiveShiftForDay(c, targetDay) === myShiftCode;
+    });
+  }
+
+  getCollabTeamShiftLabelForDay(collab: any, dayOffset: number | 'other'): string {
+    if (!collab) return '';
+    let targetDay = new Date().getDate();
+    if (dayOffset === 'other') {
+      targetDay = this.selectedCollabTeamDayOther();
+    } else {
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() + dayOffset);
+      targetDay = targetDate.getDate();
+    }
+    
+    const myShiftCode = this.getCollabEffectiveShiftForDay(collab, targetDay);
+    const code = (myShiftCode && myShiftCode !== 'FOLGA') ? myShiftCode : (collab.shift || '').trim().toUpperCase();
+    const shiftType = this.scaleService.shiftTypes().find(s => s.code.trim().toUpperCase() === code);
+    return shiftType ? `${shiftType.label} (${shiftType.code})` : code;
+  }
 
   // Month Selection and Navigation System
   monthsList = [
@@ -2570,6 +2727,10 @@ export class App {
 
   openDbConfigModal() {
     this.isDbModalOpen.set(true);
+  }
+
+  openSolicitarFolgaModal() {
+    this.isSolicitarFolgaModalOpen.set(true);
   }
 
   // Gemini IA Image Scaling Import Simulation
