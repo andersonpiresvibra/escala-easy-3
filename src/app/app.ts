@@ -378,6 +378,9 @@ export class App {
   }
 
   getCollabHours(collab: any): string {
+    if (collab && collab.hours) {
+      return collab.hours;
+    }
     if (!collab) return '07:00-15:20';
     const sCode = (collab.shift || '').trim().toUpperCase();
     const shiftType = this.scaleService.shiftTypes().find(s => 
@@ -398,6 +401,15 @@ export class App {
       return '08:00-17:00';
     }
     return '07:00-15:20';
+  }
+
+  getCollabScheduleRange(collab: any): string {
+    if (!collab) return '';
+    const hours = collab.hours || '';
+    if (hours.includes('-')) {
+      return hours.replace('-', 'às');
+    }
+    return hours;
   }
 
   getCollabPhoto(collab: any): string {
@@ -498,13 +510,22 @@ export class App {
     const counts: { [key: string]: number } = { 'MANHÃ': 0, 'TARDE': 0, 'MADRUGADA': 0, 'ADMINISTRATIVO': 0, 'NOITE': 0 };
     collabs.forEach(c => {
       const s = (c.shift || '').toUpperCase().trim();
-      if (s in counts) {
-        counts[s]++;
+      if (s.startsWith('MANHÃ') || s.startsWith('MANHA') || s === 'M') {
+        counts['MANHÃ']++;
+      } else if (s.startsWith('TARDE') || s === 'T') {
+        counts['TARDE']++;
+      } else if (s.startsWith('MADRUGADA') || s.startsWith('NOITE') || s === 'N') {
+        counts['NOITE']++;
+      } else if (s.startsWith('ADMINISTRATIVO') || s === 'ADM') {
+        counts['ADMINISTRATIVO']++;
+      } else {
+        if (s in counts) {
+          counts[s]++;
+        } else {
+          counts['MANHÃ']++;
+        }
       }
     });
-    // Group MADRUGADA into NOITE
-    counts['NOITE'] += counts['MADRUGADA'];
-    counts['MADRUGADA'] = 0;
     return counts;
   });
 
@@ -823,7 +844,7 @@ export class App {
         if (sec === 'GERAL') return 2;
         if (sec === 'GESTÃO' || sec === 'GESTAO') return 3;
         if (sec === 'CENTRAL') return 4;
-        if (sec === 'AERÓDROMO' || sec === 'AERODROMO') return 5;
+        if (sec === 'AERÓDROMO' || sec === 'AERODROMO' || sec === 'OPERACIONAL') return 5;
         if (sec === 'VIP') return 6;
         if (sec === 'TESTE') return 7;
         if (sec === 'MANUTENÇÃO' || sec === 'MANUTENCAO') return 8;
@@ -875,7 +896,7 @@ export class App {
     if (sec === 'VIP') {
       return isLight ? 'text-cyan-700' : 'text-cyan-400';
     }
-    if (sec === 'AERÓDROMO' || sec === 'AERODROMO') {
+    if (sec === 'AERÓDROMO' || sec === 'AERODROMO' || sec === 'OPERACIONAL') {
       return isLight ? 'text-emerald-700' : 'text-emerald-400';
     }
     if (sec === 'GESTÃO' || sec === 'GESTAO') {
@@ -999,6 +1020,187 @@ export class App {
   getCollabOffDays(collab: any): number[] {
     if (!collab) return [];
     return this.daysInMonth().filter(day => !this.isWorkDay(collab, day));
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getConsecutiveWorkStats(collab: any) {
+    if (!collab) return { isWorking: false, currentDay: 1, streak: 0, totalStreak: 0, energyColor: 'text-emerald-400', energyBg: 'bg-emerald-500', borderCol: 'border-emerald-500/20', textCol: 'text-emerald-400', textBg: 'bg-emerald-950/40', fatigueLevel: 'Em Folga / Descanso', alertMessage: 'Aproveite para recarregar as energias!' };
+    
+    const today = new Date();
+    let dayToAnalyze = today.getDate();
+    
+    const isCurrentMonth = today.getMonth() === this.selectedMonthIndex() && today.getFullYear() === this.currentYear();
+    if (!isCurrentMonth) {
+      const totalDays = this.daysInMonth().length;
+      dayToAnalyze = Math.min(dayToAnalyze, totalDays);
+    }
+    
+    const isTodayWorking = this.isWorkDay(collab, dayToAnalyze);
+    
+    let currentWorkStreak = 0;
+    if (isTodayWorking) {
+      for (let d = dayToAnalyze; d >= 1; d--) {
+        if (this.isWorkDay(collab, d)) {
+          currentWorkStreak++;
+        } else {
+          break;
+        }
+      }
+    }
+    
+    let totalStreakLength = 0;
+    if (isTodayWorking) {
+      let startDay = dayToAnalyze;
+      while (startDay > 1 && this.isWorkDay(collab, startDay - 1)) {
+        startDay--;
+      }
+      let endDay = dayToAnalyze;
+      const maxDay = this.daysInMonth().length;
+      while (endDay < maxDay && this.isWorkDay(collab, endDay + 1)) {
+        endDay++;
+      }
+      totalStreakLength = (endDay - startDay) + 1;
+    }
+    
+    let energyColor = 'text-emerald-400';
+    let energyBg = 'bg-emerald-500';
+    let borderCol = 'border-emerald-500/20';
+    let textCol = 'text-emerald-400';
+    let textBg = 'bg-emerald-950/40';
+    let fatigueLevel = 'Altamente Descansado';
+    let alertMessage = 'Início de ciclo - Excelente nível de energia!';
+    
+    if (!isTodayWorking) {
+      energyColor = 'text-emerald-400';
+      energyBg = 'bg-emerald-500';
+      borderCol = 'border-emerald-500/20';
+      textCol = 'text-emerald-400';
+      textBg = 'bg-emerald-950/40';
+      fatigueLevel = 'Em Folga / Descanso';
+      alertMessage = 'Aproveite para recarregar as energias!';
+    } else {
+      if (currentWorkStreak === 1) {
+        energyColor = 'text-emerald-400';
+        energyBg = 'bg-emerald-500';
+        borderCol = 'border-emerald-500/20';
+        textCol = 'text-emerald-400';
+        textBg = 'bg-emerald-950/40';
+        fatigueLevel = 'Energia Plena';
+        alertMessage = 'Bom início de jornada! Bateria 100% recarregada.';
+      } else if (currentWorkStreak === 2) {
+        energyColor = 'text-sky-400';
+        energyBg = 'bg-sky-500';
+        borderCol = 'border-sky-500/20';
+        textCol = 'text-sky-400';
+        textBg = 'bg-sky-950/40';
+        fatigueLevel = 'Bom Ritmo';
+        alertMessage = 'Ritmo seguro e estável. Hidrate-se e mantenha o foco.';
+      } else if (currentWorkStreak === 3) {
+        energyColor = 'text-amber-400';
+        energyBg = 'bg-amber-500';
+        borderCol = 'border-amber-500/20';
+        textCol = 'text-amber-400';
+        textBg = 'bg-amber-950/40';
+        fatigueLevel = 'Fadiga Leve';
+        alertMessage = 'Atenção moderada. Metade do ciclo concluída.';
+      } else {
+        energyColor = 'text-red-400';
+        energyBg = 'bg-red-500';
+        borderCol = 'border-red-500/20';
+        textCol = 'text-red-400';
+        textBg = 'bg-red-950/40';
+        fatigueLevel = 'Atenção Redobrada';
+        alertMessage = 'Fadiga acumulada elevada! Risco de fadiga aumentado, redobre os cuidados.';
+      }
+    }
+    
+    return {
+      isWorking: isTodayWorking,
+      currentDay: dayToAnalyze,
+      streak: currentWorkStreak,
+      totalStreak: totalStreakLength,
+      energyColor,
+      energyBg,
+      borderCol,
+      textCol,
+      textBg,
+      fatigueLevel,
+      alertMessage
+    };
+  }
+
+  getFolgaLabel(count: number): string {
+    if (count === 1) return 'FOLGA SECA! 🏖️';
+    if (count === 2) return 'DOBRADINHA! 🏖️';
+    if (count === 3) return 'TRINCA! 🏖️';
+    if (count === 4) return 'QUADRA! 🏖️';
+    if (count === 5) return 'QUINA! 🏖️';
+    if (count === 6) return 'SENA! 🏖️';
+    return 'FOLGA PROLONGADA! 🏖️';
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getDaysUntilNextOff(collab: any) {
+    if (!collab) return { days: 0, isOffToday: false, nextOffDays: [] as number[], isDouble: false };
+    
+    const today = new Date();
+    let dayToAnalyze = today.getDate();
+    const isCurrentMonth = today.getMonth() === this.selectedMonthIndex() && today.getFullYear() === this.currentYear();
+    if (!isCurrentMonth) {
+      const totalDays = this.daysInMonth().length;
+      dayToAnalyze = Math.min(dayToAnalyze, totalDays);
+    }
+    
+    if (!this.isWorkDay(collab, dayToAnalyze)) {
+      let startDay = dayToAnalyze;
+      while (startDay > 1 && !this.isWorkDay(collab, startDay - 1)) {
+        startDay--;
+      }
+      let endDay = dayToAnalyze;
+      const maxDay = this.daysInMonth().length;
+      while (endDay < maxDay && !this.isWorkDay(collab, endDay + 1)) {
+        endDay++;
+      }
+      const currentOffBlock: number[] = [];
+      for (let d = startDay; d <= endDay; d++) {
+        currentOffBlock.push(d);
+      }
+      return {
+        days: 0,
+        isOffToday: true,
+        nextOffDays: currentOffBlock,
+        isDouble: currentOffBlock.length >= 2
+      };
+    }
+    
+    const maxDay = this.daysInMonth().length;
+    let nextOffDay = -1;
+    for (let d = dayToAnalyze + 1; d <= maxDay; d++) {
+      if (!this.isWorkDay(collab, d)) {
+        nextOffDay = d;
+        break;
+      }
+    }
+    
+    if (nextOffDay === -1) {
+      return { days: 999, isOffToday: false, nextOffDays: [] as number[], isDouble: false };
+    }
+    
+    const daysRemaining = nextOffDay - dayToAnalyze;
+    
+    const nextOffBlock: number[] = [nextOffDay];
+    let checkDay = nextOffDay + 1;
+    while (checkDay <= maxDay && !this.isWorkDay(collab, checkDay)) {
+      nextOffBlock.push(checkDay);
+      checkDay++;
+    }
+    
+    return {
+      days: daysRemaining,
+      isOffToday: false,
+      nextOffDays: nextOffBlock,
+      isDouble: nextOffBlock.length >= 2
+    };
   }
 
   getOffsetDaysArray(): number[] {

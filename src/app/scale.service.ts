@@ -115,7 +115,21 @@ export class ScaleService {
   currentRole = signal<string>('SUPERVISOR');
 
   // Real-time synchronization lists via signals
-  collaborators = signal<Collaborator[]>([]);
+  collaborators = (() => {
+    const s = signal<Collaborator[]>([]);
+    const originalSet = s.set.bind(s);
+    const originalUpdate = s.update.bind(s);
+    
+    const normalize = (list: Collaborator[]): Collaborator[] => {
+      return list.map(c => {
+        return { ...c, sector: c.sector || 'Geral' };
+      });
+    };
+
+    s.set = (val: Collaborator[]) => originalSet(normalize(val));
+    s.update = (fn: (val: Collaborator[]) => Collaborator[]) => originalUpdate((val) => normalize(fn(val)));
+    return s;
+  })();
   shiftTypes = signal<ShiftType[]>([]);
   siglaTypes = signal<SiglaType[]>([]);
   auditHistory = signal<BackupHistory[]>([]);
