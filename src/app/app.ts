@@ -111,6 +111,45 @@ export class App {
   public editingCollab = signal<Collaborator | null>(null);
   public isPortalCollabListOpen = signal<boolean>(false);
   public isPortalRulesOpen = signal<boolean>(false);
+  public isPortalEditingDates = signal<boolean>(false);
+  
+  public daysArray = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
+  public monthsArray = [
+    { value: '01', label: 'Jan' },
+    { value: '02', label: 'Fev' },
+    { value: '03', label: 'Mar' },
+    { value: '04', label: 'Abr' },
+    { value: '05', label: 'Mai' },
+    { value: '06', label: 'Jun' },
+    { value: '07', label: 'Jul' },
+    { value: '08', label: 'Ago' },
+    { value: '09', label: 'Set' },
+    { value: '10', label: 'Out' },
+    { value: '11', label: 'Nov' },
+    { value: '12', label: 'Dez' }
+  ];
+
+  public getDayFromDate(dateStr: string | undefined): string {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      return parts[2];
+    } else if (parts.length === 2) {
+      return parts[1];
+    }
+    return '';
+  }
+
+  public getMonthFromDate(dateStr: string | undefined): string {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      return parts[1];
+    } else if (parts.length === 2) {
+      return parts[0];
+    }
+    return '';
+  }
   public isCollabModalOpen = signal<boolean>(false);
   public isNewSectorMode = signal<boolean>(false);
   public isNewRoleMode = signal<boolean>(false);
@@ -139,6 +178,18 @@ export class App {
 
   // Selected collaborator for detailed profile view
   selectedProfileCollabId = signal<string | null>(null);
+
+  // Modal for day details and scheduled list
+  public isDayDetailsModalOpen = signal<boolean>(false);
+  public selectedDetailDay = signal<number | null>(null);
+  public selectedDetailCollab = signal<any | null>(null);
+  public dayDetailsActiveTab = signal<'seu_turno' | 'turno_posterior' | 'geral'>('seu_turno');
+
+  public openCollabProfile(id: string): void {
+    this.selectedProfileCollabId.set(id);
+    this.teamViewMode.set('gallery');
+    this.activeSubTab.set('team');
+  }
 
   // Computes the active collaborator, falling back to the first one in the list
   selectedProfileCollab = computed<any>(() => {
@@ -932,6 +983,24 @@ export class App {
            today.getFullYear() === this.currentYear();
   }
 
+  isPastDay(day: number): boolean {
+    const today = new Date();
+    const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const calendarDate = new Date(this.currentYear(), this.selectedMonthIndex(), day);
+    return calendarDate.getTime() < todayZero.getTime();
+  }
+
+  getLoggedCollabOffDays(): number[] {
+    const collab = this.getLoggedCollab();
+    if (!collab) return [];
+    return this.daysInMonth().filter(day => !this.isWorkDay(collab, day));
+  }
+
+  getCollabOffDays(collab: any): number[] {
+    if (!collab) return [];
+    return this.daysInMonth().filter(day => !this.isWorkDay(collab, day));
+  }
+
   getOffsetDaysArray(): number[] {
     const startDay = new Date(this.currentYear(), this.selectedMonthIndex(), 1).getDay();
     return Array.from({ length: startDay }, (_, i) => i);
@@ -1023,6 +1092,9 @@ export class App {
     this.showPaintbrushPanel.set(!this.showPaintbrushPanel());
     if (!this.showPaintbrushPanel()) {
       this.activePaintbrush.set(null);
+      if (this.editingRowCollabId() !== null) {
+        this.cancelRowScale();
+      }
     } else {
       this.showToast('Modo de Pintura Ativado: Clique em uma sigla e depois na célula da escala');
     }
@@ -1030,7 +1102,11 @@ export class App {
 
   selectPaintbrush(code: string) {
     this.activePaintbrush.set(code);
-    this.showToast(`Pincel ativo: ${code}. Clique nas células para aplicar.`);
+    if (code === '-') {
+      this.showToast('Borracha ativada: Clique nas células da escala para limpar siglas ou turnos customizados.');
+    } else {
+      this.showToast(`Pincel ativo: ${code}. Clique nas células para aplicar.`);
+    }
   }
 
   applyPaintbrush(collabId: string, day: number) {
@@ -1637,6 +1713,115 @@ export class App {
     this.isNewRoleMode.set(false);
   }
 
+  getUnifiedAgenda(): {
+    day: number;
+    type: string;
+    label: string;
+    icon: string;
+    color: string;
+    details: string;
+  }[] {
+    const collab = this.getLoggedCollab();
+    if (!collab) return [];
+
+    const agenda: {
+      day: number;
+      type: string;
+      label: string;
+      icon: string;
+      color: string;
+      details: string;
+    }[] = [];
+
+    const monthNum = this.selectedMonthIndex() + 1;
+    const year = this.currentYear();
+
+    // 1. Check Birthday
+    if (collab.birthday) {
+      const parts = collab.birthday.split('-');
+      if (parts.length === 3) {
+        const m = parseInt(parts[1], 10);
+        const d = parseInt(parts[2], 10);
+        if (m === monthNum) {
+          agenda.push({
+            day: d,
+            type: 'birthday',
+            label: 'Seu Aniversário',
+            icon: 'cake',
+            color: '#f43f5e',
+            details: 'Folga Automática Garantida! 🎂'
+          });
+        }
+      }
+    }
+
+    // 2. Check Special Dates
+    if (collab.specialDates && Array.isArray(collab.specialDates)) {
+      for (const sd of collab.specialDates) {
+        if (!sd.date || !sd.description) continue;
+        const parts = sd.date.split('-');
+        if (parts.length === 3) {
+          const m = parseInt(parts[1], 10);
+          const d = parseInt(parts[2], 10);
+          if (m === monthNum) {
+            const descLower = sd.description.toLowerCase();
+            let icon = 'celebration';
+            let color = '#f59e0b'; // amber
+            
+            if (descLower.includes('casamento') || descLower.includes('aliança') || descLower.includes('alianca') || descLower.includes('wedding') || descLower.includes('bodas') || descLower.includes('marido') || descLower.includes('esposa') || descLower.includes('conjuge') || descLower.includes('cônjuge') || descLower.includes('noivado')) {
+              icon = 'favorite';
+              color = '#e11d48'; // red
+            } else if (descLower.includes('filho') || descLower.includes('filha') || descLower.includes('criança') || descLower.includes('crianca') || descLower.includes('bebe') || descLower.includes('bebê') || descLower.includes('nascimento') || descLower.includes('child') || descLower.includes('baby') || descLower.includes('maternidade') || descLower.includes('paternidade')) {
+              icon = 'child_care';
+              color = '#3b82f6'; // blue
+            }
+
+            agenda.push({
+              day: d,
+              type: 'special_date',
+              label: sd.description,
+              icon: icon,
+              color: color,
+              details: `Data Magna (Prioridade P${sd.priority})`
+            });
+          }
+        }
+      }
+    }
+
+    // 3. Check Folga Requests (Chosen Days Off)
+    if (collab.folgaRequests && Array.isArray(collab.folgaRequests)) {
+      for (const fr of collab.folgaRequests) {
+        if (!fr.date) continue;
+        const parts = fr.date.split('-');
+        if (parts.length === 3) {
+          const y = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10);
+          const d = parseInt(parts[2], 10);
+          if (y === year && m === monthNum) {
+            const count = this.getFolgaRequestCount(d);
+            const scaleVal = collab.scale ? (collab.scale[d] || 'X') : 'X';
+            const isApproved = scaleVal === 'F';
+            
+            agenda.push({
+              day: d,
+              type: isApproved ? 'folga_approved' : 'folga_requested',
+              label: isApproved ? 'Folga Confirmada' : 'Folga Solicitada',
+              icon: isApproved ? 'verified' : 'radio_button_checked',
+              color: isApproved ? '#10b981' : '#10b981',
+              details: isApproved ? 'Folga aprovada e confirmada na escala!' : `Status: Pendente (${count}/2 vagas ocupadas)`
+            });
+          }
+        }
+      }
+    }
+
+    // Sort chronologically by day
+    agenda.sort((a, b) => a.day - b.day);
+
+    return agenda;
+  }
+
   savePortalSpecialDates(birthday: string, specialDates: SpecialDate[]) {
     const collab = this.getLoggedCollab();
     if (!collab) {
@@ -1731,6 +1916,280 @@ export class App {
         return `${base} bg-red-950/20 border-red-950/50 text-slate-300`;
       } else {
         return `${base} bg-[#071426] border-[#10213b] hover:border-slate-400 text-slate-300`;
+      }
+    }
+  }
+
+  isWorkDay(collab: any, d: number): boolean {
+    if (!collab) return false;
+    const cellValRaw = collab.scale && collab.scale[d] !== undefined ? collab.scale[d] : '-';
+    const cellVal = (cellValRaw === '-') ? this.getShiftCode(collab.shift) : cellValRaw;
+    const upperCode = cellVal.toUpperCase().trim();
+    
+    if (upperCode === '' || upperCode === '-') return true; // Default shift is a work day
+    
+    // Is it a folga / leave / absence code?
+    const offCodes = ['F', 'FF', 'FE', 'FM', 'FT', 'FN', 'X', 'LM', 'LMT', 'LA'];
+    if (offCodes.includes(upperCode)) return false;
+    
+    // Check if it exists in siglaTypes
+    const sigla = this.scaleService.siglaTypes().find(s => s.code.trim().toUpperCase() === upperCode);
+    if (sigla) {
+      return false; // Any registered sigla is generally an absence/folga/leave
+    }
+    
+    return true;
+  }
+
+  getWorkSequenceString(collab: any, day: number): string {
+    if (!this.isWorkDay(collab, day)) {
+      return '';
+    }
+    
+    let count = 0;
+    for (let d = day; d >= 1; d--) {
+      if (this.isWorkDay(collab, d)) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    return `S${count}`;
+  }
+
+  openDayDetailsModal(collab: any, day: number) {
+    this.selectedDetailCollab.set(collab);
+    this.selectedDetailDay.set(day);
+    this.dayDetailsActiveTab.set('seu_turno');
+    this.isDayDetailsModalOpen.set(true);
+  }
+
+  getSortedShiftTypes(): ShiftType[] {
+    return [...this.scaleService.shiftTypes()].sort((a, b) => {
+      const timeA = a.startTime || '';
+      const timeB = b.startTime || '';
+      if (!timeA && !timeB) return a.code.localeCompare(b.code);
+      if (!timeA) return 1;
+      if (!timeB) return -1;
+      return timeA.localeCompare(timeB);
+    });
+  }
+
+  getNextShiftCode(currentShiftCode: string): string {
+    const sortedShifts = this.getSortedShiftTypes();
+    if (sortedShifts.length === 0) return '';
+    const currentIndex = sortedShifts.findIndex(s => s.code.trim().toUpperCase() === currentShiftCode.trim().toUpperCase());
+    if (currentIndex === -1) {
+      return sortedShifts[0].code;
+    }
+    const nextIndex = (currentIndex + 1) % sortedShifts.length;
+    return sortedShifts[nextIndex].code;
+  }
+
+  getCollabEffectiveShiftForDay(collab: any, day: number): string {
+    if (!collab) return '';
+    const code = this.getCollabShiftOnDay(collab, day);
+    const upper = code.toUpperCase().trim();
+    
+    // If it's an off code (folga/absence/leave)
+    const offCodes = ['F', 'FF', 'FE', 'FM', 'FT', 'FN', 'X', 'LM', 'LMT', 'LA'];
+    const isOff = offCodes.includes(upper) || this.scaleService.siglaTypes().some(s => s.code.trim().toUpperCase() === upper);
+    
+    if (isOff) {
+      return this.getShiftCode(collab.shift).toUpperCase().trim();
+    }
+    return upper;
+  }
+
+  getTodayTeamCollaborators(): any[] {
+    const logged = this.getLoggedCollab();
+    if (!logged) return [];
+    
+    const todayDay = new Date().getDate();
+    const myShiftCode = this.getCollabEffectiveShiftForDay(logged, todayDay);
+    
+    return this.scaleService.collaborators().filter(c => {
+      // Must be scheduled to work today
+      if (!this.isWorkDay(c, todayDay)) return false;
+      // Must match the same shift code
+      return this.getCollabEffectiveShiftForDay(c, todayDay) === myShiftCode;
+    });
+  }
+
+  getTodayTeamShiftLabel(): string {
+    const logged = this.getLoggedCollab();
+    if (!logged) return '';
+    const todayDay = new Date().getDate();
+    const myShiftCode = this.getCollabEffectiveShiftForDay(logged, todayDay);
+    const shiftType = this.scaleService.shiftTypes().find(s => s.code.trim().toUpperCase() === myShiftCode);
+    return shiftType ? `${shiftType.label} (${shiftType.code})` : myShiftCode;
+  }
+
+  getTodayDay(): number {
+    return new Date().getDate();
+  }
+
+  getCollaboratorsForDetailTab(tab: 'seu_turno' | 'turno_posterior' | 'geral'): any[] {
+    const day = this.selectedDetailDay();
+    const collab = this.selectedDetailCollab();
+    if (day === null || !collab) return [];
+
+    const allScheduled = this.getCollaboratorsScheduledForDay(day);
+    if (tab === 'geral') {
+      return allScheduled;
+    }
+
+    const myShiftCode = this.getCollabEffectiveShiftForDay(collab, day);
+    if (tab === 'seu_turno') {
+      return allScheduled.filter(c => this.getCollabEffectiveShiftForDay(c, day) === myShiftCode);
+    }
+
+    if (tab === 'turno_posterior') {
+      const nextShiftCode = this.getNextShiftCode(myShiftCode);
+      if (!nextShiftCode) return [];
+      return allScheduled.filter(c => this.getCollabEffectiveShiftForDay(c, day) === nextShiftCode);
+    }
+
+    return [];
+  }
+
+  getCollaboratorsScheduledForDay(day: number | null): any[] {
+    if (day === null) return [];
+    return this.scaleService.collaborators().filter(collab => this.isWorkDay(collab, day));
+  }
+
+  getCollabShiftOnDay(collab: any, day: number): string {
+    if (!collab) return '';
+    const cellValRaw = collab.scale && collab.scale[day] !== undefined ? collab.scale[day] : '-';
+    const cellVal = (cellValRaw === '-') ? this.getShiftCode(collab.shift) : cellValRaw;
+    return cellVal.toUpperCase().trim();
+  }
+
+  getCollaboratorDayScheduleInfo(collab: any, day: number): {
+    status: 'trabalho' | 'folga' | 'afastamento' | 'licenca';
+    label: string;
+    subLabel: string;
+    hours: string;
+    color: string;
+    borderColor: string;
+    textColor: string;
+    icon: string;
+  } {
+    if (!collab) {
+      return {
+        status: 'trabalho',
+        label: '-',
+        subLabel: 'Sem escala',
+        hours: '',
+        color: 'bg-[#071426]',
+        borderColor: 'border-[#10213b]',
+        textColor: 'text-slate-400',
+        icon: 'help_outline'
+      };
+    }
+
+    const cellValRaw = collab.scale && collab.scale[day] !== undefined ? collab.scale[day] : '-';
+    const cellVal = (cellValRaw === '-') ? this.getShiftCode(collab.shift) : cellValRaw;
+    const upperCode = cellVal.toUpperCase().trim();
+
+    // Check if it is a folga / absence first
+    const sigla = this.scaleService.siglaTypes().find(s => s.code.trim().toUpperCase() === upperCode);
+    const isFolgaCode = ['F', 'FF', 'FE', 'FM', 'FT', 'FN', 'X'].includes(upperCode);
+
+    if (sigla || isFolgaCode) {
+      const isFolgaType = isFolgaCode || (sigla && (['F', 'FF', 'FE', 'FM', 'FT', 'FN'].includes(upperCode) || sigla.label.toLowerCase().includes('folga') || sigla.code.toLowerCase().includes('f')));
+      const isLicencaType = sigla && (['LM', 'LMT', 'LA'].includes(upperCode) || sigla.label.toLowerCase().includes('licença') || sigla.label.toLowerCase().includes('licenca'));
+      
+      if (isFolgaType || upperCode === 'X') {
+        const labelText = sigla ? sigla.label.toUpperCase() : 'FOLGA';
+        return {
+          status: 'folga',
+          label: labelText,
+          subLabel: sigla ? (sigla.description || 'Folga Reservada') : 'Folga Solicitada',
+          hours: 'Descanso Oficial',
+          color: this.isLightTheme() ? 'bg-emerald-50/80' : 'bg-emerald-950/25',
+          borderColor: 'border-emerald-500/80',
+          textColor: 'text-emerald-400',
+          icon: 'nights_stay'
+        };
+      } else if (isLicencaType) {
+        return {
+          status: 'licenca',
+          label: sigla ? sigla.label.toUpperCase() : 'LICENÇA',
+          subLabel: sigla ? (sigla.description || 'Licença Médica') : 'Afastado',
+          hours: 'Afastado',
+          color: this.isLightTheme() ? 'bg-rose-50' : 'bg-rose-950/20',
+          borderColor: 'border-rose-500/60',
+          textColor: 'text-rose-400',
+          icon: 'medical_services'
+        };
+      } else {
+        return {
+          status: 'afastamento',
+          label: sigla ? sigla.label.toUpperCase() : 'AFASTAMENTO',
+          subLabel: sigla ? (sigla.description || 'Indisponível') : 'Afastamento',
+          hours: 'Afastamento',
+          color: this.isLightTheme() ? 'bg-amber-50/80' : 'bg-amber-950/20',
+          borderColor: 'border-amber-500/60',
+          textColor: 'text-amber-400',
+          icon: 'event_busy'
+        };
+      }
+    }
+
+    // It is a work day! Calculate the S1, S2, S3 sequence number
+    const sequenceStr = this.getWorkSequenceString(collab, day);
+    
+    // Find shift type for descriptive info
+    const shift = this.scaleService.shiftTypes().find(s => s.code.trim().toUpperCase() === upperCode || s.label.trim().toUpperCase() === upperCode);
+    const shiftHours = shift ? (shift.hours || 'Horário de Trabalho') : 'Escala Normal';
+
+    return {
+      status: 'trabalho',
+      label: sequenceStr,
+      subLabel: 'Dia de Trabalho',
+      hours: shiftHours,
+      color: this.isLightTheme() ? 'bg-slate-50' : 'bg-[#071426]/30',
+      borderColor: this.isLightTheme() ? 'border-slate-200' : 'border-[#10213b]',
+      textColor: this.isLightTheme() ? 'text-slate-700' : 'text-slate-300',
+      icon: 'work'
+    };
+  }
+
+  getCollaboratorCalendarDayClass(collab: any, day: number, count: number): string {
+    const base = 'p-3 border rounded-xl flex flex-col justify-between gap-1.5 transition-all cursor-pointer min-h-[96px] w-full text-left shadow-sm hover:scale-[1.02] hover:shadow-md duration-200 outline-none select-none relative overflow-hidden';
+    
+    if (!collab) {
+      return `${base} bg-slate-900/30 border-slate-800 text-slate-500`;
+    }
+
+    const cellValRaw = collab.scale && collab.scale[day] !== undefined ? collab.scale[day] : '-';
+    const cellVal = (cellValRaw === '-') ? this.getShiftCode(collab.shift) : cellValRaw;
+    const upperCode = cellVal.toUpperCase().trim();
+
+    // Is it a folga?
+    const isFolga = ['F', 'FF', 'FE', 'FM', 'FT', 'FN', 'X'].includes(upperCode);
+    // Is it an absence?
+    const isAbsence = ['LM', 'LMT', 'LA'].includes(upperCode);
+
+    if (isFolga) {
+      if (this.isLightTheme()) {
+        return `${base} bg-emerald-50/80 border-emerald-400 hover:border-emerald-500 text-emerald-800 shadow-emerald-100/50`;
+      } else {
+        return `${base} bg-gradient-to-br from-emerald-950/20 to-[#030a14] border-emerald-500/50 hover:border-emerald-400 text-emerald-200 shadow-emerald-950/10`;
+      }
+    } else if (isAbsence) {
+      if (this.isLightTheme()) {
+        return `${base} bg-rose-50 border-rose-300 hover:border-rose-500 text-rose-800`;
+      } else {
+        return `${base} bg-gradient-to-br from-red-950/20 to-[#030a14] border-rose-500/40 hover:border-rose-400 text-rose-200`;
+      }
+    } else {
+      // Regular work shift day
+      if (this.isLightTheme()) {
+        return `${base} bg-white border-slate-200 hover:border-slate-400 text-slate-700`;
+      } else {
+        return `${base} bg-[#041021]/80 border-[#10213b] hover:border-slate-500 text-slate-300`;
       }
     }
   }

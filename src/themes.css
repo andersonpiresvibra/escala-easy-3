@@ -105,6 +105,7 @@ body.light-theme ::-webkit-scrollbar-thumb:hover {
 .light-theme .bg-\[\#122b4f\] {
   background-color: #f1f5f9 !important;
 }
+.light-theme .bg-slate-900\/30,
 .light-theme .bg-slate-900\/40 {
   background-color: rgba(255, 255, 255, 0.95) !important;
   border: 1.5px solid #cbd5e1 !important;
@@ -251,6 +252,34 @@ body.light-theme ::-webkit-scrollbar-thumb:hover {
 }
 .light-theme select option {
   background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* Secondary slate buttons high-contrast in light theme */
+.light-theme .bg-\[\#1e293b\] {
+  background-color: #e2e8f0 !important; /* premium light slate secondary background */
+  color: #0f172a !important;            /* high contrast dark text */
+  border: 1px solid #cbd5e1 !important;
+}
+.light-theme .bg-\[\#1e293b\]:hover {
+  background-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+/* Force any direct or nested text in this secondary button to be dark slate */
+.light-theme button.bg-\[\#1e293b\],
+.light-theme button.bg-\[\#1e293b\] span,
+.light-theme button.bg-\[\#1e293b\] * {
+  color: #0f172a !important;
+}
+
+/* Schedule detail cards in light theme */
+.light-theme .bg-\[\#041021\],
+.light-theme .bg-\[\#041021\]\/80 {
+  background-color: #f8fafc !important;
+  border: 1.5px solid #cbd5e1 !important;
+}
+.light-theme .bg-\[\#041021\] *,
+.light-theme .bg-\[\#041021\]\/80 * {
   color: #0f172a !important;
 }
 
