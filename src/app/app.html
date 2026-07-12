@@ -10,15 +10,16 @@
   }
 
   <!-- GLOBAL UNIFIED TABS BAR (home / matrix / staff + dropdown options) -->
-  <header class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 select-none px-6 pt-4 pb-4 border-b border-[#10213b] bg-[#ffffff]" id="global_master_header">
-    <div class="flex items-center gap-3 select-none">
+  <header class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 select-none px-6 pt-4 pb-4 border-b border-[#10213b] shadow-xl relative z-20" 
+          [class.bg-[#030a14]/80]="!isLightTheme()" [class.backdrop-blur-md]="!isLightTheme()" [class.bg-white]="isLightTheme()" id="global_master_header">
+    <div class="flex items-center gap-4 select-none">
       <!-- Logo Square Emblem -->
-      <div class="w-10 h-10 bg-[#10b981] rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/15 border border-emerald-400/20">
-        <span class="material-icons text-white text-xl text-white-force" style="color: #ffffff !important;">calendar_month</span>
+      <div class="w-10 h-10 bg-gradient-to-br from-[#10b981] to-[#059669] rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20 border border-emerald-400/30">
+        <span class="material-icons text-xl text-white-force" style="color: #ffffff !important;">calendar_month</span>
       </div>
       <div class="flex flex-col select-none">
-        <div class="flex items-center gap-1">
-          <span class="text-base font-black tracking-tighter text-white leading-none">ESCALA<span class="text-[#10b981]">.</span>EASY</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-xl font-black tracking-tight leading-none" [class.text-white]="!isLightTheme()" [class.text-slate-800]="isLightTheme()">ESCALA<span class="text-[#10b981]">.</span>EASY</span>
         </div>
         
         <!-- Database Status & Realtime Sync Indicator -->
@@ -270,7 +271,8 @@
         <div class="flex-1 flex flex-col w-full gap-0 overflow-hidden animate-fade-in" id="matrix_general_card">
           
           <!-- SEARCH & FILTER TOOLBAR -->
-          <div id="matrix_search_toolbar" class="flex flex-col gap-3 border-b border-[#10213b] bg-[#020813] px-4 md:px-6 py-4">
+          <div id="matrix_search_toolbar" class="flex flex-col gap-3 border-b border-[#10213b] px-4 md:px-6 py-4"
+               [class.bg-[#030a14]]="!isLightTheme()" [class.bg-white]="isLightTheme()">
             <!-- Main header row -->
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <!-- Month Controller & Title -->
@@ -585,12 +587,12 @@
               <thead>
                 <!-- Months & Header Days Row -->
                 <tr class="border-b border-[#10213b] bg-[#071426] text-slate-400 text-[8px] font-black tracking-widest uppercase select-none sticky top-0 z-30">
-                  <th class="py-2.5 px-3 w-[350px] min-w-[350px] max-w-[350px] md:w-[420px] md:min-w-[420px] md:max-w-[420px] sticky top-0 left-0 bg-[#071426] border-r border-[#10213b] z-40 shadow-md">
+                  <th class="py-2.5 px-3 w-[240px] min-w-[240px] max-w-[240px] md:w-[280px] md:min-w-[280px] md:max-w-[280px] sticky top-0 left-0 bg-[#071426] border-r border-[#10213b] z-40 shadow-md">
                     <div class="grid grid-cols-12 gap-2 text-[10px] font-black uppercase tracking-wider text-slate-400 w-full items-center">
-    <span class="col-span-8 text-left">Colaborador</span>
-    <span class="col-span-2 text-center">Função</span>
-    <span class="col-span-2 text-center">Turno</span>
-  </div>
+                      <span class="col-span-6 text-left">Colaborador</span>
+                      <span class="col-span-3 text-center">Função</span>
+                      <span class="col-span-3 text-center">Turno</span>
+                    </div>
                   </th>
                   @for (day of daysInMonth(); track day) {
                     <th class="p-0 text-center w-[40px] min-w-[40px] max-w-[40px] h-[40px] border-r border-[#10213b] sticky top-0 z-30 day-header-cell transition-all"
@@ -630,7 +632,7 @@
                   @for (collab of filteredCollaborators(); track collab.id) {
                     <tr class="hover:bg-emerald-950/40 transition-colors" [class.bg-amber-950]="editingRowCollabId() === collab.id">
                       <!-- Collab details sticky col -->
-                      <td class="py-1.5 px-3 sticky left-0 bg-[#030a14] border-r border-[#10213b] z-10 shadow-sm w-[350px] min-w-[350px] max-w-[350px] md:w-[420px] md:min-w-[420px] md:max-w-[420px]"
+                      <td class="py-1.5 px-3 sticky left-0 bg-[#030a14] border-r border-[#10213b] z-10 shadow-sm w-[240px] min-w-[240px] max-w-[240px] md:w-[280px] md:min-w-[280px] md:max-w-[280px]"
                           [class.border-t-2]="editingRowCollabId() === collab.id"
                           [class.border-b-2]="editingRowCollabId() === collab.id"
                           [class.border-l-2]="editingRowCollabId() === collab.id"
@@ -638,7 +640,7 @@
                         <div class="grid grid-cols-12 gap-2 w-full items-center">
                           <!-- 1. COLABORADOR -->
                           <div (click)="openCollabProfile(collab.id)"
-                               class="col-span-8 flex items-center gap-2 min-w-0 cursor-pointer hover:opacity-80 transition-all"
+                               class="col-span-6 flex items-center gap-2 min-w-0 cursor-pointer hover:opacity-80 transition-all"
                                title="Ver perfil de {{ collab.name }}">
                             <div class="relative shrink-0">
                               <img [src]="getCollabPhoto(collab)" 
@@ -653,7 +655,7 @@
                           </div>
 
                           <!-- 2. FUNÇÃO -->
-                          <div class="col-span-2 text-center">
+                          <div class="col-span-3 text-center">
                             <span class="text-[8px] font-black tracking-wider uppercase inline-block font-sans text-center transition-all"
                                   [class]="getFunctionBadgeClass(collab)">
                               {{ getCollabFunction(collab) }}
@@ -661,7 +663,7 @@
                           </div>
 
                           <!-- 3. TURNO (with tooltip hover) -->
-                          <div class="col-span-2 flex justify-center">
+                          <div class="col-span-3 flex justify-center">
                             <div class="relative group cursor-pointer shrink-0 text-center min-w-[54px] font-mono text-[9px] font-black px-1.5 py-0.5 text-emerald-400 transition-all">
                               <span>{{ getShiftLabel(collab) }}</span>
                               <!-- Floating Tooltip Box -->
@@ -763,7 +765,7 @@
                       [class.bg-emerald-50/60]="isLightTheme()"
                       id="matrix_summary_row">
                     <!-- Column 1: Header / Title -->
-                    <td class="py-2.5 px-3 sticky left-0 bottom-0 z-40 shadow-md w-[310px] min-w-[310px] max-w-[310px] md:w-[360px] md:min-w-[360px] md:max-w-[360px]"
+                    <td class="py-2.5 px-3 sticky left-0 bottom-0 z-40 shadow-md w-[240px] min-w-[240px] max-w-[240px] md:w-[280px] md:min-w-[280px] md:max-w-[280px]"
                         [class.bg-[#07172e]]="!isLightTheme()"
                         [class.border-r]="true"
                         [class.border-[#10213b]]="!isLightTheme()"
@@ -1458,7 +1460,8 @@
       @if (activeSubTab() === 'team') {
         <div class="flex-1 flex flex-col w-full gap-0 overflow-hidden animate-fade-in font-sans" id="team_gallery_tab_content">
           <!-- Page Header -->
-          <div class="px-4 md:px-6 py-3 border-b border-[#10213b] bg-[#020813] flex flex-row items-center justify-between gap-4 select-none">
+          <div class="px-4 md:px-6 py-3 border-b border-[#10213b] flex flex-row items-center justify-between gap-4 select-none"
+               [class.bg-[#030a14]]="!isLightTheme()" [class.bg-white]="isLightTheme()">
             <div>
               <h3 class="font-black text-sm uppercase tracking-tight text-white flex items-center gap-1.5">
                 <span class="material-icons text-[#10b981] font-bold">group</span>
@@ -2017,7 +2020,8 @@
                             <span class="material-icons text-rose-500 text-sm">favorite</span>
                             Minhas Datas Importantes
                           </h4>
-                          <span class="text-[8px] font-bold font-mono bg-white text-[#5c5c5c] border border-slate-200 px-1.5 py-0.5 rounded shrink-0">
+                          <span class="text-[8px] font-bold font-mono px-1.5 py-0.5 rounded shrink-0 transition-colors"
+                                [class]="isLightTheme() ? 'text-rose-600 bg-rose-100 border border-rose-200' : 'text-rose-400 bg-rose-950/40 border border-rose-500/20'">
                             {{ getImportantDatesForCollab(selectedCol).length }} Registros
                           </span>
                         </div>
@@ -2207,7 +2211,7 @@
           </div> <!-- Closes Master-Detail Grid container div -->
         } @else {
           <!-- SEARCH & FILTER CONTROLS BAR -->
-          <div class="flex flex-row items-center justify-between gap-3 px-4 py-1.5 border-b border-[#10213b] bg-[#020813] w-full flex-wrap xl:flex-nowrap min-h-[44px]">
+          <div class="flex flex-row items-center justify-between gap-3 px-4 py-1.5 border-b border-[#10213b] w-full flex-wrap xl:flex-nowrap min-h-[44px]" [class.bg-[#030a14]]="!isLightTheme()" [class.bg-white]="isLightTheme()">
                   <!-- Search & Turnos Group (Left Side) -->
                   <div class="flex items-center gap-3.5 flex-wrap md:flex-nowrap">
                     <!-- Search Input -->
