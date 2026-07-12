@@ -32,6 +32,11 @@ export class App {
   // Theme & Fullscreen states
   public isLightTheme = signal<boolean>(true);
   public isFullscreen = signal<boolean>(false);
+  public portalSequenceTab = signal<'weeks' | 'stretches'>('weeks');
+
+  public setPortalSequenceTab(tab: 'weeks' | 'stretches'): void {
+    this.portalSequenceTab.set(tab);
+  }
 
   public toggleTheme(): void {
     const val = !this.isLightTheme();
@@ -105,7 +110,7 @@ export class App {
   }
 
   // Sub tab navigation: 'matrix' | 'ger.turnos' | 'siglas' | 'team' | 'team-mgmt' | 'portal' | 'dashboard'
-  public activeSubTab = signal<'matrix' | 'ger.turnos' | 'siglas' | 'team' | 'team-mgmt' | 'portal' | 'dashboard'>('matrix');
+  public activeSubTab = signal<'matrix' | 'daily-dash' | 'ger.turnos' | 'siglas' | 'team' | 'team-mgmt' | 'portal' | 'dashboard'>('daily-dash');
   
   public teamViewMode = signal<'gallery' | 'mgmt'>('gallery');
   public editingCollab = signal<Collaborator | null>(null);
@@ -528,6 +533,96 @@ export class App {
       }
     });
     return counts;
+  });
+
+  dailyAvailableCollaborators = computed(() => {
+    const days = this.daysInMonth();
+    const collabs = this.filteredCollaborators();
+    
+    const availableCountByDay: { [day: number]: number } = {};
+    
+    days.forEach(day => {
+      let count = 0;
+      collabs.forEach(c => {
+        const val = c.scale[day] || '-';
+        // Only count as available if it's NOT an absence AND NOT a blank day ('-')
+        const isAbsence = this.isSiglaAbsence(val);
+        const isBlank = val === '-';
+        if (!isAbsence && !isBlank) {
+          count++;
+        }
+      });
+      availableCountByDay[day] = count;
+    });
+    
+    return availableCountByDay;
+  });
+
+  public selectedDailyDashDay = signal<number>(new Date().getDate());
+
+  dailyDashSummary = computed(() => {
+    const day = this.selectedDailyDashDay();
+    const collabs = this.scaleService.collaborators();
+    const shifts = this.scaleService.shiftTypes();
+    const siglas = this.scaleService.siglaTypes();
+    
+    // Grouping
+    const working: Array<{collab: any, shift: any, val: string, energy: number}> = [];
+    const absent: Array<{collab: any, sigla: any, val: string}> = [];
+    const unknown: Array<{collab: any, val: string}> = [];
+
+    const getEnergy = (collab: any, targetDay: number) => {
+      let streak = 0;
+      for (let d = targetDay; d >= 1; d--) {
+        const v = collab.scale[d] || '-';
+        if (!this.isSiglaAbsence(v) && v !== '-') {
+          streak++;
+        } else {
+          break;
+        }
+      }
+      return Math.max(10, 100 - ((streak - 1) * 20));
+    };
+
+    collabs.forEach(c => {
+      const val = (c.scale[day] || '-').trim().toUpperCase();
+      if (val === '-') {
+        unknown.push({collab: c, val});
+      } else if (this.isSiglaAbsence(val)) {
+        const sigla = siglas.find(s => s.code.toUpperCase() === val) || null;
+        absent.push({collab: c, sigla, val});
+      } else {
+        const shift = shifts.find(s => s.code.toUpperCase() === val) || null;
+        working.push({collab: c, shift, val, energy: getEnergy(c, day)});
+      }
+    });
+
+    const workingByShift: { [shiftCode: string]: { shift: any, items: typeof working } } = {};
+    working.forEach(w => {
+      const code = w.shift ? w.shift.code : w.val;
+      if (!workingByShift[code]) {
+        workingByShift[code] = { shift: w.shift, items: [] };
+      }
+      workingByShift[code].items.push(w);
+    });
+
+    const absentBySigla: { [siglaCode: string]: { sigla: any, items: typeof absent } } = {};
+    absent.forEach(a => {
+      const code = a.sigla ? a.sigla.code : a.val;
+      if (!absentBySigla[code]) {
+        absentBySigla[code] = { sigla: a.sigla, items: [] };
+      }
+      absentBySigla[code].items.push(a);
+    });
+
+    return {
+      day,
+      working,
+      absent,
+      unknown,
+      workingByShift: Object.values(workingByShift).sort((a,b) => (a.shift?.code || '').localeCompare(b.shift?.code || '')),
+      absentBySigla: Object.values(absentBySigla).sort((a,b) => (a.sigla?.code || '').localeCompare(b.sigla?.code || ''))
+    };
   });
 
   collaboratorsCountBySector = computed(() => {
@@ -1179,6 +1274,166 @@ export class App {
     return this.daysInMonth().filter(day => !this.isWorkDay(collab, day));
   }
 
+  getCollabWorkDays(collab: any): number[] {
+    if (!collab) return [];
+    return this.daysInMonth().filter(day => this.isWorkDay(collab, day));
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getWeeklyWorkSequences(collab: any): any[] {
+    if (!collab) return [];
+    
+    const weeks: any[] = [];
+    const totalDays = this.daysInMonth().length;
+    
+    const weekBlocks = [
+      { num: 1, start: 1, end: 7 },
+      { num: 2, start: 8, end: 14 },
+      { num: 3, start: 15, end: 21 },
+      { num: 4, start: 22, end: 28 },
+      { num: 5, start: 29, end: totalDays }
+    ];
+    
+    for (const wb of weekBlocks) {
+      if (wb.start > totalDays) continue;
+      const endDay = Math.min(wb.end, totalDays);
+      const daysList: any[] = [];
+      let workCount = 0;
+      const workedDaysNumbers: number[] = [];
+      
+      for (let d = wb.start; d <= endDay; d++) {
+        const working = this.isWorkDay(collab, d);
+        if (working) {
+          workCount++;
+          workedDaysNumbers.push(d);
+        }
+        daysList.push({
+          day: d,
+          isWork: working,
+          label: working ? 'Trabalho' : 'Folga'
+        });
+      }
+      
+      let maxConsecInside = 0;
+      let tempConsec = 0;
+      for (let d = wb.start; d <= endDay; d++) {
+        if (this.isWorkDay(collab, d)) {
+          tempConsec++;
+          if (tempConsec > maxConsecInside) {
+            maxConsecInside = tempConsec;
+          }
+        } else {
+          tempConsec = 0;
+        }
+      }
+      
+      let severity: 'normal' | 'warning' | 'critical' = 'normal';
+      let severityColor = 'text-emerald-400 bg-emerald-950/40 border-emerald-500/20';
+      let severityText = 'Estável';
+      
+      if (maxConsecInside >= 6 || workCount >= 6) {
+        severity = 'critical';
+        severityColor = 'text-rose-400 bg-rose-950/40 border-rose-500/20';
+        severityText = 'Crítica';
+      } else if (maxConsecInside === 5 || workCount === 5) {
+        severity = 'warning';
+        severityColor = 'text-amber-400 bg-amber-950/40 border-amber-500/20';
+        severityText = 'Alerta';
+      }
+      
+      const totalDaysInWeek = endDay - wb.start + 1;
+      const percentage = Math.round((workCount / totalDaysInWeek) * 100);
+
+      weeks.push({
+        weekNum: wb.num,
+        label: `${wb.num}ª Sem`,
+        range: `Dias ${wb.start} a ${endDay}`,
+        daysList,
+        workCount,
+        workedDaysNumbers,
+        workedDaysStr: workedDaysNumbers.join(' '),
+        maxConsecInside,
+        severity,
+        severityColor,
+        severityText,
+        totalDaysInWeek,
+        percentage
+      });
+    }
+    
+    return weeks;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getContinuousWorkStretches(collab: any): any[] {
+    if (!collab) return [];
+    const stretches: any[] = [];
+    const days = this.daysInMonth();
+    let currentStretch: number[] = [];
+    
+    for (const d of days) {
+      if (this.isWorkDay(collab, d)) {
+        currentStretch.push(d);
+      } else {
+        if (currentStretch.length > 0) {
+          stretches.push(this.createStretchObject(currentStretch, stretches.length + 1));
+          currentStretch = [];
+        }
+      }
+    }
+    if (currentStretch.length > 0) {
+      stretches.push(this.createStretchObject(currentStretch, stretches.length + 1));
+    }
+    return stretches;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private createStretchObject(daysList: number[], index: number): any {
+    const daysCount = daysList.length;
+    let severity: 'normal' | 'warning' | 'critical' = 'normal';
+    let severityColor = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400';
+    let severityText = 'Estável';
+    let badgeClass = 'bg-emerald-600 text-white';
+
+    if (daysCount >= 6) {
+      severity = 'critical';
+      severityColor = 'bg-rose-500/10 border-rose-500/20 text-rose-400 animate-pulse';
+      severityText = 'Crítico (Fadiga)';
+      badgeClass = 'bg-rose-600 text-white';
+    } else if (daysCount === 5) {
+      severity = 'warning';
+      severityColor = 'bg-amber-500/10 border-amber-500/20 text-amber-400';
+      severityText = 'Fadiga Moderada';
+      badgeClass = 'bg-amber-500 text-slate-900';
+    }
+
+    return {
+      id: index,
+      startDay: daysList[0],
+      endDay: daysList[daysList.length - 1],
+      daysCount,
+      daysList,
+      severity,
+      severityColor,
+      severityText,
+      badgeClass
+    };
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getMostCriticalWeek(collab: any): any {
+    const weeks = this.getWeeklyWorkSequences(collab);
+    if (weeks.length === 0) return null;
+    return weeks.reduce((prev, current) => (current.workCount > prev.workCount) ? current : prev, weeks[0]);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getMostCriticalStretch(collab: any): any {
+    const stretches = this.getContinuousWorkStretches(collab);
+    if (stretches.length === 0) return null;
+    return stretches.reduce((prev, current) => (current.daysCount > prev.daysCount) ? current : prev, stretches[0]);
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getConsecutiveWorkStats(collab: any) {
     if (!collab) return { isWorking: false, currentDay: 1, streak: 0, totalStreak: 0, energyColor: 'text-emerald-400', energyBg: 'bg-emerald-500', borderCol: 'border-emerald-500/20', textCol: 'text-emerald-400', textBg: 'bg-emerald-950/40', fatigueLevel: 'Em Folga / Descanso', alertMessage: 'Aproveite para recarregar as energias!' };
@@ -1365,11 +1620,13 @@ export class App {
     return Array.from({ length: startDay }, (_, i) => i);
   }
 
-  getSpecialEventsForDay(collab: any, day: number): { icon: string; color: string; tooltip: string; shortLabel: string }[] {
-    const events: { icon: string; color: string; tooltip: string; shortLabel: string }[] = [];
+  /**
+   * Verifica eventos especiais como datas comemorativas ou aniversários.
+   */
+  getSpecialEventsForDay(collab: any, day: number): any[] {
+    const events: any[] = [];
     if (!collab) return events;
 
-    // 1. Birthday (Active selected month)
     if (collab.birthday) {
       const parts = collab.birthday.split('-');
       if (parts.length === 3) {
@@ -1378,61 +1635,13 @@ export class App {
         if (m === (this.selectedMonthIndex() + 1) && d === day) {
           events.push({
             icon: 'cake',
-            color: '#f43f5e', // pink/rose
+            color: '#f43f5e',
             tooltip: `Aniversário de ${collab.name}`,
             shortLabel: 'Aniversário'
           });
         }
       }
     }
-
-    // 2. Special Dates (Active selected month)
-    if (collab.specialDates && Array.isArray(collab.specialDates)) {
-      for (const sd of collab.specialDates) {
-        if (!sd.date || !sd.description) continue;
-        const parts = sd.date.split('-');
-        if (parts.length === 3) {
-          const m = parseInt(parts[1], 10);
-          const d = parseInt(parts[2], 10);
-          if (m === (this.selectedMonthIndex() + 1) && d === day) {
-            const descLower = sd.description.toLowerCase();
-            let icon = 'celebration';
-            let color = '#f59e0b'; // amber
-            let shortLabel = 'Especial';
-            
-            if (descLower.includes('casamento') || descLower.includes('aliança') || descLower.includes('alianca') || descLower.includes('wedding') || descLower.includes('bodas') || descLower.includes('marido') || descLower.includes('esposa') || descLower.includes('conjuge') || descLower.includes('cônjuge') || descLower.includes('noivado')) {
-              icon = 'favorite'; // Heart icon representing marriage/anniversary/wedding
-              color = '#e11d48'; // red-rose
-              shortLabel = 'Casamento';
-            } else if (descLower.includes('filho') || descLower.includes('filha') || descLower.includes('criança') || descLower.includes('crianca') || descLower.includes('bebe') || descLower.includes('bebê') || descLower.includes('nascimento') || descLower.includes('child') || descLower.includes('baby') || descLower.includes('maternidade') || descLower.includes('paternidade')) {
-              icon = 'child_care';
-              color = '#38bdf8'; // sky blue
-              shortLabel = 'Família';
-            } else if (descLower.includes('aniversário') || descLower.includes('aniversario') || descLower.includes('niver') || descLower.includes('bday') || descLower.includes('nasc')) {
-              icon = 'cake';
-              color = '#ec4899'; // pink
-              shortLabel = 'Níver';
-            } else if (descLower.includes('casa') || descLower.includes('mudança') || descLower.includes('mudanca') || descLower.includes('home') || descLower.includes('família') || descLower.includes('familia')) {
-              icon = 'home';
-              color = '#10b981'; // emerald
-              shortLabel = 'Lar';
-            } else if (descLower.includes('formatura') || descLower.includes('estudo') || descLower.includes('prova') || descLower.includes('aula') || descLower.includes('escola') || descLower.includes('faculdade')) {
-              icon = 'school';
-              color = '#6366f1'; // indigo
-              shortLabel = 'Estudo';
-            }
-
-            events.push({
-              icon,
-              color,
-              tooltip: `${sd.description} (Prioridade ${sd.priority})`,
-              shortLabel
-            });
-          }
-        }
-      }
-    }
-
     return events;
   }
 
@@ -2424,6 +2633,9 @@ export class App {
     return cellVal.toUpperCase().trim();
   }
 
+  /**
+   * Obtém informações detalhadas de status, rótulo e horários para um colaborador específico no dia selecionado.
+   */
   getCollaboratorDayScheduleInfo(collab: any, day: number): {
     status: 'trabalho' | 'folga' | 'afastamento' | 'licenca';
     label: string;
@@ -2448,66 +2660,43 @@ export class App {
     }
 
     const cellValRaw = collab.scale && collab.scale[day] !== undefined ? collab.scale[day] : '-';
-    const cellVal = (cellValRaw === '-') ? this.getShiftCode(collab.shift) : cellValRaw;
+    const cellVal = (cellValRaw === '-') ? (collab.shift || '-') : cellValRaw;
     const upperCode = cellVal.toUpperCase().trim();
 
-    // Check if it is a folga / absence first
-    const sigla = this.scaleService.siglaTypes().find(s => s.code.trim().toUpperCase() === upperCode);
+    // Verifica siglas de afastamento ou folga oficiais
     const isFolgaCode = ['F', 'FF', 'FE', 'FM', 'FT', 'FN', 'X'].includes(upperCode);
+    const isLicencaCode = ['LM', 'LMT', 'LA'].includes(upperCode);
 
-    if (sigla || isFolgaCode) {
-      const isFolgaType = isFolgaCode || (sigla && (['F', 'FF', 'FE', 'FM', 'FT', 'FN'].includes(upperCode) || sigla.label.toLowerCase().includes('folga') || sigla.code.toLowerCase().includes('f')));
-      const isLicencaType = sigla && (['LM', 'LMT', 'LA'].includes(upperCode) || sigla.label.toLowerCase().includes('licença') || sigla.label.toLowerCase().includes('licenca'));
-      
-      if (isFolgaType || upperCode === 'X') {
-        const labelText = sigla ? sigla.label.toUpperCase() : 'FOLGA';
-        return {
-          status: 'folga',
-          label: labelText,
-          subLabel: sigla ? (sigla.description || 'Folga Reservada') : 'Folga Solicitada',
-          hours: 'Descanso Oficial',
-          color: this.isLightTheme() ? 'bg-emerald-50/80' : 'bg-emerald-950/25',
-          borderColor: 'border-emerald-500/80',
-          textColor: 'text-emerald-400',
-          icon: 'nights_stay'
-        };
-      } else if (isLicencaType) {
-        return {
-          status: 'licenca',
-          label: sigla ? sigla.label.toUpperCase() : 'LICENÇA',
-          subLabel: sigla ? (sigla.description || 'Licença Médica') : 'Afastado',
-          hours: 'Afastado',
-          color: this.isLightTheme() ? 'bg-rose-50' : 'bg-rose-950/20',
-          borderColor: 'border-rose-500/60',
-          textColor: 'text-rose-400',
-          icon: 'medical_services'
-        };
-      } else {
-        return {
-          status: 'afastamento',
-          label: sigla ? sigla.label.toUpperCase() : 'AFASTAMENTO',
-          subLabel: sigla ? (sigla.description || 'Indisponível') : 'Afastamento',
-          hours: 'Afastamento',
-          color: this.isLightTheme() ? 'bg-amber-50/80' : 'bg-amber-950/20',
-          borderColor: 'border-amber-500/60',
-          textColor: 'text-amber-400',
-          icon: 'event_busy'
-        };
-      }
+    if (isFolgaCode || upperCode === 'X') {
+      return {
+        status: 'folga',
+        label: upperCode,
+        subLabel: 'Folga Escalonada',
+        hours: 'Descanso Oficial',
+        color: this.isLightTheme() ? 'bg-emerald-50/80' : 'bg-emerald-950/25',
+        borderColor: 'border-emerald-500/80',
+        textColor: 'text-emerald-400',
+        icon: 'nights_stay'
+      };
+    } else if (isLicencaCode) {
+      return {
+        status: 'licenca',
+        label: upperCode,
+        subLabel: 'Afastamento Médico',
+        hours: 'Afastado',
+        color: this.isLightTheme() ? 'bg-rose-50' : 'bg-rose-950/20',
+        borderColor: 'border-rose-500/60',
+        textColor: 'text-rose-400',
+        icon: 'medical_services'
+      };
     }
 
-    // It is a work day! Calculate the S1, S2, S3 sequence number
-    const sequenceStr = this.getWorkSequenceString(collab, day);
-    
-    // Find shift type for descriptive info
-    const shift = this.scaleService.shiftTypes().find(s => s.code.trim().toUpperCase() === upperCode || s.label.trim().toUpperCase() === upperCode);
-    const shiftHours = shift ? (shift.hours || 'Horário de Trabalho') : 'Escala Normal';
-
+    // Retorna dia letivo / de trabalho normal
     return {
       status: 'trabalho',
-      label: sequenceStr,
+      label: upperCode,
       subLabel: 'Dia de Trabalho',
-      hours: shiftHours,
+      hours: 'Escala Normal',
       color: this.isLightTheme() ? 'bg-slate-50' : 'bg-[#071426]/30',
       borderColor: this.isLightTheme() ? 'border-slate-200' : 'border-[#10213b]',
       textColor: this.isLightTheme() ? 'text-slate-700' : 'text-slate-300',
@@ -2515,6 +2704,9 @@ export class App {
     };
   }
 
+  /**
+   * Retorna as classes CSS do Tailwind de forma dinâmica para renderizar os cards do calendário.
+   */
   getCollaboratorCalendarDayClass(collab: any, day: number, count: number): string {
     const base = 'p-3 border rounded-xl flex flex-col justify-between gap-1.5 transition-all cursor-pointer min-h-[96px] w-full text-left shadow-sm hover:scale-[1.02] hover:shadow-md duration-200 outline-none select-none relative overflow-hidden';
     
@@ -2523,12 +2715,10 @@ export class App {
     }
 
     const cellValRaw = collab.scale && collab.scale[day] !== undefined ? collab.scale[day] : '-';
-    const cellVal = (cellValRaw === '-') ? this.getShiftCode(collab.shift) : cellValRaw;
+    const cellVal = (cellValRaw === '-') ? (collab.shift || '-') : cellValRaw;
     const upperCode = cellVal.toUpperCase().trim();
 
-    // Is it a folga?
     const isFolga = ['F', 'FF', 'FE', 'FM', 'FT', 'FN', 'X'].includes(upperCode);
-    // Is it an absence?
     const isAbsence = ['LM', 'LMT', 'LA'].includes(upperCode);
 
     if (isFolga) {
@@ -2544,7 +2734,6 @@ export class App {
         return `${base} bg-gradient-to-br from-red-950/20 to-[#030a14] border-rose-500/40 hover:border-rose-400 text-rose-200`;
       }
     } else {
-      // Regular work shift day
       if (this.isLightTheme()) {
         return `${base} bg-white border-slate-200 hover:border-slate-400 text-slate-700`;
       } else {
