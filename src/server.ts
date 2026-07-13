@@ -1,3 +1,4 @@
+import './polyfills.server';
 import {
   AngularNodeAppEngine,
   createNodeRequestHandler,

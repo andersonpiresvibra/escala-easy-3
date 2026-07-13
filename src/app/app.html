@@ -2567,7 +2567,11 @@
                                        [class.text-white]="isToday(day) && isLightTheme()">
                                    {{ day < 10 ? '0' + day : day }}
                                  </span>
-                                 <span class="text-[6px] font-black uppercase tracking-wider text-slate-500 leading-none">
+                                 <span class="text-[6px] font-black uppercase tracking-wider leading-none"
+                                       [class.text-amber-500]="!isPastDay(day) && !isToday(day) && !isLightTheme()"
+                                       [class.text-amber-800]="!isPastDay(day) && !isToday(day) && isLightTheme()"
+                                       [class.text-slate-500]="isPastDay(day)"
+                                       [class.text-white]="isToday(day)">
                                    {{ getDayOfWeekLabel(day) }}
                                  </span>
                               </div>
@@ -2648,7 +2652,11 @@
                                   {{ day < 10 ? '0' + day : day }}
                                 </span>
                                 
-                                <span class="text-[6px] font-black uppercase tracking-wider text-slate-500 leading-none">
+                                <span class="text-[6px] font-black uppercase tracking-wider leading-none"
+                                      [class.text-emerald-500]="!isPastDay(day) && !isToday(day) && !isLightTheme()"
+                                      [class.text-emerald-800]="!isPastDay(day) && !isToday(day) && isLightTheme()"
+                                      [class.text-slate-500]="isPastDay(day)"
+                                      [class.text-white]="isToday(day)">
                                   {{ getDayOfWeekLabel(day) }}
                                 </span>
                               </div>
