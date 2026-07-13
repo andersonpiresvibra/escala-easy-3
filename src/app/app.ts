@@ -33,9 +33,14 @@ export class App {
   public isLightTheme = signal<boolean>(true);
   public isFullscreen = signal<boolean>(false);
   public portalSequenceTab = signal<'weeks' | 'stretches'>('weeks');
+  public portalWidgetTab = signal<'trabalho' | 'semanas'>('trabalho');
 
   public setPortalSequenceTab(tab: 'weeks' | 'stretches'): void {
     this.portalSequenceTab.set(tab);
+  }
+
+  public setPortalWidgetTab(tab: 'trabalho' | 'semanas'): void {
+    this.portalWidgetTab.set(tab);
   }
 
   public toggleTheme(): void {
@@ -110,7 +115,7 @@ export class App {
   }
 
   // Sub tab navigation: 'matrix' | 'ger.turnos' | 'siglas' | 'team' | 'team-mgmt' | 'portal' | 'dashboard'
-  public activeSubTab = signal<'matrix' | 'daily-dash' | 'ger.turnos' | 'siglas' | 'team' | 'team-mgmt' | 'portal' | 'dashboard'>('daily-dash');
+  public activeSubTab = signal<'matrix' | 'ger.turnos' | 'siglas' | 'team' | 'team-mgmt' | 'portal' | 'dashboard'>('matrix');
   
   public teamViewMode = signal<'gallery' | 'mgmt'>('gallery');
   public editingCollab = signal<Collaborator | null>(null);
@@ -189,6 +194,7 @@ export class App {
   public selectedDetailDay = signal<number | null>(null);
   public selectedDetailCollab = signal<any | null>(null);
   public dayDetailsActiveTab = signal<'seu_turno' | 'turno_posterior' | 'geral'>('seu_turno');
+  public selectedCalendarDay = signal<number>(new Date().getDate());
 
   public openCollabProfile(id: string): void {
     this.selectedProfileCollabId.set(id);
@@ -454,6 +460,58 @@ export class App {
   public isImportModalOpen = signal<boolean>(false);
   public isDbModalOpen = signal<boolean>(false);
   public isSolicitarFolgaModalOpen = signal<boolean>(false);
+  public folgaModalSelectedDay = signal<number | null>(null);
+
+  isFolgaRequestPeriodOpen(): boolean {
+    const today = this.simulatedDayOfMonth();
+    return today >= 1 && today <= 10;
+  }
+
+  getNextMonthIndex(): number {
+    return (this.selectedMonthIndex() + 1) % 12;
+  }
+
+  getNextMonthYear(): number {
+    return this.selectedMonthIndex() === 11 ? this.currentYear() + 1 : this.currentYear();
+  }
+
+  getNextMonthCalendarDays(): any[] {
+    const year = this.getNextMonthYear();
+    const month = this.getNextMonthIndex();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDayOfWeek = new Date(year, month, 1).getDay(); // 0 = Sunday
+    
+    const days = [];
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      days.push({ empty: true });
+    }
+    
+    const dateStrPrefix = `${year}-${String(month + 1).padStart(2, '0')}-`;
+    const collabs = this.scaleService.collaborators();
+    const logged = this.getLoggedCollab();
+    
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = dateStrPrefix + String(d).padStart(2, '0');
+      
+      const requesters = collabs.filter(c => 
+        (c.folgaRequests || []).some(r => r.date === dateStr)
+      );
+      
+      const hasRequested = logged ? requesters.some(r => r.id === logged.id) : false;
+      
+      days.push({
+        empty: false,
+        day: d,
+        dateStr: dateStr,
+        requesters: requesters,
+        hasRequested: hasRequested,
+        isFull: requesters.length >= 3 && !hasRequested,
+        count: requesters.length
+      });
+    }
+    
+    return days;
+  }
 
   // Database Connection Indicator
   dbStatus = signal<'checking' | 'connected' | 'error'>('connected');
@@ -883,14 +941,22 @@ export class App {
   });
 
   prevMonth(): void {
-    const prev = (this.selectedMonthIndex() - 1 + 12) % 12;
-    this.selectedMonthIndex.set(prev);
+    if (this.selectedMonthIndex() === 0) {
+      this.selectedMonthIndex.set(11);
+      this.currentYear.set(this.currentYear() - 1);
+    } else {
+      this.selectedMonthIndex.set(this.selectedMonthIndex() - 1);
+    }
     this.isMonthPickerOpen.set(false);
   }
 
   nextMonth(): void {
-    const next = (this.selectedMonthIndex() + 1) % 12;
-    this.selectedMonthIndex.set(next);
+    if (this.selectedMonthIndex() === 11) {
+      this.selectedMonthIndex.set(0);
+      this.currentYear.set(this.currentYear() + 1);
+    } else {
+      this.selectedMonthIndex.set(this.selectedMonthIndex() + 1);
+    }
     this.isMonthPickerOpen.set(false);
   }
 
@@ -1038,6 +1104,8 @@ export class App {
   }
 
   // Role Simulator
+  
+
   changeRole(role: 'SUPERVISOR' | 'LIDER' | 'OPERADOR') {
     this.scaleService.currentRole.set(role);
     this.showToast(`Perfil alterado para: ${role === 'LIDER' ? 'LÍDER DE TURNO' : role}`);
@@ -1642,6 +1710,17 @@ export class App {
         }
       }
     }
+    if (collab.folgaRequests) {
+      const dateStr = `${this.currentYear()}-${String(this.selectedMonthIndex() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      if (collab.folgaRequests.some((r: any) => r.date === dateStr)) {
+        events.push({
+          icon: 'event_busy',
+          color: '#10b981',
+          tooltip: 'Intenção de folga',
+          shortLabel: 'Folga'
+        });
+      }
+    }
     return events;
   }
 
@@ -2230,6 +2309,12 @@ export class App {
     }
   }
 
+  navigateToCollabPortal(id: string): void {
+    this.loginAsCollab(id);
+    this.isDayDetailsModalOpen.set(false);
+    this.activeSubTab.set('portal');
+  }
+
   registerCollaborator(
     name: string,
     role: string,
@@ -2569,26 +2654,30 @@ export class App {
     return upper;
   }
 
+  selectCalendarDay(day: number): void {
+    this.selectedCalendarDay.set(day);
+  }
+
   getTodayTeamCollaborators(): any[] {
     const logged = this.getLoggedCollab();
     if (!logged) return [];
     
-    const todayDay = new Date().getDate();
-    const myShiftCode = this.getCollabEffectiveShiftForDay(logged, todayDay);
+    const day = this.selectedCalendarDay();
+    const myShiftCode = this.getCollabEffectiveShiftForDay(logged, day);
     
     return this.scaleService.collaborators().filter(c => {
-      // Must be scheduled to work today
-      if (!this.isWorkDay(c, todayDay)) return false;
+      // Must be scheduled to work on that day
+      if (!this.isWorkDay(c, day)) return false;
       // Must match the same shift code
-      return this.getCollabEffectiveShiftForDay(c, todayDay) === myShiftCode;
+      return this.getCollabEffectiveShiftForDay(c, day) === myShiftCode;
     });
   }
 
   getTodayTeamShiftLabel(): string {
     const logged = this.getLoggedCollab();
     if (!logged) return '';
-    const todayDay = new Date().getDate();
-    const myShiftCode = this.getCollabEffectiveShiftForDay(logged, todayDay);
+    const day = this.selectedCalendarDay();
+    const myShiftCode = this.getCollabEffectiveShiftForDay(logged, day);
     const shiftType = this.scaleService.shiftTypes().find(s => s.code.trim().toUpperCase() === myShiftCode);
     return shiftType ? `${shiftType.label} (${shiftType.code})` : myShiftCode;
   }
@@ -2708,7 +2797,7 @@ export class App {
    * Retorna as classes CSS do Tailwind de forma dinâmica para renderizar os cards do calendário.
    */
   getCollaboratorCalendarDayClass(collab: any, day: number, count: number): string {
-    const base = 'p-3 border rounded-xl flex flex-col justify-between gap-1.5 transition-all cursor-pointer min-h-[96px] w-full text-left shadow-sm hover:scale-[1.02] hover:shadow-md duration-200 outline-none select-none relative overflow-hidden';
+    const base = 'p-1.5 sm:p-3 border rounded-lg sm:rounded-xl flex flex-col justify-between gap-1 sm:gap-1.5 transition-all cursor-pointer min-h-[54px] sm:min-h-[96px] w-full text-left shadow-sm hover:scale-[1.02] hover:shadow-md duration-200 outline-none select-none relative overflow-hidden';
     
     if (!collab) {
       return `${base} bg-slate-900/30 border-slate-800 text-slate-500`;
@@ -2771,6 +2860,7 @@ export class App {
       this.showToast(result.message);
     } else {
       this.showToast(`Folga adicionada para ${collab.name}!`);
+      this.folgaModalSelectedDay.set(null);
     }
   }
 
@@ -2781,6 +2871,29 @@ export class App {
       this.showToast(result.message);
     } else {
       this.showToast(`Folga removida para ${collab.name}!`);
+      this.folgaModalSelectedDay.set(null);
+    }
+  }
+
+  requestCollabFolgaDayForNextMonth(collab: Collaborator, day: number) {
+    const dateStr = `${this.getNextMonthYear()}-${String(this.getNextMonthIndex() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const result = this.scaleService.requestFolga(collab.id, dateStr, this.simulatedDayOfMonth());
+    if (!result.success) {
+      this.showToast(result.message);
+    } else {
+      this.showToast('Folga solicitada com sucesso!');
+      this.folgaModalSelectedDay.set(null);
+    }
+  }
+
+  removeCollabFolgaDayFromNextMonth(collab: Collaborator, day: number) {
+    const dateStr = `${this.getNextMonthYear()}-${String(this.getNextMonthIndex() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const result = this.scaleService.removeFolga(collab.id, dateStr, this.simulatedDayOfMonth());
+    if (!result.success) {
+      this.showToast(result.message);
+    } else {
+      this.showToast('Solicitação cancelada.');
+      this.folgaModalSelectedDay.set(null);
     }
   }
 

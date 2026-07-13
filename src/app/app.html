@@ -10,7 +10,7 @@
   }
 
   <!-- GLOBAL UNIFIED TABS BAR (home / matrix / staff + dropdown options) -->
-  <header class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 select-none px-6 pt-4 pb-4 border-b border-[#10213b] shadow-xl relative z-20" 
+  <header class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 select-none px-6 pt-4 pb-4 border-b border-[#10213b] shadow-xl relative z-[60]" 
           [class.bg-[#030a14]/80]="!isLightTheme()" [class.backdrop-blur-md]="!isLightTheme()" [class.bg-white]="isLightTheme()" id="global_master_header">
     <div class="flex items-center gap-4 select-none">
       <!-- Logo Square Emblem -->
@@ -43,6 +43,72 @@
         </div>
       </div>
     </div>
+
+    <!-- CENTER PORTAL PROFILE HEADER IN MAIN HEADER -->
+    @if (getLoggedCollab()) {
+      @let loggedH = getLoggedCollab()!;
+      
+      <div class="flex items-center gap-3 relative z-10 select-none" id="header_portal_profile">
+        <!-- Avatar Container -->
+        <div class="relative shrink-0 group cursor-pointer">
+          <div class="absolute -inset-0.5 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-lg blur opacity-35"></div>
+          @if (loggedH.photoUrl || loggedH.photo) {
+            <img [src]="getCollabPhoto(loggedH)" 
+                 alt="Foto de {{ loggedH.name }}"
+                 class="w-10 h-10 rounded-lg object-cover border border-emerald-500/20 shadow-lg bg-slate-900 relative z-10">
+          } @else {
+            <div class="w-10 h-10 rounded-lg border border-emerald-500/20 shadow-lg bg-slate-900 relative z-10 flex items-center justify-center text-slate-400 font-black text-sm uppercase">
+              {{ loggedH.name.charAt(0) }}
+            </div>
+          }
+          <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity rounded-lg z-20">
+            <span class="material-icons text-[10px] mb-0.5">add_a_photo</span>
+            <span class="text-[5px] font-black uppercase tracking-wider">Alt</span>
+          </div>
+          <input type="file"
+                 (change)="onPortalPhotoSelected($event)"
+                 accept="image/*"
+                 class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-30"
+                 title="Alterar foto">
+        </div>
+
+        <div class="flex flex-row items-center divide-x divide-slate-700/50 light-theme-border-divide-override select-none">
+          <!-- Coluna 1: Nome & Função -->
+          <div class="flex flex-col pr-4">
+            <span class="text-xs font-black uppercase tracking-tight leading-none mb-1"
+                  [class.text-white]="!isLightTheme()"
+                  [class.text-slate-800]="isLightTheme()">
+              {{ loggedH.name }}
+            </span>
+            <span class="text-[8px] font-bold text-slate-400 uppercase tracking-wider leading-none">
+              {{ loggedH.role === 'LIDER' ? 'Líder' : loggedH.role === 'SUPERVISOR' ? 'Supervisor' : 'Operador' }}
+            </span>
+          </div>
+
+          <!-- Coluna 2: Setor -->
+          <div class="flex flex-col px-4">
+            <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
+              Setor
+            </span>
+            <span class="text-[10px] font-black uppercase tracking-wide leading-none"
+                  [class.text-white]="!isLightTheme()"
+                  [class.text-slate-800]="isLightTheme()">
+              {{ loggedH.sector || 'Geral' }}
+            </span>
+          </div>
+
+          <!-- Coluna 3: Turno -->
+          <div class="flex flex-col pl-4">
+            <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
+              Turno
+            </span>
+            <span class="text-[10px] font-black text-emerald-500 uppercase tracking-wide leading-none font-mono">
+              {{ loggedH.shift }}
+            </span>
+          </div>
+        </div>
+      </div>
+    }
 
     <!-- RIGHT UTILITIES ROW -->
     <div class="flex flex-wrap items-center gap-2.5 justify-end">
@@ -168,19 +234,6 @@
                 Escala
               </button>
 
-              <button (click)="activeSubTab.set('daily-dash'); isDropdownOpen.set(false)"
-                      class="w-full text-left px-4 py-2 text-[10px] font-black uppercase transition-colors tracking-wider flex items-center gap-2 cursor-pointer border-none outline-none bg-transparent"
-                      [class]="activeSubTab() === 'daily-dash' ? 'text-emerald-400 font-extrabold bg-[#0b1e36]/30' : 'text-slate-300 hover:bg-[#0b1e36]'">
-                <span class="material-icons text-sm" [class]="activeSubTab() === 'daily-dash' ? 'text-emerald-400' : 'text-slate-400'">today</span>
-                Painel Diário
-              </button>
-
-              <button (click)="activeSubTab.set('team'); teamViewMode.set('gallery'); isDropdownOpen.set(false)"
-                      class="w-full text-left px-4 py-2 text-[10px] font-black uppercase transition-colors tracking-wider flex items-center gap-2 cursor-pointer border-none outline-none bg-transparent"
-                      [class]="activeSubTab() === 'team' && teamViewMode() === 'gallery' ? 'text-emerald-400 font-extrabold bg-[#0b1e36]/30' : 'text-slate-300 hover:bg-[#0b1e36]'">
-                <span class="material-icons text-sm" [class]="activeSubTab() === 'team' && teamViewMode() === 'gallery' ? 'text-emerald-400' : 'text-slate-400'">group</span>
-                Quadro de Colaboradores
-              </button>
 
               <button (click)="activeSubTab.set('portal'); isDropdownOpen.set(false)"
                       class="w-full text-left px-4 py-2 text-[10px] font-black uppercase transition-colors tracking-wider flex items-center gap-2 cursor-pointer border-none outline-none bg-transparent"
@@ -646,10 +699,10 @@
                           [class.border-amber-500]="editingRowCollabId() === collab.id">
                         <div class="grid grid-cols-12 gap-2 w-full items-center">
                           <!-- 1. COLABORADOR -->
-                          <div (click)="openCollabProfile(collab.id)"
-                               class="col-span-6 flex items-center gap-2 min-w-0 cursor-pointer hover:opacity-80 transition-all"
-                               title="Ver perfil de {{ collab.name }}">
-                            <div class="relative shrink-0">
+                          <div class="col-span-6 flex items-center gap-2 min-w-0">
+                            <div (click)="navigateToCollabPortal(collab.id)"
+                                 class="relative shrink-0 cursor-pointer hover:opacity-80 transition-all"
+                                 title="Ir para o Portal do Colaborador">
                               <img [src]="getCollabPhoto(collab)" 
                                    alt="Avatar"
                                    referrerpolicy="no-referrer"
@@ -657,7 +710,11 @@
                             </div>
                             
                             <div class="flex flex-col min-w-0 text-left">
-                              <span class="font-sans font-extrabold text-white truncate text-[11.5px] tracking-wide">{{ collab.name }}</span>
+                              <span (click)="navigateToCollabPortal(collab.id)"
+                                    class="font-sans font-extrabold text-white hover:text-emerald-400 hover:underline cursor-pointer truncate text-[11.5px] tracking-wide transition-all"
+                                    title="Ir para o Portal do Colaborador">
+                                {{ collab.name }}
+                              </span>
                             </div>
                           </div>
 
@@ -843,39 +900,6 @@
                   </tr>
                 }
               </tbody>
-              <tfoot>
-                <tr class="border-t-2"
-                    [class.bg-[#030a14]]="!isLightTheme()"
-                    [class.text-white]="!isLightTheme()"
-                    [class.border-[#10213b]]="!isLightTheme()"
-                    [class.bg-slate-50]="isLightTheme()"
-                    [class.text-slate-800]="isLightTheme()"
-                    [class.border-slate-200]="isLightTheme()">
-                  <td class="py-2 pl-5 pr-4 md:pl-7 md:pr-5 sticky left-0 z-20 shadow-sm font-sans font-bold text-right text-[10px] uppercase text-slate-400"
-                      [class.bg-[#030a14]]="!isLightTheme()"
-                      [class.border-r]="true"
-                      [class.border-[#10213b]]="!isLightTheme()"
-                      [class.bg-slate-50]="isLightTheme()"
-                      [class.border-slate-200]="isLightTheme()">
-                    Total Disponível
-                  </td>
-                  @for (day of daysInMonth(); track day) {
-                    <td class="py-2 px-0.5 text-center font-mono text-[10px] font-bold"
-                        [class.border-r]="true"
-                        [class.border-[#10213b]]="!isLightTheme()"
-                        [class.border-slate-200]="isLightTheme()"
-                        [ngClass]="{'text-emerald-400': dailyAvailableCollaborators()[day] > 0, 'text-rose-400': dailyAvailableCollaborators()[day] === 0}">
-                      {{ dailyAvailableCollaborators()[day] }}
-                    </td>
-                  }
-                  <td class="py-2 px-0.5 sticky right-0 z-20 shadow-sm"
-                      [class.bg-[#030a14]]="!isLightTheme()"
-                      [class.border-l]="true"
-                      [class.border-[#10213b]]="!isLightTheme()"
-                      [class.bg-slate-50]="isLightTheme()"
-                      [class.border-slate-200]="isLightTheme()"></td>
-                </tr>
-              </tfoot>
             </table>
           </div>
         </div>
@@ -1846,7 +1870,7 @@
                         <tr class="hover:bg-emerald-950/40 transition-colors text-xs font-medium">
                           <!-- Colaborador Nome -->
                           <td class="py-3.5 px-4 md:px-6">
-                            <div (click)="openCollabProfile(collab.id)" class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-all" title="Ver perfil de {{ collab.name }}">
+                            <div class="flex items-center gap-3">
                               <img [src]="getCollabPhoto(collab)" 
                                    alt="Avatar"
                                    referrerpolicy="no-referrer"
@@ -2164,91 +2188,143 @@
           } @else {
             @let logged = getLoggedCollab()!;
             @let loggedStats = calculateStatsForCollab(logged);
+            @let seqStats = getConsecutiveWorkStats(logged);
+            @let offStats = getDaysUntilNextOff(logged);
             
             <div class="space-y-6 w-full">
-              <!-- Profile Main Header -->
-              <div class="p-5 rounded-lg border flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden shadow-sm mb-6"
-                   [class.bg-gradient-to-r]="!isLightTheme()"
-                   [class.from-[#071426]]="!isLightTheme()"
-                   [class.to-[#030a14]]="!isLightTheme()"
-                   [class.border-[#10213b]]="!isLightTheme()"
-                   [class.bg-white]="isLightTheme()"
-                   [class.border-slate-200]="isLightTheme()">
-                <div class="absolute right-0 top-0 bottom-0 opacity-10 select-none pointer-events-none flex items-center pr-6">
-                  <span class="material-icons text-9xl text-slate-500 font-bold">person</span>
-                </div>
-
-                <div class="flex items-center gap-4 relative z-10">
-                  <!-- Glowing Avatar Container -->
-                  <div class="relative shrink-0 group cursor-pointer">
-                    <div class="absolute -inset-0.5 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-lg blur opacity-30"></div>
-                    @if (logged.photoUrl || logged.photo) {
-                      <img [src]="getCollabPhoto(logged)" 
-                           alt="Foto de {{ logged.name }}"
-                           class="w-16 h-16 rounded-lg object-cover border-2 border-emerald-500/20 shadow-xl bg-slate-900 relative z-10">
-                    } @else {
-                      <div class="w-16 h-16 rounded-lg border-2 border-emerald-500/20 shadow-xl bg-slate-900 relative z-10 flex items-center justify-center text-slate-500 font-bold text-lg uppercase">
-                        {{ logged.name.charAt(0) }}
-                      </div>
-                    }
-                    <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity rounded-lg z-20">
-                      <span class="material-icons text-sm mb-0.5">add_a_photo</span>
-                      <span class="text-[7px] font-black uppercase tracking-wider">Alterar</span>
-                    </div>
-                    <input type="file"
-                           (change)="onPortalPhotoSelected($event)"
-                           accept="image/*"
-                           class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-30"
-                           title="Alterar foto">
-                  </div>
-
-                  <div class="flex flex-row items-center divide-x divide-slate-700/50 light-theme-border-divide-override select-none">
-                    <!-- Coluna 1: Nome (Header) & Função (Valor) -->
-                    <div class="flex flex-col pr-6 md:pr-8">
-                      <span class="text-sm md:text-base font-black text-white uppercase tracking-tight leading-none mb-2">
-                        {{ logged.name }}
-                      </span>
-                      <span class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">
-                        {{ logged.role === 'LIDER' ? 'Líder' : logged.role === 'SUPERVISOR' ? 'Supervisor' : 'Operador' }}
-                      </span>
-                    </div>
-
-                    <!-- Coluna 2: Setor (Header) & Valor -->
-                    <div class="flex flex-col px-6 md:px-8">
-                      <span class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest leading-none mb-2">
-                        Setor
-                      </span>
-                      <span class="text-xs md:text-sm font-black text-white uppercase tracking-wide leading-tight">
-                        {{ logged.sector || 'Geral' }}
-                      </span>
-                    </div>
-
-                    <!-- Coluna 3: Turno (Header) & Valor -->
-                    <div class="flex flex-col pl-6 md:pl-8">
-                      <span class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest leading-none mb-2">
-                        Turno
-                      </span>
-                      <span class="text-xs md:text-sm font-black text-emerald-400 uppercase tracking-wide leading-tight font-mono">
-                        {{ logged.shift }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Shift Time Badge & Logout -->
-                <div class="flex items-center gap-4 relative z-10">
-                  <button id="btn_portal_logout_header" (click)="logout()" class="px-3 py-1.5 bg-transparent hover:bg-emerald-950/40 text-emerald-400 border border-emerald-500/30 rounded-lg cursor-pointer flex items-center gap-1.5 transition-all outline-none font-black text-[10px] uppercase tracking-wider shrink-0">
-                    <span class="material-icons text-sm">logout</span>
-                    Sair
-                  </button>
-                </div>
-              </div>
-
               <!-- PORTAL GRID -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
-              
-              <!-- LEFT SIDEBAR: PROFILE & STATS -->
-              <div class="lg:col-span-4 space-y-6">
+              <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
+                
+                <!-- LEFT SIDEBAR: PROFILE & STATS -->
+                <div class="lg:col-span-4 space-y-6">
+
+                  <!-- WIDGET UNIFICADO: MONITOR DE JORNADA & DESCANSO -->
+                  <div class="p-4 bg-[#071426]/60 border border-[#10213b] rounded-xl flex flex-col space-y-4 transition-all duration-300 shadow-xl"
+                     [style.border-color]="seqStats.isWorking ? (seqStats.streak === 1 ? '#10b981' : (seqStats.streak === 2 ? '#0ea5e9' : (seqStats.streak === 3 ? '#f59e0b' : '#ef4444'))) : '#10213b'">
+                  
+                    <!-- HEADER -->
+                    <div class="flex items-center justify-between pb-2 border-b border-[#10213b]/60">
+                      <div class="flex items-center gap-2">
+                        <span class="material-icons text-emerald-400 text-sm">query_stats</span>
+                        <span class="text-xs font-black uppercase tracking-wider text-slate-200">
+                          Jornada &amp; Descanso
+                        </span>
+                      </div>
+                      @if (seqStats.isWorking) {
+                        <span class="text-[9px] font-bold font-mono text-amber-400 bg-amber-950/40 border border-amber-500/25 px-2 py-0.5 rounded uppercase tracking-wider">
+                          Trabalhando Hoje
+                        </span>
+                      } @else {
+                        <span class="text-[9px] font-bold font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/25 px-2 py-0.5 rounded uppercase tracking-wider animate-pulse">
+                          De Folga Hoje
+                        </span>
+                      }
+                    </div>
+
+                    <!-- CONTEÚDO INTEGRADO: SEM SUB-CARDS POLUÍDOS OU MICRO-TEXTOS -->
+                    <div class="space-y-4">
+                      
+                      <!-- SEÇÃO 1: STATUS DA JORNADA -->
+                      <div class="space-y-3">
+                        @if (seqStats.isWorking) {
+                          <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                              <span class="material-icons text-amber-400 text-lg">schedule</span>
+                              <div>
+                                <p class="text-[13px] font-extrabold text-white leading-tight">
+                                  {{ seqStats.streak }}º Dia de Trabalho Consecutivo
+                                </p>
+                                <p class="text-[10px] text-slate-400">
+                                  Escala programada de {{ seqStats.totalStreak }} dias úteis
+                                </p>
+                              </div>
+                            </div>
+                            <span class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded"
+                                  [class]="seqStats.textCol + ' ' + seqStats.textBg">
+                              {{ seqStats.fatigueLevel }}
+                            </span>
+                          </div>
+                        } @else {
+                          <div class="flex items-center gap-2.5">
+                            <span class="material-icons text-emerald-400 text-lg">weekend</span>
+                            <div>
+                              <p class="text-[13px] font-extrabold text-emerald-400 leading-tight">
+                                ✨ Excelente Folga! ✨
+                              </p>
+                              <p class="text-[10px] text-slate-400">
+                                Desconecte-se e aproveite seu merecido descanso hoje.
+                              </p>
+                            </div>
+                          </div>
+                        }
+
+                        <!-- Energy progress bar - compact and clear -->
+                        <div class="space-y-1 pt-1">
+                          <div class="flex items-center justify-between text-[9px] font-black tracking-wider text-slate-500">
+                            <span>SCORE DE ENERGIA ATUAL</span>
+                            <span class="text-slate-400">{{ seqStats.alertMessage }}</span>
+                          </div>
+                          <div class="grid grid-cols-4 gap-1 h-1.5">
+                            <div class="rounded-sm transition-all duration-300"
+                                 [style.background-color]="seqStats.isWorking ? '#10b981' : '#1e293b'"></div>
+                            <div class="rounded-sm transition-all duration-300"
+                                 [style.background-color]="seqStats.isWorking && seqStats.streak >= 2 ? '#0ea5e9' : '#1e293b'"></div>
+                            <div class="rounded-sm transition-all duration-300"
+                                 [style.background-color]="seqStats.isWorking && seqStats.streak >= 3 ? '#f59e0b' : '#1e293b'"></div>
+                            <div class="rounded-sm transition-all duration-300"
+                                 [style.background-color]="seqStats.isWorking && seqStats.streak >= 4 ? '#ef4444' : '#1e293b'"></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- SEÇÃO 2: RADAR DE FOLGAS (LINHA DE TEXTO SIMPLES E ALTAMENTE VISÍVEL) -->
+                      <div class="pt-3 border-t border-[#10213b]/50">
+                        @if (offStats.isOffToday) {
+                          <div class="text-[11px] text-emerald-400 font-bold flex items-center gap-1.5">
+                            <span class="material-icons text-xs text-emerald-400">check_circle</span>
+                            <span>Aproveite o seu dia de folga! Nenhuma atividade de escala programada para hoje.</span>
+                          </div>
+                        } @else {
+                          <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                              <span class="material-icons text-amber-500 text-base">radar</span>
+                              <span class="text-xs font-bold text-slate-300">
+                                @if (offStats.days === 1) {
+                                  Falta apenas <span class="text-amber-400 font-extrabold text-[13px] font-mono">1 dia</span> de trabalho para folgar!
+                                } @else if (offStats.days === 999) {
+                                  Sem mais folgas programadas.
+                                } @else {
+                                  Faltam <span class="text-amber-400 font-extrabold text-[13px] font-mono">{{ offStats.days }} dias</span> para sua folga!
+                                }
+                              </span>
+                            </div>
+                            <span class="text-[9px] font-black text-emerald-400 bg-emerald-950/40 border border-emerald-500/25 px-2 py-0.5 rounded flex items-center gap-1 shrink-0 animate-pulse">
+                              <span class="material-icons text-[10px]">local_cafe</span>
+                              <span>Boas folgas vêm aí!</span>
+                            </span>
+                          </div>
+                        }
+                      </div>
+
+                      <!-- SEÇÃO 3: FOLGAS PROGRAMADAS DO MÊS (FOLGA SECA EM LINHA DE TEXTO) -->
+                      @if (offStats.nextOffDays.length > 0) {
+                        <div class="pt-3 border-t border-[#10213b]/50 space-y-1">
+                          <p class="text-[10px] font-black tracking-wider text-slate-500 uppercase">
+                            FOLGAS PROGRAMADAS DE {{ currentMonthName() | uppercase }}
+                          </p>
+                          <div class="text-[11px] text-slate-300 flex items-center gap-1.5 flex-wrap">
+                            <span class="material-icons text-xs text-emerald-400">calendar_month</span>
+                            <span>Dias de descanso planejado:</span>
+                            <span class="font-mono font-black text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-2 py-0.5 rounded text-xs select-none">
+                              {{ offStats.nextOffDays.join(', ') }}
+                            </span>
+                          </div>
+                        </div>
+                      }
+
+                    </div>
+
+                  </div>
                 <!-- PORTAL COLLABORATOR PERFIL & WIDGETS -->
                 <div class="bg-[#030a14] border border-[#10213b] rounded-lg p-5 shadow-xl space-y-4">
                   <div class="pb-2 border-b border-[#10213b] flex items-center justify-between">
@@ -2262,203 +2338,298 @@
                   <!-- Statistics Bento Widgets Grid (Indicators) -->
                   <div class="grid grid-cols-1 gap-4">
 
-                    <!-- WIDGET 2: WORK STREAK INDICATOR (VISUALIZAÇÃO DE DIAS DE TRABALHO) -->
+                     <!-- WIDGET 2: WORK STREAK INDICATOR & TABS (VISUALIZAÇÃO DE DIAS DE TRABALHO OU SEMANAS CRÍTICAS) -->
                     <div class="p-4 rounded-lg flex flex-col justify-between space-y-4 border transition-all duration-300"
                          [class.bg-[#071426]/60]="!isLightTheme()"
                          [class.border-[#10213b]]="!isLightTheme()"
                          [class.bg-slate-50]="isLightTheme()"
                          [class.border-slate-200]="isLightTheme()">
-                      <div>
-                        <div class="flex items-center justify-between">
-                          <span class="text-[9px] font-black uppercase tracking-wider flex items-center gap-1"
-                                [class.text-slate-400]="!isLightTheme()"
-                                [class.text-slate-600]="isLightTheme()">
-                            <span class="material-icons text-xs text-emerald-500">work</span>
-                            Carga Semanal &amp; Evolução
-                          </span>
-                          <span class="text-[8px] font-bold font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-1.5 py-0.5 rounded shrink-0">
-                            {{ getCollabWorkDays(logged).length }} Dias Ativos
-                          </span>
-                        </div>
-                        <p class="text-[8px] text-slate-500 mt-0.5 leading-relaxed">Visão agrupada por semanas e nível de severidade de carga de trabalho.</p>
+                      
+                      <!-- TABS SELECTOR -->
+                      <div class="flex items-center gap-1 p-0.5 rounded-lg border select-none"
+                           [class.bg-[#030a14]]="!isLightTheme()"
+                           [class.border-[#10213b]]="!isLightTheme()"
+                           [class.bg-slate-100]="isLightTheme()"
+                           [class.border-slate-200]="isLightTheme()">
+                        <button (click)="setPortalWidgetTab('trabalho')"
+                                class="flex-1 py-1.5 px-2 rounded-md font-black text-[9px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all outline-none cursor-pointer"
+                                [class.bg-emerald-500]="portalWidgetTab() === 'trabalho' && !isLightTheme()"
+                                [class.bg-emerald-600]="portalWidgetTab() === 'trabalho' && isLightTheme()"
+                                [class.text-slate-950]="portalWidgetTab() === 'trabalho' && !isLightTheme()"
+                                [class.text-white]="portalWidgetTab() === 'trabalho' && isLightTheme()"
+                                [class.bg-transparent]="portalWidgetTab() !== 'trabalho'"
+                                [class.text-slate-400]="portalWidgetTab() !== 'trabalho' && !isLightTheme()"
+                                [class.text-slate-600]="portalWidgetTab() !== 'trabalho' && isLightTheme()">
+                          <span class="material-icons text-xs">work</span>
+                          Dias de Trabalho
+                        </button>
+                        <button (click)="setPortalWidgetTab('semanas')"
+                                class="flex-1 py-1.5 px-2 rounded-md font-black text-[9px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all outline-none cursor-pointer"
+                                [class.bg-emerald-500]="portalWidgetTab() === 'semanas' && !isLightTheme()"
+                                [class.bg-emerald-600]="portalWidgetTab() === 'semanas' && isLightTheme()"
+                                [class.text-slate-950]="portalWidgetTab() === 'semanas' && !isLightTheme()"
+                                [class.text-white]="portalWidgetTab() === 'semanas' && isLightTheme()"
+                                [class.bg-transparent]="portalWidgetTab() !== 'semanas'"
+                                [class.text-slate-400]="portalWidgetTab() !== 'semanas' && !isLightTheme()"
+                                [class.text-slate-600]="portalWidgetTab() !== 'semanas' && isLightTheme()">
+                          <span class="material-icons text-xs">warning</span>
+                          Semanas Críticas
+                        </button>
                       </div>
 
-                      <!-- GRAPHIC SEGMENTED EVOLUTION BAR (4/5 PARTS) -->
-                      <div class="space-y-1.5">
-                        <div class="flex items-center justify-between text-[7px] uppercase font-black tracking-wider text-slate-500">
-                          <span>Evolução de Criticidade Semanal</span>
-                          <span class="font-mono text-emerald-500">Alerta e Atenção</span>
-                        </div>
-                        <div class="w-full h-3 rounded-full flex gap-1 p-0.5"
-                             [class.bg-slate-950/60]="!isLightTheme()"
-                             [class.bg-slate-200]="isLightTheme()">
-                          @for (week of getWeeklyWorkSequences(logged); track week.weekNum) {
-                            <div class="flex-1 h-full rounded-sm transition-all duration-300 relative"
-                                 [class.bg-rose-500]="week.severity === 'critical'"
-                                 [class.shadow-[0_0_8px_rgba(239,68,68,0.4)]]="week.severity === 'critical'"
-                                 
-                                 [class.bg-amber-500]="week.severity === 'warning'"
-                                 [class.shadow-[0_0_8px_rgba(245,158,11,0.4)]]="week.severity === 'warning'"
-                                 
-                                 [class.bg-emerald-500]="week.severity === 'normal'"
-                                 [class.shadow-[0_0_8px_rgba(16,185,129,0.4)]]="week.severity === 'normal'"
-                                 [title]="week.label + ': ' + week.workCount + ' dias (' + week.severityText + ')'">
-                            </div>
-                          }
-                        </div>
-                        <div class="flex items-center justify-between text-[6.5px] font-bold text-slate-500 uppercase">
-                          <span>Início do Mês</span>
-                          <span>Fim do Mês</span>
-                        </div>
-                      </div>
+                      @if (portalWidgetTab() === 'trabalho') {
+                        <!-- TAB 1: WORK DAYS FROM DATABASE -->
+                        <div class="space-y-3">
+                          <div class="flex items-center justify-between">
+                            <span class="text-[9px] font-black uppercase tracking-wider flex items-center gap-1"
+                                  [class.text-slate-400]="!isLightTheme()"
+                                  [class.text-slate-600]="isLightTheme()">
+                              <span class="material-icons text-xs text-emerald-500">done_all</span>
+                              Dias de Trabalho Efetivos
+                            </span>
+                            <span class="text-[8px] font-bold font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-1.5 py-0.5 rounded shrink-0"
+                                  [class.text-emerald-700]="isLightTheme()"
+                                  [class.bg-emerald-50]="isLightTheme()"
+                                  [class.border-emerald-200]="isLightTheme()">
+                              {{ getCollabWorkDays(logged).length }} Dias Ativos
+                            </span>
+                          </div>
+                          
+                          <p class="text-[8px] text-slate-500 leading-relaxed">
+                            Abaixo estão listados apenas os dias de trabalho programados em seu cadastro no banco de dados.
+                          </p>
 
-                      <!-- WEEKLY DETAILED SECTIONS GRID -->
-                      <div class="space-y-3 max-h-[360px] overflow-y-auto pr-1">
-                        @for (week of getWeeklyWorkSequences(logged); track week.weekNum) {
-                          <div class="p-3 border rounded-lg flex flex-col space-y-2 transition-all duration-300"
-                               [class.bg-rose-950/10]="week.severity === 'critical' && !isLightTheme()"
-                               [class.border-rose-500/30]="week.severity === 'critical' && !isLightTheme()"
-                               [class.bg-rose-50/50]="week.severity === 'critical' && isLightTheme()"
-                               [class.border-rose-200]="week.severity === 'critical' && isLightTheme()"
-                               
-                               [class.bg-amber-950/10]="week.severity === 'warning' && !isLightTheme()"
-                               [class.border-amber-500/30]="week.severity === 'warning' && !isLightTheme()"
-                               [class.bg-amber-50/50]="week.severity === 'warning' && isLightTheme()"
-                               [class.border-amber-200]="week.severity === 'warning' && isLightTheme()"
-                               
-                               [class.bg-emerald-950/10]="week.severity === 'normal' && !isLightTheme()"
-                               [class.border-emerald-500/20]="week.severity === 'normal' && !isLightTheme()"
-                               [class.bg-emerald-50/20]="week.severity === 'normal' && isLightTheme()"
-                               [class.border-slate-200]="week.severity === 'normal' && isLightTheme()">
-                               
-                               <!-- Week Header -->
-                               <div class="flex items-center justify-between">
-                                 <div class="flex items-center gap-2">
-                                   <!-- SVG Micro Donut Chart -->
-                                   <div class="relative flex items-center justify-center shrink-0">
-                                     <svg class="w-6 h-6 -rotate-90" viewBox="0 0 36 36">
-                                       <circle class="stroke-slate-800/40" [class.stroke-slate-200]="isLightTheme()" stroke-width="4px" stroke="currentColor" fill="transparent" r="15.915" cx="18" cy="18" />
-                                       <circle [class]="week.severity === 'critical' ? 'stroke-rose-500' : (week.severity === 'warning' ? 'stroke-amber-500' : 'stroke-emerald-500')"
-                                               stroke-width="4px"
-                                               stroke-linecap="round"
-                                               [attr.stroke-dasharray]="100"
-                                               [attr.stroke-dashoffset]="100 - week.percentage"
-                                               fill="transparent"
-                                               r="15.915" cx="18" cy="18" />
-                                     </svg>
-                                     <span class="absolute text-[7px] font-black font-mono text-slate-300" [class.text-slate-700]="isLightTheme()">
-                                       {{ week.percentage }}%
-                                     </span>
-                                   </div>
+                          <div class="grid grid-cols-5 xs:grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-5 xl:grid-cols-6 gap-1">
+                            @for (day of getCollabWorkDays(logged); track day) {
+                              @let dayInfo = getCollaboratorDayScheduleInfo(logged, day);
+                              <div class="p-1 border rounded-lg flex flex-col items-center justify-center text-center select-none min-h-[42px] transition-all duration-300 relative overflow-hidden group hover:scale-[1.03]"
+                                   [class.bg-emerald-950/20]="!isLightTheme()"
+                                   [class.border-emerald-500/30]="!isLightTheme()"
+                                   [class.bg-emerald-50/50]="isLightTheme()"
+                                   [class.border-emerald-200]="isLightTheme()"
+                                   [class.ring-1]="isToday(day)"
+                                   [class.ring-emerald-400]="isToday(day)">
                                    
-                                   <div>
-                                     <span class="text-[9px] font-black uppercase tracking-wider block"
-                                           [class.text-slate-200]="!isLightTheme()"
-                                           [class.text-slate-800]="isLightTheme()">
-                                       {{ week.label }}
-                                     </span>
-                                     <span class="text-[7px] text-slate-500 block leading-none font-bold">
-                                       {{ week.range }}
-                                     </span>
-                                   </div>
-                                 </div>
-                                 
-                                 <div class="flex items-center gap-1.5">
-                                   <span class="text-[7.5px] font-black font-mono px-1.5 py-0.5 rounded border uppercase tracking-wider shrink-0"
-                                         [class.bg-rose-950/40]="week.severity === 'critical' && !isLightTheme()"
-                                         [class.text-rose-400]="week.severity === 'critical' && !isLightTheme()"
-                                         [class.border-rose-500/20]="week.severity === 'critical' && !isLightTheme()"
-                                         [class.bg-rose-50]="week.severity === 'critical' && isLightTheme()"
-                                         [class.text-rose-700]="week.severity === 'critical' && isLightTheme()"
-                                         [class.border-rose-200]="week.severity === 'critical' && isLightTheme()"
-                                         
-                                         [class.bg-amber-950/40]="week.severity === 'warning' && !isLightTheme()"
-                                         [class.text-amber-400]="week.severity === 'warning' && !isLightTheme()"
-                                         [class.border-amber-500/20]="week.severity === 'warning' && !isLightTheme()"
-                                         [class.bg-amber-50]="week.severity === 'warning' && isLightTheme()"
-                                         [class.text-amber-700]="week.severity === 'warning' && isLightTheme()"
-                                         [class.border-amber-200]="week.severity === 'warning' && isLightTheme()"
-                                         
-                                         [class.bg-emerald-950/40]="week.severity === 'normal' && !isLightTheme()"
-                                         [class.text-emerald-400]="week.severity === 'normal' && !isLightTheme()"
-                                         [class.border-emerald-500/20]="week.severity === 'normal' && !isLightTheme()"
-                                         [class.bg-emerald-50]="week.severity === 'normal' && isLightTheme()"
-                                         [class.text-emerald-700]="week.severity === 'normal' && isLightTheme()"
-                                         [class.border-emerald-200]="week.severity === 'normal' && isLightTheme()">
-                                     {{ week.severityText }}
-                                   </span>
-                                 </div>
-                               </div>
+                                <span class="text-[10px] font-mono font-black leading-none"
+                                      [class.text-emerald-400]="!isLightTheme()"
+                                      [class.text-emerald-700]="isLightTheme()">
+                                  {{ day < 10 ? '0' + day : day }}
+                                </span>
+                                
+                                <span class="text-[6px] font-black uppercase tracking-wider text-slate-400 leading-none"
+                                      [class.text-slate-500]="isLightTheme()">
+                                  {{ getDayOfWeekLabel(day) }}
+                                </span>
+                              </div>
+                            } @empty {
+                              <div class="col-span-full py-8 text-center flex flex-col items-center justify-center space-y-2 border border-dashed rounded-lg"
+                                   [class.border-slate-800]="!isLightTheme()"
+                                   [class.border-slate-200]="isLightTheme()">
+                                <span class="material-icons text-slate-500 text-sm">info</span>
+                                <span class="text-[8px] font-bold uppercase tracking-wider text-slate-500">Nenhum dia de trabalho neste mês</span>
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      } @else {
+                        <!-- TAB 2: CRITICAL WEEKS OVERVIEW -->
+                        <div class="space-y-4">
+                          <div>
+                            <div class="flex items-center justify-between">
+                              <span class="text-[9px] font-black uppercase tracking-wider flex items-center gap-1"
+                                    [class.text-slate-400]="!isLightTheme()"
+                                    [class.text-slate-600]="isLightTheme()">
+                                <span class="material-icons text-xs text-emerald-500">warning</span>
+                                Carga Semanal &amp; Evolução
+                              </span>
+                              <span class="text-[8px] font-bold font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-1.5 py-0.5 rounded shrink-0"
+                                    [class.text-emerald-700]="isLightTheme()"
+                                    [class.bg-emerald-50]="isLightTheme()"
+                                    [class.border-emerald-200]="isLightTheme()">
+                                {{ getCollabWorkDays(logged).length }} Dias Ativos
+                              </span>
+                            </div>
+                            <p class="text-[8px] text-slate-500 mt-0.5 leading-relaxed">Visão agrupada por semanas e nível de severidade de carga de trabalho.</p>
+                          </div>
 
-                               <!-- Week Days Worked Grid (styled like the off days grid but themed by week urgency) -->
-                               <div class="grid grid-cols-5 gap-1">
-                                 @for (dayObj of week.daysList; track dayObj.day) {
-                                   @if (dayObj.isWork) {
-                                     <div class="p-1 border rounded flex flex-col items-center justify-center text-center select-none min-h-[36px] transition-all duration-300"
-                                          [class.bg-rose-950/30]="week.severity === 'critical' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                          [class.border-rose-500/30]="week.severity === 'critical' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                          [class.text-rose-300]="week.severity === 'critical' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                          [class.bg-rose-100/40]="week.severity === 'critical' && isLightTheme() && !isPastDay(dayObj.day)"
-                                          [class.border-rose-200]="week.severity === 'critical' && isLightTheme() && !isPastDay(dayObj.day)"
-                                          [class.text-rose-800]="week.severity === 'critical' && isLightTheme() && !isPastDay(dayObj.day)"
+                          <!-- GRAPHIC SEGMENTED EVOLUTION BAR (4/5 PARTS) -->
+                          <div class="space-y-1.5">
+                            <div class="flex items-center justify-between text-[7px] uppercase font-black tracking-wider text-slate-500">
+                              <span>Evolução de Criticidade Semanal</span>
+                              <span class="font-mono text-emerald-500">Alerta e Atenção</span>
+                            </div>
+                            <div class="w-full h-3 rounded-full flex gap-1 p-0.5"
+                                 [class.bg-slate-950/60]="!isLightTheme()"
+                                 [class.bg-slate-200]="isLightTheme()">
+                              @for (week of getWeeklyWorkSequences(logged); track week.weekNum) {
+                                <div class="flex-1 h-full rounded-sm transition-all duration-300 relative"
+                                     [class.bg-rose-500]="week.severity === 'critical'"
+                                     [class.shadow-[0_0_8px_rgba(239,68,68,0.4)]]="week.severity === 'critical'"
+                                     
+                                     [class.bg-amber-500]="week.severity === 'warning'"
+                                     [class.shadow-[0_0_8px_rgba(245,158,11,0.4)]]="week.severity === 'warning'"
+                                     
+                                     [class.bg-emerald-500]="week.severity === 'normal'"
+                                     [class.shadow-[0_0_8px_rgba(16,185,129,0.4)]]="week.severity === 'normal'"
+                                     [title]="week.label + ': ' + week.workCount + ' dias (' + week.severityText + ')'">
+                                </div>
+                              }
+                            </div>
+                            <div class="flex items-center justify-between text-[6.5px] font-bold text-slate-500 uppercase">
+                              <span>Início do Mês</span>
+                              <span>Fim do Mês</span>
+                            </div>
+                          </div>
 
-                                          [class.bg-amber-950/30]="week.severity === 'warning' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                          [class.border-amber-500/30]="week.severity === 'warning' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                          [class.text-amber-300]="week.severity === 'warning' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                          [class.bg-amber-100/40]="week.severity === 'warning' && isLightTheme() && !isPastDay(dayObj.day)"
-                                          [class.border-amber-200]="week.severity === 'warning' && isLightTheme() && !isPastDay(dayObj.day)"
-                                          [class.text-amber-800]="week.severity === 'warning' && isLightTheme() && !isPastDay(dayObj.day)"
-
-                                          [class.bg-emerald-950/30]="week.severity === 'normal' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                          [class.border-emerald-500/20]="week.severity === 'normal' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                          [class.text-emerald-300]="week.severity === 'normal' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                          [class.bg-emerald-50]="week.severity === 'normal' && isLightTheme() && !isPastDay(dayObj.day)"
-                                          [class.border-emerald-200]="week.severity === 'normal' && isLightTheme() && !isPastDay(dayObj.day)"
-                                          [class.text-emerald-800]="week.severity === 'normal' && isLightTheme() && !isPastDay(dayObj.day)"
-
-                                          [class.opacity-35]="isPastDay(dayObj.day)"
-                                          [class.bg-slate-950/30]="!isLightTheme() && isPastDay(dayObj.day)"
-                                          [class.border-slate-800]="!isLightTheme() && isPastDay(dayObj.day)"
-                                          [class.text-slate-500]="!isLightTheme() && isPastDay(dayObj.day)"
-                                          [class.bg-slate-100]="isLightTheme() && isPastDay(dayObj.day)"
-                                          [class.border-slate-200]="isLightTheme() && isPastDay(dayObj.day)"
-                                          [class.text-slate-400]="isLightTheme() && isPastDay(dayObj.day)"
-
-                                          [class.ring-1]="isToday(dayObj.day)"
-                                          [class.ring-emerald-400]="isToday(dayObj.day)">
-                                       <span class="text-[10px] font-mono font-black leading-tight"
-                                             [class.text-rose-400]="week.severity === 'critical' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                             [class.text-rose-700]="week.severity === 'critical' && isLightTheme() && !isPastDay(dayObj.day)"
-                                             [class.text-amber-400]="week.severity === 'warning' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                             [class.text-amber-700]="week.severity === 'warning' && isLightTheme() && !isPastDay(dayObj.day)"
-                                             [class.text-emerald-400]="week.severity === 'normal' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                             [class.text-emerald-700]="week.severity === 'normal' && isLightTheme() && !isPastDay(dayObj.day)"
-                                             [class.text-slate-600]="!isLightTheme() && isPastDay(dayObj.day)"
-                                             [class.text-slate-400]="isLightTheme() && isPastDay(dayObj.day)">
-                                         {{ dayObj.day < 10 ? '0' + dayObj.day : dayObj.day }}
-                                       </span>
-                                       <span class="text-[6px] font-black uppercase tracking-wider"
-                                             [class.text-rose-500/70]="week.severity === 'critical' && !isPastDay(dayObj.day)"
-                                             [class.text-rose-600/70]="week.severity === 'critical' && isPastDay(dayObj.day)"
-                                             [class.text-amber-500/70]="week.severity === 'warning' && !isPastDay(dayObj.day)"
-                                             [class.text-amber-600/70]="week.severity === 'warning' && isPastDay(dayObj.day)"
-                                             [class.text-emerald-500/70]="week.severity === 'normal' && !isPastDay(dayObj.day)"
-                                             [class.text-emerald-600/70]="week.severity === 'normal' && isPastDay(dayObj.day)"
-                                             [class.text-slate-700]="!isLightTheme() && isPastDay(dayObj.day)"
-                                             [class.text-slate-500]="isLightTheme() && isPastDay(dayObj.day)">
-                                         {{ getDayOfWeekLabel(dayObj.day) }}
+                          <!-- WEEKLY DETAILED SECTIONS GRID -->
+                          <div class="space-y-3 max-h-[220px] overflow-y-auto pr-1">
+                            @for (week of getWeeklyWorkSequences(logged); track week.weekNum) {
+                              <div class="p-3 border rounded-lg flex flex-col space-y-2 transition-all duration-300"
+                                   [class.bg-rose-950/10]="week.severity === 'critical' && !isLightTheme()"
+                                   [class.border-rose-500/30]="week.severity === 'critical' && !isLightTheme()"
+                                   [class.bg-rose-50/50]="week.severity === 'critical' && isLightTheme()"
+                                   [class.border-rose-200]="week.severity === 'critical' && isLightTheme()"
+                                   
+                                   [class.bg-amber-950/10]="week.severity === 'warning' && !isLightTheme()"
+                                   [class.border-amber-500/30]="week.severity === 'warning' && !isLightTheme()"
+                                   [class.bg-amber-50/50]="week.severity === 'warning' && isLightTheme()"
+                                   [class.border-amber-200]="week.severity === 'warning' && isLightTheme()"
+                                   
+                                   [class.bg-emerald-950/10]="week.severity === 'normal' && !isLightTheme()"
+                                   [class.border-emerald-500/20]="week.severity === 'normal' && !isLightTheme()"
+                                   [class.bg-emerald-50/20]="week.severity === 'normal' && isLightTheme()"
+                                   [class.border-slate-200]="week.severity === 'normal' && isLightTheme()">
+                                   
+                                   <!-- Week Header -->
+                                   <div class="flex items-center justify-between">
+                                     <div class="flex items-center gap-2">
+                                       <!-- SVG Micro Donut Chart -->
+                                       <div class="relative flex items-center justify-center shrink-0">
+                                         <svg class="w-6 h-6 -rotate-90" viewBox="0 0 36 36">
+                                           <circle class="stroke-slate-800/40" [class.stroke-slate-200]="isLightTheme()" stroke-width="4px" stroke="currentColor" fill="transparent" r="15.915" cx="18" cy="18" />
+                                           <circle [class]="week.severity === 'critical' ? 'stroke-rose-500' : (week.severity === 'warning' ? 'stroke-amber-500' : 'stroke-emerald-500')"
+                                                   stroke-width="4px"
+                                                   stroke-linecap="round"
+                                                   [attr.stroke-dasharray]="100"
+                                                   [attr.stroke-dashoffset]="100 - week.percentage"
+                                                   fill="transparent"
+                                                   r="15.915" cx="18" cy="18" />
+                                         </svg>
+                                         <span class="absolute text-[7px] font-black font-mono text-slate-300" [class.text-slate-700]="isLightTheme()">
+                                           {{ week.percentage }}%
+                                         </span>
+                                       </div>
+                                       
+                                       <div>
+                                         <span class="text-[9px] font-black uppercase tracking-wider block"
+                                               [class.text-slate-200]="!isLightTheme()"
+                                               [class.text-slate-800]="isLightTheme()">
+                                           {{ week.label }}
+                                         </span>
+                                         <span class="text-[7px] text-slate-500 block leading-none font-bold">
+                                           {{ week.range }}
+                                         </span>
+                                       </div>
+                                     </div>
+                                     
+                                     <div class="flex items-center gap-1.5">
+                                       <span class="text-[7.5px] font-black font-mono px-1.5 py-0.5 rounded border uppercase tracking-wider shrink-0"
+                                             [class.bg-rose-950/40]="week.severity === 'critical' && !isLightTheme()"
+                                             [class.text-rose-400]="week.severity === 'critical' && !isLightTheme()"
+                                             [class.border-rose-500/20]="week.severity === 'critical' && !isLightTheme()"
+                                             [class.bg-rose-50]="week.severity === 'critical' && isLightTheme()"
+                                             [class.text-rose-700]="week.severity === 'critical' && isLightTheme()"
+                                             [class.border-rose-200]="week.severity === 'critical' && isLightTheme()"
+                                             
+                                             [class.bg-amber-950/40]="week.severity === 'warning' && !isLightTheme()"
+                                             [class.text-amber-400]="week.severity === 'warning' && !isLightTheme()"
+                                             [class.border-amber-500/20]="week.severity === 'warning' && !isLightTheme()"
+                                             [class.bg-amber-50]="week.severity === 'warning' && isLightTheme()"
+                                             [class.text-amber-700]="week.severity === 'warning' && isLightTheme()"
+                                             [class.border-amber-200]="week.severity === 'warning' && isLightTheme()"
+                                             
+                                             [class.bg-emerald-950/40]="week.severity === 'normal' && !isLightTheme()"
+                                             [class.text-emerald-400]="week.severity === 'normal' && !isLightTheme()"
+                                             [class.border-emerald-500/20]="week.severity === 'normal' && !isLightTheme()"
+                                             [class.bg-emerald-50]="week.severity === 'normal' && isLightTheme()"
+                                             [class.text-emerald-700]="week.severity === 'normal' && isLightTheme()"
+                                             [class.border-emerald-200]="week.severity === 'normal' && isLightTheme()">
+                                         {{ week.severityText }}
                                        </span>
                                      </div>
-                                   }
-                                 } @empty {
-                                   <div class="col-span-full py-3 text-center">
-                                     <span class="text-[7.5px] font-bold italic text-slate-500 uppercase tracking-wider">Folga total nesta semana</span>
                                    </div>
-                                 }
-                                </div>
+
+                                   <!-- Week Days Worked Grid (styled like the off days grid but themed by week urgency) -->
+                                   <div class="grid grid-cols-5 gap-1">
+                                     @for (dayObj of week.daysList; track dayObj.day) {
+                                       @if (dayObj.isWork) {
+                                         <div class="p-1 border rounded flex flex-col items-center justify-center text-center select-none min-h-[36px] transition-all duration-300"
+                                              [class.bg-rose-950/30]="week.severity === 'critical' && !isLightTheme() && !isPastDay(dayObj.day)"
+                                              [class.border-rose-500/30]="week.severity === 'critical' && !isLightTheme() && !isPastDay(dayObj.day)"
+                                              [class.text-rose-300]="week.severity === 'critical' && !isLightTheme() && !isPastDay(dayObj.day)"
+                                              [class.bg-rose-100/40]="week.severity === 'critical' && isLightTheme() && !isPastDay(dayObj.day)"
+                                              [class.border-rose-200]="week.severity === 'critical' && isLightTheme() && !isPastDay(dayObj.day)"
+                                              [class.text-rose-800]="week.severity === 'critical' && isLightTheme() && !isPastDay(dayObj.day)"
+
+                                              [class.bg-amber-950/30]="week.severity === 'warning' && !isLightTheme() && !isPastDay(dayObj.day)"
+                                              [class.border-amber-500/30]="week.severity === 'warning' && !isLightTheme() && !isPastDay(dayObj.day)"
+                                              [class.text-amber-300]="week.severity === 'warning' && !isLightTheme() && !isPastDay(dayObj.day)"
+                                              [class.bg-amber-100/40]="week.severity === 'warning' && isLightTheme() && !isPastDay(dayObj.day)"
+                                              [class.border-amber-200]="week.severity === 'warning' && isLightTheme() && !isPastDay(dayObj.day)"
+                                              [class.text-amber-800]="week.severity === 'warning' && isLightTheme() && !isPastDay(dayObj.day)"
+
+                                              [class.bg-emerald-950/30]="week.severity === 'normal' && !isLightTheme() && !isPastDay(dayObj.day)"
+                                              [class.border-emerald-500/20]="week.severity === 'normal' && !isLightTheme() && !isPastDay(dayObj.day)"
+                                              [class.text-emerald-300]="week.severity === 'normal' && !isLightTheme() && !isPastDay(dayObj.day)"
+                                              [class.bg-emerald-50]="week.severity === 'normal' && isLightTheme() && !isPastDay(dayObj.day)"
+                                              [class.border-emerald-200]="week.severity === 'normal' && isLightTheme() && !isPastDay(dayObj.day)"
+                                              [class.text-emerald-800]="week.severity === 'normal' && isLightTheme() && !isPastDay(dayObj.day)"
+
+                                              [class.opacity-35]="isPastDay(dayObj.day)"
+                                              [class.bg-slate-950/30]="!isLightTheme() && isPastDay(dayObj.day)"
+                                              [class.border-slate-800]="!isLightTheme() && isPastDay(dayObj.day)"
+                                              [class.text-slate-500]="!isLightTheme() && isPastDay(dayObj.day)"
+                                              [class.bg-slate-100]="isLightTheme() && isPastDay(dayObj.day)"
+                                              [class.border-slate-200]="isLightTheme() && isPastDay(dayObj.day)"
+                                              [class.text-slate-400]="isLightTheme() && isPastDay(dayObj.day)"
+
+                                              [class.ring-1]="isToday(dayObj.day)"
+                                              [class.ring-emerald-400]="isToday(dayObj.day)">
+                                           <span class="text-[10px] font-mono font-black leading-tight"
+                                                 [class.text-rose-400]="week.severity === 'critical' && !isLightTheme() && !isPastDay(dayObj.day)"
+                                                 [class.text-rose-700]="week.severity === 'critical' && isLightTheme() && !isPastDay(dayObj.day)"
+                                                 [class.text-amber-400]="week.severity === 'warning' && !isLightTheme() && !isPastDay(dayObj.day)"
+                                                 [class.text-amber-700]="week.severity === 'warning' && isLightTheme() && !isPastDay(dayObj.day)"
+                                                 [class.text-emerald-400]="week.severity === 'normal' && !isLightTheme() && !isPastDay(dayObj.day)"
+                                                 [class.text-emerald-700]="week.severity === 'normal' && isLightTheme() && !isPastDay(dayObj.day)"
+                                                 [class.text-slate-600]="!isLightTheme() && isPastDay(dayObj.day)"
+                                                 [class.text-slate-400]="isLightTheme() && isPastDay(dayObj.day)">
+                                             {{ dayObj.day < 10 ? '0' + dayObj.day : dayObj.day }}
+                                           </span>
+                                           <span class="text-[6px] font-black uppercase tracking-wider"
+                                                 [class.text-rose-500/70]="week.severity === 'critical' && !isPastDay(dayObj.day)"
+                                                 [class.text-rose-600/70]="week.severity === 'critical' && isPastDay(dayObj.day)"
+                                                 [class.text-amber-500/70]="week.severity === 'warning' && !isPastDay(dayObj.day)"
+                                                 [class.text-amber-600/70]="week.severity === 'warning' && isPastDay(dayObj.day)"
+                                                 [class.text-emerald-500/70]="week.severity === 'normal' && !isPastDay(dayObj.day)"
+                                                 [class.text-emerald-600/70]="week.severity === 'normal' && isPastDay(dayObj.day)"
+                                                 [class.text-slate-700]="!isLightTheme() && isPastDay(dayObj.day)"
+                                                 [class.text-slate-500]="isLightTheme() && isPastDay(dayObj.day)">
+                                             {{ getDayOfWeekLabel(dayObj.day) }}
+                                           </span>
+                                         </div>
+                                       }
+                                     } @empty {
+                                       <div class="col-span-full py-3 text-center">
+                                         <span class="text-[7.5px] font-bold italic text-slate-500 uppercase tracking-wider">Folga total nesta semana</span>
+                                       </div>
+                                     }
+                                    </div>
+                              </div>
+                            }
                           </div>
-                        }
-                      </div>
+                        </div>
+                      }
                     </div>
 
 
@@ -2510,275 +2681,168 @@
                       </div>
                     </div>
 
-                    <!-- WIDGET 5: ORIENTADOR DE JORNADA & FADIGA -->
-                    @let seqStats = getConsecutiveWorkStats(logged);
-                    <div class="p-4 bg-[#071426]/60 border rounded-lg flex flex-col justify-between space-y-3 transition-all duration-300"
-                         [style.border-color]="seqStats.isWorking ? (seqStats.streak === 1 ? '#10b981' : (seqStats.streak === 2 ? '#0ea5e9' : (seqStats.streak === 3 ? '#f59e0b' : '#ef4444'))) : '#10213b'"
-                         [style.box-shadow]="seqStats.isWorking ? '0 4px 20px -5px ' + (seqStats.streak === 1 ? 'rgba(16,185,129,0.1)' : (seqStats.streak === 2 ? 'rgba(14,165,233,0.1)' : (seqStats.streak === 3 ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.15)'))) : 'none'">
-                      <div>
-                        <span class="text-[9px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                          <span class="material-icons text-xs" [class]="seqStats.energyColor">bolt</span>
-                          Orientador de Jornada
-                        </span>
-                        <p class="text-[8px] text-slate-500 mt-0.5 leading-relaxed">Ritmo de dias consecutivos de trabalho e nível de esforço atual.</p>
-                      </div>
-
-                      <div class="space-y-2">
-                        @if (seqStats.isWorking) {
-                          <div class="flex items-center gap-2">
-                            <div class="w-10 h-10 rounded-full flex flex-col items-center justify-center font-mono font-black border text-white transition-all duration-300"
-                                 [style.background-color]="seqStats.streak === 1 ? '#064e3b' : (seqStats.streak === 2 ? '#0c4a6e' : (seqStats.streak === 3 ? '#78350f' : '#7f1d1d'))"
-                                 [style.border-color]="seqStats.streak === 1 ? '#10b981' : (seqStats.streak === 2 ? '#0ea5e9' : (seqStats.streak === 3 ? '#f59e0b' : '#ef4444'))">
-                              <span class="text-xs leading-none">{{ seqStats.streak }}º</span>
-                              <span class="text-[6px] uppercase font-sans tracking-wide">Dia</span>
-                            </div>
-                            <div>
-                              <p class="text-[11px] font-black text-white leading-tight">
-                                {{ seqStats.streak }}º Dia Consecutivo
-                              </p>
-                              <p class="text-[9px] text-slate-400 leading-tight">
-                                De uma sequência total de {{ seqStats.totalStreak }} dias de trabalho.
-                              </p>
-                            </div>
-                          </div>
-                        } @else {
-                          <div class="flex items-center gap-2">
-                            <div class="w-10 h-10 rounded-full flex flex-col items-center justify-center font-mono font-black border bg-emerald-950/40 border-emerald-500 text-emerald-400">
-                              <span class="material-icons text-base">weekend</span>
-                            </div>
-                            <div>
-                              <p class="text-[11px] font-black text-emerald-400 leading-tight">
-                                Hoje é seu Dia de Folga!
-                              </p>
-                              <p class="text-[9px] text-slate-400 leading-tight">
-                                Desconecte-se e recarregue suas energias.
-                              </p>
-                            </div>
-                          </div>
-                        }
-
-                        <div class="space-y-1 pt-1">
-                          <div class="flex items-center justify-between text-[8px] font-bold">
-                            <span class="uppercase tracking-wider text-slate-400">Score de Energia:</span>
-                            <span class="font-mono font-black uppercase px-1.5 py-0.5 rounded text-[7.5px]"
-                                  [class]="seqStats.textCol + ' ' + seqStats.textBg">
-                              {{ seqStats.fatigueLevel }}
-                            </span>
-                          </div>
-                          <div class="grid grid-cols-4 gap-1 h-1.5">
-                            <div class="rounded-sm transition-all duration-300"
-                                 [style.background-color]="seqStats.isWorking ? '#10b981' : '#1e293b'"></div>
-                            <div class="rounded-sm transition-all duration-300"
-                                 [style.background-color]="seqStats.isWorking && seqStats.streak >= 2 ? '#0ea5e9' : '#1e293b'"></div>
-                            <div class="rounded-sm transition-all duration-300"
-                                 [style.background-color]="seqStats.isWorking && seqStats.streak >= 3 ? '#f59e0b' : '#1e293b'"></div>
-                            <div class="rounded-sm transition-all duration-300"
-                                 [style.background-color]="seqStats.isWorking && seqStats.streak >= 4 ? '#ef4444' : '#1e293b'"></div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div class="pt-1.5 border-t border-[#10213b]/60 flex items-center justify-between text-[8px] font-bold text-slate-400">
-                        <span class="flex items-center gap-1" [class]="seqStats.textCol">
-                          <span class="material-icons text-[10px]" [class]="seqStats.textCol">info</span>
-                          {{ seqStats.alertMessage }}
-                        </span>
-                      </div>
-                    </div>
-
-                    <!-- WIDGET 6: RADAR DA FOLGA -->
-                    @let offStats = getDaysUntilNextOff(logged);
-                    <div class="p-4 bg-[#071426]/60 border border-[#10213b] rounded-lg flex flex-col justify-between space-y-3 transition-all duration-300">
-                      <div>
-                        <span class="text-[9px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                          <span class="material-icons text-xs text-amber-400">radar</span>
-                          Radar da Folga
-                        </span>
-                        <p class="text-[8px] text-slate-500 mt-0.5 leading-relaxed">Contagem regressiva e informações sobre o seu próximo período de descanso.</p>
-                      </div>
-
-                      <div class="space-y-2">
-                        @if (offStats.isOffToday) {
-                          <div class="flex flex-col items-center justify-center text-center py-2 bg-emerald-950/20 border border-emerald-500/20 rounded-lg p-2">
-                            <span class="text-xs font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1 animate-pulse">
-                              <span class="material-icons text-xs">local_cafe</span>
-                              ✨ Excelente Folga! ✨
-                            </span>
-                            <span class="text-[8px] text-slate-400 mt-1 leading-normal">Você está em seu merecido período de descanso hoje.</span>
-                          </div>
-                        } @else {
-                          <div class="flex items-baseline justify-between bg-[#030a14]/40 border border-[#10213b]/50 rounded p-2">
-                            <div class="flex flex-col">
-                              <span class="text-2xl font-black text-amber-400 font-mono leading-none">
-                                @if (offStats.days === 999) {
-                                  --
-                                } @else {
-                                  {{ offStats.days }}
-                                  <span class="text-xs font-sans font-black text-slate-400">dias</span>
-                                }
-                              </span>
-                              <span class="text-[8px] uppercase tracking-wider text-amber-500 font-bold mt-1.5 leading-none">
-                                @if (offStats.days === 1) {
-                                  Falta apenas 1 dia de trabalho!
-                                } @else if (offStats.days === 999) {
-                                  Sem mais folgas programadas
-                                } @else {
-                                  Faltam {{ offStats.days }} dias para folgar
-                                }
-                              </span>
-                            </div>
-                            <div class="p-1 rounded bg-amber-950/30 border border-amber-500/20 text-amber-400 text-center flex items-center justify-center animate-pulse">
-                              <span class="material-icons text-xs">hourglass_empty</span>
-                            </div>
-                          </div>
-                        }
-
-                        @if (offStats.nextOffDays.length > 0) {
-                          <div class="space-y-2 pt-1">
-                            <div class="flex items-center gap-1.5">
-                              <span class="text-[7.5px] font-black uppercase tracking-widest text-slate-400">Período Programado:</span>
-                              <span class="text-[8px] font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1">
-                                <span class="w-1 h-1 rounded-full bg-emerald-400 animate-pulse"></span>
-                                {{ getFolgaLabel(offStats.nextOffDays.length) }}
-                              </span>
-                            </div>
-                            
-                            <div class="flex flex-wrap gap-1.5">
-                              @for (d of offStats.nextOffDays; track d) {
-                                <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex flex-col items-center justify-center transition-all hover:bg-emerald-500/15 group relative shadow-sm light-theme-tag-wrapper">
-                                  <span class="text-[12px] font-mono font-black text-emerald-400 group-hover:scale-105 transition-transform">{{ d }}</span>
-                                  <span class="text-[6.5px] uppercase tracking-wider text-emerald-500/60 font-extrabold font-mono -mt-0.5">{{ currentMonthName().slice(0, 3) }}</span>
-                                </div>
-                              }
-                            </div>
-                          </div>
-                        }
-                      </div>
-
-                      <div class="pt-1.5 border-t border-[#10213b]/60 flex items-center justify-between text-[8px] font-bold text-slate-400">
-                        <span>Status de Motivação:</span>
-                        <span class="text-emerald-400 font-black">Falta pouco para descansar!</span>
-                      </div>
-                    </div>
-
                   </div>
                 </div>
-              </div>
 
-              <!-- RIGHT CONTENT: UNIFIED CALENDAR & AGENDA command center -->
-              <div class="lg:col-span-8 space-y-6">
-                
-                <!-- Equipe de Hoje Section -->
-                <div class="p-5 rounded-xl border shadow-xl space-y-3 transition-all duration-300"
-                     [class.bg-[#030a14]]="!isLightTheme()"
-                     [class.border-[#10213b]]="!isLightTheme()"
-                     [class.bg-white]="isLightTheme()"
-                     [class.border-slate-200]="isLightTheme()"
-                     id="today_team_section">
-                  <div class="flex items-center justify-between pb-1">
-                    <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
-                      <span class="material-icons text-xs text-emerald-400">group</span>
-                      Equipe de Hoje &mdash; {{ getTodayTeamShiftLabel() }}
+                <!-- SECTION: FOLGAS SOLICITADAS -->
+                <div class="bg-[#030a14] border border-[#10213b] rounded-lg p-5 shadow-xl space-y-3">
+                  <div class="flex items-center justify-between pb-1 border-b border-[#10213b]/40">
+                    <h4 class="font-black text-[11px] text-white uppercase tracking-wider flex items-center gap-1.5">
+                      <span class="material-icons text-[#10b981] text-[13px]">nights_stay</span>
+                      Folgas Solicitadas
+                    </h4>
+                    <span class="text-[8px] font-bold font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-1.5 py-0.5 rounded shrink-0">
+                      {{ getRequestedFolgasForCollab(logged).length }}/3
                     </span>
-                    <span class="text-[8px] font-bold font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-1.5 py-0.5 rounded">
-                      {{ getTodayTeamCollaborators().length }} Membros
+                  </div>
+                  <p class="text-[9px] text-slate-400 leading-tight">
+                    Próximo mês "{{ monthsList[(selectedMonthIndex() + 1) % 12].name }}"
+                  </p>
+
+                  <div class="grid grid-cols-1 gap-2">
+                    @for (item of getFolgaRequestSlots(logged); track item.id) {
+                      @if (!item.isEmpty) {
+                        <div class="h-[42px] px-2 border rounded-lg flex justify-center items-center gap-1.5 transition-all duration-200"
+                             [class.bg-[#030a14]/60]="!isLightTheme()"
+                             [class.border-[#10213b]]="!isLightTheme()"
+                             [class.bg-white]="isLightTheme()"
+                             [class.border-slate-200]="isLightTheme()">
+                          <span class="text-[10px] font-black text-slate-400 uppercase tracking-wide leading-none">
+                            {{ getDayOfWeekLabel(item.day) }} -
+                          </span>
+                          <span class="text-[12px] font-black text-white uppercase tracking-wide leading-none">
+                            {{ item.formattedDate }}
+                          </span>
+                        </div>
+                      } @else {
+                        <button (click)="openSolicitarFolgaModal()" class="h-[42px] px-2 border border-dashed border-[#10213b]/60 rounded-lg flex justify-center items-center gap-1.5 transition-all duration-200 hover:bg-[#10213b]/30 cursor-pointer w-full"
+                             [class.bg-slate-900/10]="!isLightTheme()"
+                             [class.bg-slate-50]="isLightTheme()">
+                          <span class="material-icons text-[14px] text-slate-500">add</span>
+                          <span class="text-[10px] font-black text-slate-400 uppercase tracking-wide leading-none">
+                            Solicitar
+                          </span>
+                        </button>
+                      }
+                    }
+                  </div>
+                </div>
+
+                <!-- SECTION: MINHAS DATAS IMPORTANTES -->
+                <div class="bg-[#030a14] border border-[#10213b] rounded-lg p-5 shadow-xl space-y-3">
+                  <div class="flex items-center justify-between pb-1 border-b border-[#10213b]/40">
+                    <h4 class="font-black text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
+                      <span class="material-icons text-rose-500 text-sm">favorite</span>
+                      Minhas Datas Importantes
+                    </h4>
+                    <span class="text-[8px] font-bold font-mono px-1.5 py-0.5 rounded shrink-0 transition-colors"
+                          [class]="isLightTheme() ? 'text-rose-600 bg-rose-100 border border-rose-200' : 'text-rose-400 bg-rose-950/40 border border-rose-500/20'">
+                      {{ getImportantDatesForCollab(logged).length }} Registros
                     </span>
                   </div>
 
-                  <p class="text-[9.5px] text-slate-400 leading-relaxed">
-                    Seus colegas de turno que estão escalados para trabalhar hoje (Dia {{ getTodayDay() }}).
-                  </p>
-
-                  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    @for (collab of getTodayTeamCollaborators(); track collab.id) {
-                      <div class="p-2.5 border rounded-lg transition-all duration-200 flex flex-col items-center justify-center text-center gap-2 select-none h-[135px]"
-                           [class.bg-[#071426]]="!isLightTheme()"
-                           [class.border-[#10213b]]="!isLightTheme() && collab.id !== logged.id"
-                           [class.border-emerald-500/40]="!isLightTheme() && collab.id === logged.id"
-                           [class.bg-emerald-950/15]="!isLightTheme() && collab.id === logged.id"
-                           
-                           [class.bg-white]="isLightTheme()"
-                           [class.border-slate-200]="isLightTheme() && collab.id !== logged.id"
-                           [class.border-emerald-500/60]="isLightTheme() && collab.id === logged.id"
-                           [class.bg-emerald-50/40]="isLightTheme() && collab.id === logged.id">
+                  <div class="grid grid-cols-1 gap-2">
+                    @for (item of getImportantDatesForCollab(logged); track item.rawDate) {
+                      <div class="p-2 border border-[#10213b]/60 rounded-lg bg-[#030a14]/60 flex flex-col justify-between gap-2 transition-all duration-200"
+                           [class.border-rose-500/30]="item.isBirthday"
+                           [class.bg-rose-950/10]="item.isBirthday"
+                           [class.shadow-[inset_0_0_15px_rgba(244,63,94,0.05)]]="item.isBirthday">
                         
-                        <!-- Square Photo Wrapper with modern styling -->
-                        <div class="w-16 h-16 relative shrink-0 border overflow-hidden rounded-none"
-                             [class.border-[#10213b]]="!isLightTheme() && collab.id !== logged.id"
-                             [class.border-emerald-500]="collab.id === logged.id"
-                             [class.border-slate-200]="isLightTheme() && collab.id !== logged.id">
-                          <img [src]="getCollabPhoto(collab)" [alt]="collab.name" referrerpolicy="no-referrer"
-                               class="w-full h-full object-cover">
-                          @if (collab.id === logged.id) {
-                            <div class="absolute bottom-0 inset-x-0 bg-emerald-600 text-[6.5px] font-black uppercase text-white py-0.5 tracking-wider text-center">
-                              Você
-                            </div>
-                          }
+                        <div class="flex items-start justify-between">
+                          <div class="w-7 h-7 rounded flex items-center justify-center shrink-0 border" [class]="item.color">
+                            <span class="material-icons text-[14px]">{{ item.icon }}</span>
+                          </div>
+                          <div class="flex items-center shrink-0 h-7">
+                            <span class="text-[9px] font-black font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-1.5 h-full rounded flex items-center justify-center leading-none">
+                              {{ item.dateLabel }}
+                            </span>
+                          </div>
                         </div>
-
-                        <!-- Collaborator Info -->
-                        <div class="w-full min-w-0">
-                          <h6 class="text-[10px] font-black truncate leading-tight"
-                              [class.text-white]="!isLightTheme()"
-                              [class.text-slate-800]="isLightTheme()">
-                            {{ collab.name }}
-                          </h6>
-                          <p class="text-[7.5px] font-mono mt-1 font-bold uppercase tracking-widest truncate"
-                             [class.text-slate-500]="collab.id !== logged.id"
-                             [class.text-emerald-400]="!isLightTheme() && collab.id === logged.id"
-                             [class.text-emerald-700]="isLightTheme() && collab.id === logged.id">
-                            {{ collab.role }}
-                          </p>
+                        
+                        <div>
+                          <div class="flex items-center gap-1 mb-0.5">
+                            <span class="text-[9px] font-black text-white truncate leading-none uppercase tracking-wide">
+                              {{ item.label }}
+                            </span>
+                            @if (item.priorityLabel) {
+                              <span class="text-[6px] font-mono bg-slate-800 text-slate-300 px-1 py-0.5 rounded leading-none">{{ item.priorityLabel }}</span>
+                            }
+                          </div>
+                          <span class="text-[7px] text-slate-500 block truncate leading-none mt-1">
+                            {{ item.details }}
+                          </span>
                         </div>
+                        
                       </div>
                     } @empty {
-                      <div class="col-span-full py-8 text-center rounded-lg border border-dashed flex flex-col items-center justify-center gap-1.5"
-                           [class.border-[#10213b]/60]="!isLightTheme()"
-                           [class.bg-slate-900/10]="!isLightTheme()"
-                           [class.border-slate-300]="isLightTheme()"
-                           [class.bg-slate-50]="isLightTheme()">
-                        <span class="material-icons text-xl text-slate-500">sentiment_neutral</span>
-                        <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400">Nenhum colega escalado hoje</span>
+                      <div class="py-4 text-center rounded-lg border border-dashed border-[#10213b]/40 bg-slate-900/10 flex flex-col items-center justify-center gap-1 w-full">
+                        <span class="material-icons text-base text-slate-500">cake</span>
+                        <span class="text-[8px] font-bold uppercase tracking-wider text-slate-500">Nenhuma data especial cadastrada</span>
                       </div>
                     }
                   </div>
                 </div>
+
+              </div>
+
+              <!-- RIGHT CONTENT: UNIFIED CALENDAR & AGENDA command center -->
+              <div class="lg:col-span-8 space-y-6">
+
                 <!-- PORTAL COLLABORATOR OFFICIAL REPORT & MONTHLY SCALE (Prontuário) -->
-                <div class="bg-[#030a14] border border-[#10213b] rounded-xl p-5 shadow-xl space-y-5">
-                  <div>
-                    <h4 class="font-black text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
-                      <span class="material-icons text-emerald-500 text-sm">assignment_ind</span>
-                      Prontuário de Escala &amp; Histórico Mensal
-                    </h4>
-                    <p class="text-[9.5px] text-slate-400 mt-1">
-                      Visualização consolidada do seu calendário de trabalho oficial do mês e planejamento de folgas autorizadas.
-                    </p>
-                  </div>
+                <div class="bg-[#030a14] border border-[#10213b] rounded-xl p-3 sm:p-5 shadow-xl space-y-4 sm:space-y-5">
 
                   <!-- Calendário de Escala de Folgas -->
-                  <div class="bg-[#030a14] border border-[#10213b] rounded-xl p-5 shadow-xl space-y-4">
-                    <div>
-                      <h4 class="font-black text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
-                        <span class="material-icons text-[#10b981] text-sm">calendar_month</span>
-                        Calendário Oficial do Mês - {{ currentMonthName() }} {{ currentYear() }}
-                      </h4>
-                      <p class="text-[9px] text-slate-400 mt-1">
-                        Legenda de cores: Verde representa suas folgas, Vermelho representa licenças/afastamentos médicos, e Azul representa escala regular.
-                      </p>
+                  <div class="space-y-4">
+                    <div class="flex items-center justify-between gap-4 flex-wrap">
+                      <div>
+                        <h4 class="font-black text-xs text-white uppercase tracking-wider flex items-center gap-1.5"
+                            [class.text-slate-800]="isLightTheme()">
+                          <span class="material-icons text-[#10b981] text-sm">calendar_month</span>
+                          Calendário Oficial - {{ currentMonthName() }} {{ currentYear() }}
+                        </h4>
+                        <p class="text-[9px] text-slate-400 mt-1" [class.text-slate-500]="isLightTheme()">
+                          Legenda: Verde (Folgas), Vermelho (Licenças), Azul (Escala Regular).
+                        </p>
+                      </div>
+                      
+                      <!-- Month Navigator -->
+                      <div class="flex items-center gap-1 bg-[#071426] border border-[#10213b] rounded-lg p-1"
+                           [class.bg-slate-100]="isLightTheme()"
+                           [class.border-slate-200]="isLightTheme()">
+                        <button (click)="prevMonth()" class="w-8 h-8 flex items-center justify-center rounded cursor-pointer text-slate-400 hover:text-emerald-400 hover:bg-[#0b1e36] transition-colors border-none outline-none"
+                                [class.hover:bg-white]="isLightTheme()"
+                                title="Mês Anterior">
+                          <span class="material-icons text-sm">chevron_left</span>
+                        </button>
+                        <div class="flex flex-col items-center justify-center min-w-[100px]">
+                          <span class="text-[9px] font-black uppercase text-slate-300 leading-tight"
+                                [class.text-slate-700]="isLightTheme()">
+                            {{ currentMonthName() }}
+                          </span>
+                          <span class="text-[7px] font-bold text-slate-500 font-mono leading-tight">
+                            {{ currentYear() }}
+                          </span>
+                        </div>
+                        <button (click)="nextMonth()" class="w-8 h-8 flex items-center justify-center rounded cursor-pointer text-slate-400 hover:text-emerald-400 hover:bg-[#0b1e36] transition-colors border-none outline-none"
+                                [class.hover:bg-white]="isLightTheme()"
+                                title="Próximo Mês">
+                          <span class="material-icons text-sm">chevron_right</span>
+                        </button>
+                      </div>
                     </div>
 
                     <!-- Grade de Dias do Calendário -->
-                    <div class="grid grid-cols-7 gap-2 text-center text-xs">
-                      <div class="font-black text-slate-500 text-[8px] uppercase tracking-wider">Dom</div>
-                      <div class="font-black text-slate-500 text-[8px] uppercase tracking-wider">Seg</div>
-                      <div class="font-black text-slate-500 text-[8px] uppercase tracking-wider">Ter</div>
-                      <div class="font-black text-slate-500 text-[8px] uppercase tracking-wider">Qua</div>
-                      <div class="font-black text-slate-500 text-[8px] uppercase tracking-wider">Qui</div>
-                      <div class="font-black text-slate-500 text-[8px] uppercase tracking-wider">Sex</div>
-                      <div class="font-black text-slate-500 text-[8px] uppercase tracking-wider">Sáb</div>
+                    <div class="grid grid-cols-7 gap-1 sm:gap-2 text-center text-xs">
+                      <div class="font-black text-slate-500 text-[7px] sm:text-[8px] uppercase tracking-wider">Dom</div>
+                      <div class="font-black text-slate-500 text-[7px] sm:text-[8px] uppercase tracking-wider">Seg</div>
+                      <div class="font-black text-slate-500 text-[7px] sm:text-[8px] uppercase tracking-wider">Ter</div>
+                      <div class="font-black text-slate-500 text-[7px] sm:text-[8px] uppercase tracking-wider">Qua</div>
+                      <div class="font-black text-slate-500 text-[7px] sm:text-[8px] uppercase tracking-wider">Qui</div>
+                      <div class="font-black text-slate-500 text-[7px] sm:text-[8px] uppercase tracking-wider">Sex</div>
+                      <div class="font-black text-slate-500 text-[7px] sm:text-[8px] uppercase tracking-wider">Sáb</div>
 
                       @for (offset of getOffsetDaysArray(); track offset) {
-                        <div class="bg-transparent border border-transparent p-2"></div>
+                        <div class="bg-transparent border border-transparent p-1.5 sm:p-2"></div>
                       }
 
                       @for (day of daysInMonth(); track day) {
@@ -2786,21 +2850,22 @@
                         @let dayInfo = getCollaboratorDayScheduleInfo(logged, day);
                         @let count = getFolgaRequestCount(day);
 
-                        <button (click)="openDayDetailsModal(logged, day)"
+                        <button (click)="selectCalendarDay(day)"
                                 [class]="getCollaboratorCalendarDayClass(logged, day, count)"
                                 [class.opacity-45]="isPastDay(day)"
                                 [class.saturate-[0.45]]="isPastDay(day)"
                                 [class.hover:opacity-95]="isPastDay(day)"
                                 [class.hover:saturate-100]="isPastDay(day)"
                                 class="transition-all duration-300"
-                                [class.ring-2]="isToday(day)"
-                                [class.ring-emerald-400]="isToday(day)"
-                                [class.ring-offset-2]="isToday(day)"
-                                [class.ring-offset-[#020813]]="isToday(day) && !isLightTheme()"
-                                [class.ring-offset-white]="isToday(day) && isLightTheme()">
+                                [class.ring-2]="isToday(day) || day === selectedCalendarDay()"
+                                [class.ring-emerald-400]="isToday(day) && day !== selectedCalendarDay()"
+                                [class.ring-emerald-500]="day === selectedCalendarDay()"
+                                [class.ring-offset-2]="isToday(day) || day === selectedCalendarDay()"
+                                [class.ring-offset-[#020813]]="(isToday(day) || day === selectedCalendarDay()) && !isLightTheme()"
+                                [class.ring-offset-white]="(isToday(day) || day === selectedCalendarDay()) && isLightTheme()">
                           
                           <div class="flex items-center justify-between w-full shrink-0">
-                            <span class="font-extrabold font-mono text-[12px] h-6 w-6 flex items-center justify-center rounded-full"
+                            <span class="font-extrabold font-mono text-[10px] sm:text-[12px] h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center rounded-full"
                                   [class.bg-emerald-500/20]="dayInfo.status === 'folga'"
                                   [class.text-emerald-400]="dayInfo.status === 'folga' && !isLightTheme()"
                                   [class.text-emerald-800]="dayInfo.status === 'folga' && isLightTheme()"
@@ -2816,512 +2881,183 @@
                             @if (events.length > 0) {
                               <div class="flex items-center gap-0.5">
                                 @for (ev of events; track ev.tooltip) {
-                                  <span class="material-icons text-[11px] select-none" [style.color]="ev.color" [title]="ev.tooltip">{{ ev.icon }}</span>
+                                  <span class="material-icons text-[9px] sm:text-[11px] select-none" [style.color]="ev.color" [title]="ev.tooltip">{{ ev.icon }}</span>
                                 }
                               </div>
                             }
                           </div>
 
-                          <div class="flex flex-col items-start w-full gap-0.5 shrink-0 select-none mt-1 leading-none">
-                            <span class="text-[8.5px] font-black uppercase tracking-tight block max-w-full truncate leading-none"
+                          <div class="flex flex-col items-start w-full gap-0.5 shrink-0 select-none mt-0.5 sm:mt-1 leading-none">
+                            <span class="text-[7.5px] sm:text-[8.5px] font-black uppercase tracking-tight block max-w-full truncate leading-none"
                                   [class.text-emerald-400]="dayInfo.status === 'folga'"
                                   [class.text-rose-400]="dayInfo.status === 'licenca'"
                                   [class.text-slate-300]="dayInfo.status === 'trabalho' && !isLightTheme()"
                                   [class.text-slate-700]="dayInfo.status === 'trabalho' && isLightTheme()">
-                              {{ dayInfo.label }}
-                            </span>
-                            <span class="text-[6.5px] uppercase font-bold tracking-widest block truncate text-slate-500 leading-none mt-0.5">
-                              {{ dayInfo.subLabel }}
+                              <span class="hidden sm:inline">{{ dayInfo.status === 'folga' ? 'Folga' : (dayInfo.status === 'licenca' || dayInfo.status === 'afastamento' ? 'Atestado' : 'Trabalho') }}</span>
+                              <span class="inline sm:hidden">{{ dayInfo.status === 'folga' ? 'Folga' : (dayInfo.status === 'licenca' || dayInfo.status === 'afastamento' ? 'Atest.' : 'Trab.') }}</span>
                             </span>
                           </div>
 
-                          <div class="w-full text-left pt-1 border-t border-[#10213b]/20 shrink-0 select-none mt-1 leading-none flex items-center justify-between">
-                            <span class="text-[6px] font-semibold text-slate-500 font-mono uppercase tracking-wider truncate leading-none">
-                              {{ dayInfo.hours }}
-                            </span>
+                          <div class="w-full text-left pt-1 border-t border-[#10213b]/20 shrink-0 select-none mt-1 leading-none hidden sm:flex items-center justify-between">
                           </div>
                         </button>
                       }
                     </div>
                   </div>
+                </div>
 
-                  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <!-- SECTION: FOLGAS SOLICITADAS -->
-                    <div class="bg-[#071426] border border-[#10213b] rounded-lg p-4 space-y-3 lg:col-span-1">
-                      <div class="flex items-center justify-between pb-1 border-b border-[#10213b]/40">
-                        <h4 class="font-black text-[11px] text-white uppercase tracking-wider flex items-center gap-1.5">
-                          <span class="material-icons text-[#10b981] text-[13px]">nights_stay</span>
-                          Folgas Solicitadas
-                        </h4>
-                        <span class="text-[8px] font-bold font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-1.5 py-0.5 rounded shrink-0">
-                          {{ getRequestedFolgasForCollab(logged).length }}/3
+                <!-- Equipe de Hoje Section -->
+                <div class="p-5 rounded-xl border shadow-xl space-y-3 transition-all duration-300"
+                     [class.bg-[#030a14]]="!isLightTheme()"
+                     [class.border-[#10213b]]="!isLightTheme()"
+                     [class.bg-white]="isLightTheme()"
+                     [class.border-slate-200]="isLightTheme()"
+                     id="today_team_section">
+                  <div class="flex items-center justify-between pb-1">
+                    <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
+                      <span class="material-icons text-xs text-emerald-400">group</span>
+                      @if (selectedCalendarDay() === getTodayDay()) {
+                        Equipe de Hoje &mdash; {{ getTodayTeamShiftLabel() }}
+                      } @else {
+                        Equipe do Dia {{ selectedCalendarDay() }}/{{ selectedMonthIndex() + 1 }} &mdash; {{ getTodayTeamShiftLabel() }}
+                      }
+                    </span>
+                    <span class="text-[8px] font-bold font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                      {{ getTodayTeamCollaborators().length }} Membros
+                    </span>
+                  </div>
+
+                  <p class="text-[9.5px] text-slate-400 leading-relaxed">
+                    @if (selectedCalendarDay() === getTodayDay()) {
+                      Seus colegas de turno que estão escalados para trabalhar hoje (Dia {{ getTodayDay() }}).
+                    } @else {
+                      Seus colegas de turno que estão escalados para trabalhar no dia {{ selectedCalendarDay() }} ({{ getDayOfWeekLabel(selectedCalendarDay()) }}).
+                    }
+                  </p>
+
+                  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    @for (collab of getTodayTeamCollaborators(); track collab.id) {
+                      <div class="p-2 border rounded-lg transition-all duration-200 flex flex-col items-center justify-center text-center gap-1.5 select-none h-[105px]"
+                           [class.bg-[#071426]]="!isLightTheme()"
+                           [class.border-[#10213b]]="!isLightTheme() && collab.id !== logged.id"
+                           [class.border-emerald-500/40]="!isLightTheme() && collab.id === logged.id"
+                           [class.bg-emerald-950/15]="!isLightTheme() && collab.id === logged.id"
+                           
+                           [class.bg-white]="isLightTheme()"
+                           [class.border-slate-200]="isLightTheme() && collab.id !== logged.id"
+                           [class.border-emerald-500/60]="isLightTheme() && collab.id === logged.id"
+                           [class.bg-emerald-50/40]="isLightTheme() && collab.id === logged.id">
+                        
+                        <!-- Circular Photo Wrapper with elegant double-border moldura -->
+                        <div (click)="navigateToCollabPortal(collab.id)"
+                             class="w-11 h-11 relative shrink-0 rounded-full border p-[1.5px] transition-all duration-300 shadow-[0_2px_8px_rgba(0,0,0,0.3)] cursor-pointer hover:scale-105"
+                             title="Ir para o Portal do Colaborador"
+                             [class.border-emerald-500]="collab.id === logged.id"
+                             [class.bg-emerald-950/30]="!isLightTheme() && collab.id === logged.id"
+                             [class.bg-emerald-50/50]="isLightTheme() && collab.id === logged.id"
+                             [class.border-[#10213b]]="!isLightTheme() && collab.id !== logged.id"
+                             [class.border-slate-200]="isLightTheme() && collab.id !== logged.id"
+                             [class.bg-slate-900/40]="!isLightTheme() && collab.id !== logged.id"
+                             [class.bg-slate-50]="isLightTheme() && collab.id !== logged.id">
+                          <div class="w-full h-full rounded-full overflow-hidden">
+                            <img [src]="getCollabPhoto(collab)" [alt]="collab.name" referrerpolicy="no-referrer"
+                                 class="w-full h-full object-cover">
+                          </div>
+                          @if (collab.id === logged.id) {
+                            <div class="absolute -bottom-0.5 -right-0.5 bg-emerald-500 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center shadow-md border border-[#030a14]">
+                              <span class="material-icons text-[8px] font-black">check</span>
+                            </div>
+                          }
+                        </div>
+
+                        <!-- Collaborator Info -->
+                        <div class="w-full min-w-0">
+                          <h6 (click)="navigateToCollabPortal(collab.id)"
+                              class="text-[10px] font-black truncate leading-tight cursor-pointer hover:text-emerald-400 hover:underline transition-all"
+                              title="Ir para o Portal do Colaborador"
+                              [class.text-white]="!isLightTheme()"
+                              [class.text-slate-800]="isLightTheme()">
+                            {{ collab.name }}
+                          </h6>
+                          <p class="text-[7.5px] font-mono mt-0.5 font-bold uppercase tracking-widest truncate"
+                             [class.text-slate-500]="collab.id !== logged.id"
+                             [class.text-emerald-400]="!isLightTheme() && collab.id === logged.id"
+                             [class.text-emerald-700]="isLightTheme() && collab.id === logged.id">
+                            {{ collab.role }}
+                          </p>
+                        </div>
+                      </div>
+                    } @empty {
+                      <div class="col-span-full py-8 text-center rounded-lg border border-dashed flex flex-col items-center justify-center gap-1.5"
+                           [class.border-[#10213b]/60]="!isLightTheme()"
+                           [class.bg-slate-900/10]="!isLightTheme()"
+                           [class.border-slate-300]="isLightTheme()"
+                           [class.bg-slate-50]="isLightTheme()">
+                        <span class="material-icons text-xl text-slate-500">sentiment_neutral</span>
+                        <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                          @if (selectedCalendarDay() === getTodayDay()) {
+                            Nenhum colega escalado hoje
+                          } @else {
+                            Nenhum colega escalado neste dia
+                          }
                         </span>
                       </div>
-                      <p class="text-[9px] text-slate-400 leading-tight">
-                        Próximo mês "{{ monthsList[(selectedMonthIndex() + 1) % 12].name }}"
-                      </p>
+                    }
+                  </div>
 
-                      <div class="grid grid-cols-2 lg:grid-cols-1 gap-2">
-                        @for (item of getFolgaRequestSlots(logged); track item.id) {
-                          @if (!item.isEmpty) {
-                            <div class="h-[42px] px-2 border rounded-lg flex justify-center items-center gap-1.5 transition-all duration-200"
-                                 [class.bg-[#030a14]/60]="!isLightTheme()"
-                                 [class.border-[#10213b]]="!isLightTheme()"
-                                 [class.bg-white]="isLightTheme()"
-                                 [class.border-slate-200]="isLightTheme()">
-                              <span class="text-[10px] font-black text-slate-400 uppercase tracking-wide leading-none">
-                                {{ getDayOfWeekLabel(item.day) }} -
-                              </span>
-                              <span class="text-[12px] font-black text-white uppercase tracking-wide leading-none">
-                                {{ item.formattedDate }}
-                              </span>
-                            </div>
-                          } @else {
-                            <button (click)="openSolicitarFolgaModal()" class="h-[42px] px-2 border border-dashed border-[#10213b]/60 rounded-lg flex justify-center items-center gap-1.5 transition-all duration-200 hover:bg-[#10213b]/30 cursor-pointer w-full"
-                                 [class.bg-slate-900/10]="!isLightTheme()"
-                                 [class.bg-slate-50]="isLightTheme()">
-                              <span class="material-icons text-[14px] text-slate-500">add</span>
-                              <span class="text-[10px] font-black text-slate-400 uppercase tracking-wide leading-none">
-                                Solicitar
-                              </span>
-                            </button>
-                          }
-                        }
-                      </div>
+                  <!-- Botões de Ação para o dia selecionado (Folga, Permuta, etc.) -->
+                  @let selDay = selectedCalendarDay();
+                  @let isChosen = isChosenByCollab(logged, selDay);
+                  @let isPre = isPreSelectedByCollab(logged, selDay);
+                  @let dayInfo = getCollaboratorDayScheduleInfo(logged, selDay);
+
+                  <div class="mt-4 pt-3 border-t border-[#10213b]/20 flex flex-wrap gap-3 items-center justify-between" id="selected_day_action_bar">
+                    <div class="flex items-center gap-2">
+                      <span class="text-[8.5px] font-bold text-slate-400 uppercase tracking-wider">
+                        Seu Status no dia {{ selDay }}:
+                      </span>
+                      <span class="text-[8.5px] font-black uppercase px-2 py-0.5 rounded tracking-widest font-mono"
+                            [style.background-color]="getShiftOrSiglaColor(dayInfo.label, selDay)"
+                            [style.color]="getShiftOrSiglaTextColor(dayInfo.label)">
+                        {{ dayInfo.label || 'N/A' }}
+                      </span>
+                      <span class="text-[8.5px] font-bold text-slate-400 font-mono">{{ dayInfo.subLabel }}</span>
                     </div>
 
-                    <!-- SECTION: MINHAS DATAS IMPORTANTES -->
-                    <div class="bg-[#071426] border border-[#10213b] rounded-lg p-4 space-y-3 lg:col-span-2">
-                      <div class="flex items-center justify-between pb-1 border-b border-[#10213b]/40">
-                        <h4 class="font-black text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
-                          <span class="material-icons text-rose-500 text-sm">favorite</span>
-                          Minhas Datas Importantes
-                        </h4>
-                        <span class="text-[8px] font-bold font-mono px-1.5 py-0.5 rounded shrink-0 transition-colors"
-                              [class]="isLightTheme() ? 'text-rose-600 bg-rose-100 border border-rose-200' : 'text-rose-400 bg-rose-950/40 border border-rose-500/20'">
-                          {{ getImportantDatesForCollab(logged).length }} Registros
-                        </span>
-                      </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                      <!-- Detalhes Completos (Modal original) -->
+                      <button (click)="openDayDetailsModal(logged, selDay)"
+                              id="btn_view_day_details"
+                              class="flex items-center gap-1 px-2.5 py-1 text-[8.5px] font-black uppercase tracking-wider text-slate-300 bg-[#041021] hover:bg-slate-800 transition-all rounded cursor-pointer border border-[#10213b] select-none shadow-sm">
+                        <span class="material-icons text-xs leading-none">info</span>
+                        Ver Detalhes do Dia
+                      </button>
 
-                      <div class="grid grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-2">
-                        @for (item of getImportantDatesForCollab(logged); track item.rawDate) {
-                          <div class="p-2 border border-[#10213b]/60 rounded-lg bg-[#030a14]/60 flex flex-col justify-between gap-2 transition-all duration-200"
-                               [class.border-rose-500/30]="item.isBirthday"
-                               [class.bg-rose-950/10]="item.isBirthday"
-                               [class.shadow-[inset_0_0_15px_rgba(244,63,94,0.05)]]="item.isBirthday">
-                            
-                            <div class="flex items-start justify-between">
-                              <div class="w-7 h-7 rounded flex items-center justify-center shrink-0 border" [class]="item.color">
-                                <span class="material-icons text-[14px]">{{ item.icon }}</span>
-                              </div>
-                              <div class="flex items-center shrink-0 h-7">
-                                <span class="text-[9px] font-black font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-1.5 h-full rounded flex items-center justify-center leading-none">
-                                  {{ item.dateLabel }}
-                                </span>
-                              </div>
-                            </div>
-                            
-                            <div>
-                              <div class="flex items-center gap-1 mb-0.5">
-                                <span class="text-[9px] font-black text-white truncate leading-none uppercase tracking-wide">
-                                  {{ item.label }}
-                                </span>
-                                @if (item.priorityLabel) {
-                                  <span class="text-[6px] font-mono bg-slate-800 text-slate-300 px-1 py-0.5 rounded leading-none">{{ item.priorityLabel }}</span>
-                                }
-                              </div>
-                              <span class="text-[7px] text-slate-500 block truncate leading-none mt-1">
-                                {{ item.details }}
-                              </span>
-                            </div>
-                            
-                          </div>
-                        } @empty {
-                          <div class="col-span-full py-4 text-center rounded-lg border border-dashed border-[#10213b]/40 bg-slate-900/10 flex flex-col items-center justify-center gap-1">
-                            <span class="material-icons text-base text-slate-500">cake</span>
-                            <span class="text-[8px] font-bold uppercase tracking-wider text-slate-500">Nenhuma data especial cadastrada</span>
-                          </div>
-                        }
-                      </div>
+                      <!-- Solicitação de Folga rápida (Abre modal) -->
+                      <button (click)="openSolicitarFolgaModal()"
+                              id="btn_request_folga_quick"
+                              class="flex items-center gap-1 px-2.5 py-1 text-[8.5px] font-black uppercase tracking-wider text-[#10b981] bg-emerald-500/10 hover:bg-emerald-500/20 transition-all rounded cursor-pointer border border-emerald-500/20 select-none shadow-sm">
+                        <span class="material-icons text-xs leading-none">add_circle</span>
+                        Solicitar Folgas
+                      </button>
+
+                      <!-- Permuta rápida -->
+                      <button (click)="openPermutaModal(selDay)"
+                              id="btn_quick_permuta"
+                              class="flex items-center gap-1 px-2.5 py-1 text-[8.5px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 transition-all rounded cursor-pointer border border-emerald-500/20 select-none shadow-sm">
+                        <span class="material-icons text-xs leading-none">swap_horiz</span>
+                        Propor Permuta
+                      </button>
                     </div>
                   </div>
                 </div>
+
+
 
               </div>
             </div>
           </div>
           }
-        </div>
-      }
-
-      <!-- SUB-TAB: DAILY DASHBOARD (PAINEL DIÁRIO) -->
-      @if (activeSubTab() === 'daily-dash') {
-        <div class="flex-1 flex flex-col w-full gap-0 overflow-y-auto animate-fade-in p-4 md:p-6" id="daily_dash_workspace"
-             [class.bg-[#020813]]="!isLightTheme()"
-             [class.bg-slate-50]="isLightTheme()">
-
-          <!-- TITLE BAR -->
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <div>
-              <h2 class="text-xl font-black tracking-tight uppercase"
-                  [class.text-white]="!isLightTheme()"
-                  [class.text-slate-800]="isLightTheme()">
-                Painel Operacional Diário
-              </h2>
-              <p class="text-[10px] uppercase font-bold text-slate-400 mt-0.5 tracking-wider">
-                Análise de efetivo, ausências e indicador de fadiga em tempo real
-              </p>
-            </div>
-            
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-black uppercase tracking-widest font-mono text-emerald-400 px-3 py-1.5 rounded-lg border"
-                    [class.bg-[#071426]]="!isLightTheme()"
-                    [class.border-[#10213b]]="!isLightTheme()"
-                    [class.bg-white]="isLightTheme()"
-                    [class.border-slate-200]="isLightTheme()"
-                    [class.text-emerald-600]="isLightTheme()">
-                {{ currentMonthName() | uppercase }} {{ currentYear() }}
-              </span>
-            </div>
-          </div>
-
-          <!-- DAY PICKER LIST -->
-          <div class="mb-6 p-4 rounded-xl border flex flex-col gap-3 shadow-md"
-               [class.bg-[#071426]]="!isLightTheme()"
-               [class.border-[#10213b]]="!isLightTheme()"
-               [class.bg-white]="isLightTheme()"
-               [class.border-slate-200]="isLightTheme()">
-            <div class="flex items-center justify-between">
-              <span class="text-[9px] font-black uppercase tracking-wider text-slate-400">Selecione o Dia para Análise</span>
-              <span class="text-[9px] font-bold text-emerald-500 font-mono">Dia Ativo: {{ selectedDailyDashDay() }}</span>
-            </div>
-            
-            <!-- Scrollable Day Buttons -->
-            <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent">
-              @for (day of daysInMonth(); track day) {
-                <button (click)="selectedDailyDashDay.set(day)"
-                        class="flex-shrink-0 w-11 h-14 rounded-lg flex flex-col items-center justify-center transition-all cursor-pointer border-none outline-none"
-                        [class.bg-emerald-500]="selectedDailyDashDay() === day"
-                        [class.text-slate-950]="selectedDailyDashDay() === day"
-                        [class.font-black]="selectedDailyDashDay() === day"
-                        [class.shadow-lg]="selectedDailyDashDay() === day"
-                        [class.shadow-emerald-500/20]="selectedDailyDashDay() === day"
-                        [class.scale-105]="selectedDailyDashDay() === day"
-                        [class.bg-[#030a14]]="selectedDailyDashDay() !== day && !isLightTheme()"
-                        [class.border]="selectedDailyDashDay() !== day"
-                        [class.border-[#10213b]]="selectedDailyDashDay() !== day && !isLightTheme()"
-                        [class.text-slate-300]="selectedDailyDashDay() !== day && !isLightTheme()"
-                        [class.hover:bg-[#0b1e36]]="selectedDailyDashDay() !== day && !isLightTheme()"
-                        [class.bg-slate-50]="selectedDailyDashDay() !== day && isLightTheme()"
-                        [class.border-slate-200]="selectedDailyDashDay() !== day && isLightTheme()"
-                        [class.text-slate-700]="selectedDailyDashDay() !== day && isLightTheme()"
-                        [class.hover:bg-slate-100]="selectedDailyDashDay() !== day && isLightTheme()">
-                  <span class="text-[10px] font-bold uppercase tracking-wider">DIA</span>
-                  <span class="text-base font-black leading-tight">{{ day }}</span>
-                  
-                  <!-- Tiny Available Count -->
-                  <span class="text-[8px] font-bold mt-1"
-                        [class.text-slate-900]="selectedDailyDashDay() === day"
-                        [class.text-emerald-400]="selectedDailyDashDay() !== day && !isLightTheme() && dailyAvailableCollaborators()[day] > 0"
-                        [class.text-rose-400]="selectedDailyDashDay() !== day && !isLightTheme() && dailyAvailableCollaborators()[day] === 0"
-                        [class.text-emerald-600]="selectedDailyDashDay() !== day && isLightTheme() && dailyAvailableCollaborators()[day] > 0"
-                        [class.text-rose-500]="selectedDailyDashDay() !== day && isLightTheme() && dailyAvailableCollaborators()[day] === 0">
-                    {{ dailyAvailableCollaborators()[day] }}
-                  </span>
-                </button>
-              }
-            </div>
-          </div>
-
-          <!-- STATS BENTO GRID -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            
-            <!-- CARD 1: EFETIVO ATIVO -->
-            <div class="p-5 rounded-xl border flex items-center justify-between shadow-md"
-                 [class.bg-[#071426]]="!isLightTheme()"
-                 [class.border-[#10213b]]="!isLightTheme()"
-                 [class.bg-white]="isLightTheme()"
-                 [class.border-slate-200]="isLightTheme()">
-              <div class="space-y-1">
-                <span class="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Efetivo Ativo</span>
-                <div class="flex items-baseline gap-1.5">
-                  <span class="text-3xl font-black text-[#10b981]">{{ dailyDashSummary().working.length }}</span>
-                  <span class="text-xs font-bold text-slate-400">/ {{ scaleService.collaborators().length }}</span>
-                </div>
-                <span class="block text-[8px] font-semibold text-slate-500 uppercase tracking-widest">Colaboradores Escalados</span>
-              </div>
-              <div class="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-[#10b981]">
-                <span class="material-icons text-2xl">verified</span>
-              </div>
-            </div>
-
-            <!-- CARD 2: LICENÇAS / FOLGAS -->
-            <div class="p-5 rounded-xl border flex items-center justify-between shadow-md"
-                 [class.bg-[#071426]]="!isLightTheme()"
-                 [class.border-[#10213b]]="!isLightTheme()"
-                 [class.bg-white]="isLightTheme()"
-                 [class.border-slate-200]="isLightTheme()">
-              <div class="space-y-1">
-                <span class="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Afastamentos & Folgas</span>
-                <div class="flex items-baseline gap-1.5">
-                  <span class="text-3xl font-black text-rose-500">{{ dailyDashSummary().absent.length }}</span>
-                  <span class="text-xs font-bold text-slate-500">Afastados</span>
-                </div>
-                <span class="block text-[8px] font-semibold text-slate-500 uppercase tracking-widest">Não Operacionais Hoje</span>
-              </div>
-              <div class="w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-500">
-                <span class="material-icons text-2xl">event_busy</span>
-              </div>
-            </div>
-
-            <!-- CARD 3: SEM ESCALA ATRIBUÍDA -->
-            <div class="p-5 rounded-xl border flex items-center justify-between shadow-md"
-                 [class.bg-[#071426]]="!isLightTheme()"
-                 [class.border-[#10213b]]="!isLightTheme()"
-                 [class.bg-white]="isLightTheme()"
-                 [class.border-slate-200]="isLightTheme()">
-              <div class="space-y-1">
-                <span class="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Folgas Padrão / Sem Escala</span>
-                <div class="flex items-baseline gap-1.5">
-                  <span class="text-3xl font-black text-amber-500">{{ dailyDashSummary().unknown.length }}</span>
-                  <span class="text-xs font-bold text-slate-500">Sem Registro</span>
-                </div>
-                <span class="block text-[8px] font-semibold text-slate-500 uppercase tracking-widest">Afastamentos Regulares</span>
-              </div>
-              <div class="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
-                <span class="material-icons text-2xl">info</span>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- SPLIT LAYOUT -->
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- LEFT COLUMN: WORKING COLLABORATORS BY SHIFT (2/3 WIDTH) -->
-            <div class="lg:col-span-2 space-y-6">
-              <div class="flex items-center justify-between">
-                <h3 class="text-xs font-black uppercase tracking-wider"
-                    [class.text-white]="!isLightTheme()"
-                    [class.text-slate-800]="isLightTheme()">
-                  Distribuição por Turnos Operacionais
-                </h3>
-                <span class="text-[9px] font-bold font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-                  {{ dailyDashSummary().workingByShift.length }} Turnos Ativos
-                </span>
-              </div>
-
-              <div class="space-y-4">
-                @for (shiftGroup of dailyDashSummary().workingByShift; track shiftGroup.shift?.code) {
-                  <div class="p-5 rounded-xl border shadow-sm"
-                       [class.bg-[#071426]]="!isLightTheme()"
-                       [class.border-[#10213b]]="!isLightTheme()"
-                       [class.bg-white]="isLightTheme()"
-                       [class.border-slate-200]="isLightTheme()">
-                    
-                    <!-- Shift Group Header -->
-                    <div class="flex items-center justify-between pb-3 border-b border-dashed mb-4"
-                         [class.border-[#10213b]]="!isLightTheme()"
-                         [class.border-slate-200]="isLightTheme()">
-                      <div class="flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 rounded-full" [style.background-color]="shiftGroup.shift?.color"></span>
-                        <div class="flex flex-col">
-                          <span class="text-xs font-black uppercase text-white" [class.text-slate-800]="isLightTheme()">
-                            {{ shiftGroup.shift?.label || shiftGroup.shift?.code }}
-                          </span>
-                          <span class="text-[9px] text-slate-400 font-mono font-bold">
-                            {{ shiftGroup.shift?.hours }} ({{ shiftGroup.shift?.startTime }} - {{ shiftGroup.shift?.endTime }})
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <span class="text-[8px] font-black uppercase px-2 py-0.5 rounded tracking-widest font-mono"
-                            [style.background-color]="shiftGroup.shift?.color"
-                            [style.color]="getShiftOrSiglaTextColor(shiftGroup.shift?.code)">
-                        {{ shiftGroup.shift?.code }}
-                      </span>
-                    </div>
-
-                    <!-- Collaborators Grid -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      @for (item of shiftGroup.items; track item.collab.id) {
-                        <div class="p-3 border rounded-lg flex items-center justify-between"
-                             [class.bg-[#030a14]/40]="!isLightTheme()"
-                             [class.border-[#10213b]/60]="!isLightTheme()"
-                             [class.bg-slate-50]="isLightTheme()"
-                             [class.border-slate-200]="isLightTheme()">
-                          <div class="flex items-center gap-2.5">
-                            @if (item.collab.photo) {
-                              <img [src]="item.collab.photo" alt="Avatar" class="w-8 h-8 rounded-full object-cover border border-[#10213b]/60" referrerpolicy="no-referrer" />
-                            } @else {
-                              <div class="w-8 h-8 rounded-full bg-[#10213b] text-slate-300 flex items-center justify-center font-black text-xs">
-                                {{ item.collab.name.slice(0, 2).toUpperCase() }}
-                              </div>
-                            }
-                            <div>
-                              <span class="block text-xs font-black" [class.text-white]="!isLightTheme()" [class.text-slate-800]="isLightTheme()">
-                                {{ item.collab.name }}
-                              </span>
-                              <span class="text-[8px] font-bold text-slate-400 uppercase tracking-wider font-mono block">
-                                {{ item.collab.role }} • {{ item.collab.sector }}
-                              </span>
-                            </div>
-                          </div>
-
-                          <!-- Stamina/Fatigue indicator -->
-                          <div class="flex flex-col items-end gap-1 min-w-[70px]">
-                            <span class="text-[8px] font-black uppercase tracking-wider"
-                                  [class.text-emerald-400]="item.energy >= 75"
-                                  [class.text-amber-500]="item.energy < 75 && item.energy >= 35"
-                                  [class.text-rose-500]="item.energy < 35">
-                              Stamina: {{ item.energy }}%
-                            </span>
-                            
-                            <!-- Stamina Bar -->
-                            <div class="w-16 h-1.5 rounded-full bg-slate-800 overflow-hidden border border-slate-700/30">
-                              <div class="h-full rounded-full"
-                                   [style.width.%]="item.energy"
-                                   [class.bg-emerald-500]="item.energy >= 75"
-                                   [class.bg-amber-500]="item.energy < 75 && item.energy >= 35"
-                                   [class.bg-rose-500]="item.energy < 35">
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      }
-                    </div>
-
-                  </div>
-                } @empty {
-                  <div class="p-8 border border-dashed rounded-xl text-center text-slate-500"
-                       [class.border-[#10213b]]="!isLightTheme()"
-                       [class.border-slate-200]="isLightTheme()">
-                    <span class="material-icons text-3xl block mb-1 text-slate-600">group_off</span>
-                    <span class="text-[10px] font-bold uppercase tracking-wider">Nenhum colaborador operacional programado para este dia</span>
-                  </div>
-                }
-              </div>
-            </div>
-
-            <!-- RIGHT COLUMN: ABSENCES & NON-OPERATIONAL (1/3 WIDTH) -->
-            <div class="space-y-6">
-              <div>
-                <h3 class="text-xs font-black uppercase tracking-wider"
-                    [class.text-white]="!isLightTheme()"
-                    [class.text-slate-800]="isLightTheme()">
-                  Afastamentos e Ausências
-                </h3>
-              </div>
-
-              <div class="space-y-4">
-                @for (absentGroup of dailyDashSummary().absentBySigla; track absentGroup.sigla?.code) {
-                  <div class="p-4 rounded-xl border shadow-sm"
-                       [class.bg-[#071426]]="!isLightTheme()"
-                       [class.border-[#10213b]]="!isLightTheme()"
-                       [class.bg-white]="isLightTheme()"
-                       [class.border-slate-200]="isLightTheme()">
-                    
-                    <!-- Sigla Title Header -->
-                    <div class="flex items-center justify-between pb-2 border-b border-dashed mb-3"
-                         [class.border-[#10213b]]="!isLightTheme()"
-                         [class.border-slate-200]="isLightTheme()">
-                      <div class="flex items-center gap-2">
-                        <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded tracking-widest font-mono"
-                              [style.background-color]="absentGroup.sigla?.color"
-                              [style.color]="getShiftOrSiglaTextColor(absentGroup.sigla?.code)">
-                          {{ absentGroup.sigla?.code }}
-                        </span>
-                        <span class="text-xs font-bold uppercase" [class.text-white]="!isLightTheme()" [class.text-slate-800]="isLightTheme()">
-                          {{ absentGroup.sigla?.label || absentGroup.sigla?.code }}
-                        </span>
-                      </div>
-                      <span class="text-[8px] font-mono font-black text-slate-400">
-                        {{ absentGroup.items.length }} COLLAB
-                      </span>
-                    </div>
-
-                    <!-- Collaborators list -->
-                    <div class="space-y-2">
-                      @for (item of absentGroup.items; track item.collab.id) {
-                        <div class="flex items-center gap-2 p-1.5">
-                          @if (item.collab.photo) {
-                            <img [src]="item.collab.photo" alt="Avatar" class="w-6 h-6 rounded-full object-cover border border-[#10213b]/60" referrerpolicy="no-referrer" />
-                          } @else {
-                            <div class="w-6 h-6 rounded-full bg-[#10213b] text-slate-300 flex items-center justify-center font-black text-[9px]">
-                              {{ item.collab.name.slice(0, 2).toUpperCase() }}
-                            </div>
-                          }
-                          <div class="min-w-0">
-                            <span class="block text-[11px] font-bold truncate" [class.text-white]="!isLightTheme()" [class.text-slate-800]="isLightTheme()">
-                              {{ item.collab.name }}
-                            </span>
-                            <span class="text-[7px] font-semibold text-slate-400 uppercase tracking-widest font-mono block">
-                              {{ item.collab.role }} • {{ item.collab.sector }}
-                            </span>
-                          </div>
-                        </div>
-                      }
-                    </div>
-
-                  </div>
-                } @empty {
-                  <div class="p-8 border border-dashed rounded-xl text-center text-slate-500"
-                       [class.border-[#10213b]]="!isLightTheme()"
-                       [class.border-slate-200]="isLightTheme()">
-                    <span class="material-icons text-3xl block mb-1 text-slate-600">health_and_safety</span>
-                    <span class="text-[10px] font-bold uppercase tracking-wider">Nenhum afastamento ou licença registrada</span>
-                  </div>
-                }
-
-                <!-- UNKNOWN SCALE COLLABORATORS -->
-                @if (dailyDashSummary().unknown.length > 0) {
-                  <div class="p-4 rounded-xl border border-dashed shadow-sm"
-                       [class.bg-[#071426]]="!isLightTheme()"
-                       [class.border-[#10213b]]="!isLightTheme()"
-                       [class.bg-white]="isLightTheme()"
-                       [class.border-slate-200]="isLightTheme()">
-                    
-                    <div class="flex items-center justify-between pb-2 border-b border-dashed mb-3"
-                         [class.border-[#10213b]]="!isLightTheme()"
-                         [class.border-slate-200]="isLightTheme()">
-                      <span class="text-xs font-black uppercase text-amber-500 flex items-center gap-1">
-                        <span class="material-icons text-xs">warning_amber</span>
-                        Sem Escala Atribuída (-)
-                      </span>
-                      <span class="text-[8px] font-mono font-black text-slate-400">
-                        {{ dailyDashSummary().unknown.length }} COLLAB
-                      </span>
-                    </div>
-
-                    <div class="space-y-2 max-h-[150px] overflow-y-auto pr-1">
-                      @for (item of dailyDashSummary().unknown; track item.collab.id) {
-                        <div class="flex items-center gap-2 p-1.5">
-                          @if (item.collab.photo) {
-                            <img [src]="item.collab.photo" alt="Avatar" class="w-6 h-6 rounded-full object-cover border border-[#10213b]/60" referrerpolicy="no-referrer" />
-                          } @else {
-                            <div class="w-6 h-6 rounded-full bg-[#10213b] text-slate-300 flex items-center justify-center font-black text-[9px]">
-                              {{ item.collab.name.slice(0, 2).toUpperCase() }}
-                            </div>
-                          }
-                          <div class="min-w-0">
-                            <span class="block text-[11px] font-bold truncate" [class.text-white]="!isLightTheme()" [class.text-slate-800]="isLightTheme()">
-                              {{ item.collab.name }}
-                            </span>
-                            <span class="text-[7px] font-semibold text-slate-400 uppercase tracking-widest font-mono block">
-                              {{ item.collab.role }} • {{ item.collab.sector }}
-                            </span>
-                          </div>
-                        </div>
-                      }
-                    </div>
-
-                  </div>
-                }
-              </div>
-            </div>
-
-          </div>
-
         </div>
       }
 
@@ -3764,20 +3500,116 @@ CREATE TABLE IF NOT EXISTS public.audit_history (
         </div>
 
         <!-- Body -->
-        <div class="p-6 bg-[#030a14] flex flex-col items-center justify-center gap-4 text-center">
-          <div class="w-12 h-12 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-            <span class="material-icons text-2xl">info</span>
-          </div>
-          <div>
-            <h4 class="text-white font-bold text-sm mb-1">Escolha de Datas</h4>
-            <p class="text-slate-400 text-[10px] leading-relaxed">
-              Para solicitar uma folga, por favor, selecione as datas desejadas diretamente clicando nos dias no <strong>calendário de escalas da equipe</strong>.
-            </p>
-          </div>
-          
-          <button (click)="isSolicitarFolgaModalOpen.set(false)" class="mt-2 w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-wider rounded-lg transition-all duration-200 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-            Entendi
-          </button>
+        <div class="p-5 bg-[#030a14] flex flex-col gap-4">
+          @if (!isFolgaRequestPeriodOpen()) {
+            <div class="text-center p-4 bg-rose-500/10 border border-rose-500/20 rounded-lg">
+              <span class="material-icons text-rose-500 text-3xl mb-2">lock</span>
+              <h4 class="text-rose-400 font-bold text-xs uppercase tracking-wider mb-1">Período Fechado</h4>
+              <p class="text-slate-400 text-[10px] leading-relaxed">
+                As solicitações de folga só podem ser feitas do dia 1 ao dia 10 do mês.
+              </p>
+            </div>
+            <button (click)="isSolicitarFolgaModalOpen.set(false)" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white font-black text-[10px] uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer">
+              Fechar
+            </button>
+          } @else {
+            <div class="flex items-center justify-between">
+              <h4 class="text-white font-bold text-xs uppercase tracking-wider">
+                {{ monthsList[getNextMonthIndex()].name }} {{ getNextMonthYear() }}
+              </h4>
+              <span class="text-[9px] font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                Dias 1 a 10
+              </span>
+            </div>
+            
+            <!-- Simple Calendar Grid -->
+            <div class="grid grid-cols-7 gap-1">
+              <!-- Weekdays -->
+              <div class="text-center text-[9px] font-black uppercase text-slate-500 pb-1">Dom</div>
+              <div class="text-center text-[9px] font-black uppercase text-slate-500 pb-1">Seg</div>
+              <div class="text-center text-[9px] font-black uppercase text-slate-500 pb-1">Ter</div>
+              <div class="text-center text-[9px] font-black uppercase text-slate-500 pb-1">Qua</div>
+              <div class="text-center text-[9px] font-black uppercase text-slate-500 pb-1">Qui</div>
+              <div class="text-center text-[9px] font-black uppercase text-slate-500 pb-1">Sex</div>
+              <div class="text-center text-[9px] font-black uppercase text-slate-500 pb-1">Sáb</div>
+
+              @for (dayObj of getNextMonthCalendarDays(); track $index) {
+                @if (dayObj.empty) {
+                  <div class="aspect-square"></div>
+                } @else {
+                  <button (click)="dayObj.isFull && !dayObj.hasRequested ? null : folgaModalSelectedDay.set(dayObj.day)"
+                          [class.cursor-not-allowed]="dayObj.isFull && !dayObj.hasRequested"
+                          [class.opacity-50]="dayObj.isFull && !dayObj.hasRequested"
+                          [class.bg-[#071426]]="folgaModalSelectedDay() !== dayObj.day"
+                          [class.bg-emerald-500]="folgaModalSelectedDay() === dayObj.day"
+                          [class.text-white]="folgaModalSelectedDay() === dayObj.day"
+                          [class.text-slate-300]="folgaModalSelectedDay() !== dayObj.day"
+                          [class.ring-2]="folgaModalSelectedDay() === dayObj.day"
+                          [class.ring-emerald-400]="folgaModalSelectedDay() === dayObj.day"
+                          [class.border-emerald-500]="dayObj.hasRequested"
+                          class="aspect-square rounded border border-[#10213b] flex flex-col items-center justify-center relative hover:bg-[#10213b] transition-all group">
+                    <span class="text-xs font-bold font-mono">{{ dayObj.day }}</span>
+                    
+                    @if (dayObj.hasRequested) {
+                      <span class="text-[7px] font-black text-emerald-400 uppercase tracking-tighter leading-none mt-1">Sua</span>
+                    } @else if (dayObj.isFull) {
+                      <span class="text-[7px] font-black text-rose-400 uppercase tracking-tighter leading-none mt-1">Cheio</span>
+                    } @else if (dayObj.count > 0) {
+                      <span class="text-[7px] font-bold text-slate-400 uppercase tracking-tighter leading-none mt-1">{{ dayObj.count }}/3</span>
+                    }
+                  </button>
+                }
+              }
+            </div>
+            
+            <!-- Selected Day Info -->
+            @if (folgaModalSelectedDay() !== null) {
+              @let selObj = getNextMonthCalendarDays().find(d => !d.empty && d.day === folgaModalSelectedDay());
+              <div class="p-3 bg-[#071426] border border-[#10213b] rounded-lg text-left mt-2 animate-fade-in">
+                <div class="flex justify-between items-start mb-2">
+                  <span class="text-[10px] font-black uppercase text-slate-300">
+                    Dia {{ selObj.day }} de {{ monthsList[getNextMonthIndex()].name }}
+                  </span>
+                  <span class="text-[9px] font-mono" [class.text-rose-400]="selObj.isFull" [class.text-emerald-400]="!selObj.isFull">
+                    {{ selObj.count }}/3 Vagas
+                  </span>
+                </div>
+                
+                @if (selObj.count > 0) {
+                  <div class="mb-3">
+                    <span class="text-[8px] font-bold text-slate-500 uppercase block mb-1">Solicitado por:</span>
+                    <div class="flex flex-wrap gap-1">
+                      @for (r of selObj.requesters; track r.id) {
+                        <div class="flex items-center gap-1 bg-[#10213b] px-1.5 py-0.5 rounded" title="{{ r.name }}">
+                          @if (r.photo) {
+                            <img [src]="r.photo" alt="" class="w-3 h-3 rounded-full object-cover" referrerpolicy="no-referrer">
+                          } @else {
+                            <div class="w-3 h-3 rounded-full bg-slate-700 text-[6px] flex items-center justify-center font-bold text-white">{{ r.name.charAt(0) }}</div>
+                          }
+                          <span class="text-[8px] font-bold text-slate-300 truncate max-w-[60px]">{{ r.name }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+                
+                @let logged = getLoggedCollab();
+                @if (selObj.hasRequested && logged) {
+                  <button (click)="removeCollabFolgaDayFromNextMonth(logged, selObj.day); isSolicitarFolgaModalOpen.set(false)" class="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-black text-[10px] uppercase tracking-wider rounded-lg transition-all cursor-pointer">
+                    Cancelar Solicitação
+                  </button>
+                } @else if (!selObj.isFull && logged) {
+                  <button (click)="requestCollabFolgaDayForNextMonth(logged, selObj.day); isSolicitarFolgaModalOpen.set(false)" class="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-wider rounded-lg transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] cursor-pointer">
+                    Confirmar Solicitação
+                  </button>
+                }
+              </div>
+            } @else {
+              <div class="text-center p-3 text-slate-500 text-[9px] uppercase font-bold tracking-wider mt-2 border border-dashed border-[#10213b]/60 rounded-lg">
+                Selecione um dia no calendário
+              </div>
+            }
+          }
         </div>
       </div>
     </div>
@@ -3823,15 +3655,24 @@ CREATE TABLE IF NOT EXISTS public.audit_history (
             <div class="flex items-start gap-3">
               <!-- Avatar -->
               @if (detailCol.photo) {
-                <img [src]="detailCol.photo" alt="Colaborador" class="w-10 h-10 rounded-full object-cover border border-[#10213b]" referrerpolicy="no-referrer" />
+                <img (click)="navigateToCollabPortal(detailCol.id)"
+                     [src]="detailCol.photo" 
+                     alt="Colaborador" 
+                     class="w-10 h-10 rounded-full object-cover border border-[#10213b] cursor-pointer hover:opacity-85 transition-all" 
+                     title="Ir para o Portal do Colaborador"
+                     referrerpolicy="no-referrer" />
               } @else {
-                <div class="w-10 h-10 rounded-full bg-[#10213b] text-slate-300 flex items-center justify-center font-black text-sm">
+                <div (click)="navigateToCollabPortal(detailCol.id)"
+                     class="w-10 h-10 rounded-full bg-[#10213b] text-slate-300 flex items-center justify-center font-black text-sm cursor-pointer hover:opacity-85 transition-all"
+                     title="Ir para o Portal do Colaborador">
                   {{ detailCol.name.slice(0, 2).toUpperCase() }}
                 </div>
               }
 
               <div class="flex-1">
-                <span class="text-xs font-black text-white block">{{ detailCol.name }}</span>
+                <span (click)="navigateToCollabPortal(detailCol.id)"
+                      class="text-xs font-black text-white block cursor-pointer hover:text-emerald-400 hover:underline transition-all"
+                      title="Ir para o Portal do Colaborador">{{ detailCol.name }}</span>
                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider font-mono">
                   {{ detailCol.role }} • {{ detailCol.sector }}
                 </span>
@@ -3853,17 +3694,11 @@ CREATE TABLE IF NOT EXISTS public.audit_history (
 
             <!-- Botões de Solicitacao de Folga -->
             <div class="mt-4 pt-3 border-t border-[#10213b]/40 flex items-center justify-end">
-              @if (isChosen) {
-                <button (click)="isPre ? showToast('Folga automática de alta prioridade não pode ser removida.') : removeCollabFolgaDay(detailCol, detailDay)"
-                        class="flex items-center gap-1.5 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 transition-all rounded cursor-pointer border border-rose-500/20">
-                  <span class="material-icons text-xs leading-none">delete</span>
-                  Remover Folga
-                </button>
-              } @else {
-                <button (click)="requestCollabFolgaDay(detailCol, detailDay)"
+              @if (detailCol.id === logged.id) {
+                <button (click)="openSolicitarFolgaModal()"
                         class="flex items-center gap-1.5 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 transition-all rounded cursor-pointer border border-emerald-500/20">
                   <span class="material-icons text-xs leading-none">add_circle</span>
-                  Solicitar Folga
+                  Solicitar Folgas
                 </button>
               }
             </div>
@@ -3928,15 +3763,24 @@ CREATE TABLE IF NOT EXISTS public.audit_history (
                   <div class="flex items-center gap-2.5">
                     <!-- Photo -->
                     @if (col.photo) {
-                      <img [src]="col.photo" alt="Avatar" class="w-8 h-8 rounded-full object-cover border border-[#10213b]" referrerpolicy="no-referrer" />
+                      <img (click)="navigateToCollabPortal(col.id)"
+                           [src]="col.photo" 
+                           alt="Avatar" 
+                           class="w-8 h-8 rounded-full object-cover border border-[#10213b] cursor-pointer hover:opacity-85 transition-all" 
+                           title="Ir para o Portal do Colaborador"
+                           referrerpolicy="no-referrer" />
                     } @else {
-                      <div class="w-8 h-8 rounded-full bg-[#10213b] text-slate-300 flex items-center justify-center font-bold text-xs">
+                      <div (click)="navigateToCollabPortal(col.id)"
+                           class="w-8 h-8 rounded-full bg-[#10213b] text-slate-300 flex items-center justify-center font-bold text-xs cursor-pointer hover:opacity-85 transition-all"
+                           title="Ir para o Portal do Colaborador">
                         {{ col.name.slice(0, 2).toUpperCase() }}
                       </div>
                     }
                     
                     <div>
-                      <span class="block text-xs font-extrabold text-white leading-tight">{{ col.name }}</span>
+                      <span (click)="navigateToCollabPortal(col.id)"
+                            class="block text-xs font-extrabold text-white leading-tight cursor-pointer hover:text-emerald-400 hover:underline transition-all"
+                            title="Ir para o Portal do Colaborador">{{ col.name }}</span>
                       <span class="text-[8px] font-semibold text-slate-400 uppercase tracking-wider font-mono">
                         {{ col.role }} • {{ col.sector }}
                       </span>

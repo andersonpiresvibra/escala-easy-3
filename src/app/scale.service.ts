@@ -137,29 +137,31 @@ export class ScaleService {
 
   // Helper to resolve initial Supabase URL
   private getInitialSupabaseUrl(): string {
-    const stored = localStorage.getItem('supabase_url');
-    if (stored) return stored;
-
-    if (supabaseEnv && supabaseEnv.url) {
-      return supabaseEnv.url;
+    const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('supabase_url') : null;
+    if (stored && stored !== 'undefined' && stored !== 'null' && stored.trim() !== '') {
+      return stored.trim();
     }
 
-    const windowUrl = (window as any)['SUPABASE_URL'] || (window as any)['env']?.['SUPABASE_URL'];
-    if (windowUrl) {
-      localStorage.setItem('supabase_url', windowUrl);
-      return windowUrl;
+    if (supabaseEnv && supabaseEnv.url && supabaseEnv.url.trim() !== '') {
+      return supabaseEnv.url.trim();
+    }
+
+    const windowUrl = typeof window !== 'undefined' ? ((window as any)['SUPABASE_URL'] || (window as any)['env']?.['SUPABASE_URL']) : null;
+    if (windowUrl && typeof windowUrl === 'string' && windowUrl.trim() !== '') {
+      if (typeof localStorage !== 'undefined') localStorage.setItem('supabase_url', windowUrl.trim());
+      return windowUrl.trim();
     }
 
     const processUrl = typeof process !== 'undefined' ? process?.env?.['SUPABASE_URL'] || process?.env?.['NG_APP_SUPABASE_URL'] : '';
-    if (processUrl) {
-      localStorage.setItem('supabase_url', processUrl);
-      return processUrl;
+    if (processUrl && typeof processUrl === 'string' && processUrl.trim() !== '') {
+      if (typeof localStorage !== 'undefined') localStorage.setItem('supabase_url', processUrl.trim());
+      return processUrl.trim();
     }
 
     const importMetaUrl = (import.meta as any).env?.['SUPABASE_URL'] || (import.meta as any).env?.['NG_APP_SUPABASE_URL'] || (import.meta as any).env?.['VITE_SUPABASE_URL'];
-    if (importMetaUrl) {
-      localStorage.setItem('supabase_url', importMetaUrl);
-      return importMetaUrl;
+    if (importMetaUrl && typeof importMetaUrl === 'string' && importMetaUrl.trim() !== '') {
+      if (typeof localStorage !== 'undefined') localStorage.setItem('supabase_url', importMetaUrl.trim());
+      return importMetaUrl.trim();
     }
 
     return 'https://vefyegxmvjficncbetyp.supabase.co';
@@ -167,29 +169,31 @@ export class ScaleService {
 
   // Helper to resolve initial Supabase Key
   private getInitialSupabaseKey(): string {
-    const stored = localStorage.getItem('supabase_key');
-    if (stored) return stored;
-
-    if (supabaseEnv && supabaseEnv.key) {
-      return supabaseEnv.key;
+    const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('supabase_key') : null;
+    if (stored && stored !== 'undefined' && stored !== 'null' && stored.trim() !== '') {
+      return stored.trim();
     }
 
-    const windowKey = (window as any)['SUPABASE_KEY'] || (window as any)['env']?.['SUPABASE_KEY'];
-    if (windowKey) {
-      localStorage.setItem('supabase_key', windowKey);
-      return windowKey;
+    if (supabaseEnv && supabaseEnv.key && supabaseEnv.key.trim() !== '') {
+      return supabaseEnv.key.trim();
+    }
+
+    const windowKey = typeof window !== 'undefined' ? ((window as any)['SUPABASE_KEY'] || (window as any)['env']?.['SUPABASE_KEY']) : null;
+    if (windowKey && typeof windowKey === 'string' && windowKey.trim() !== '') {
+      if (typeof localStorage !== 'undefined') localStorage.setItem('supabase_key', windowKey.trim());
+      return windowKey.trim();
     }
 
     const processKey = typeof process !== 'undefined' ? process?.env?.['SUPABASE_KEY'] || process?.env?.['NG_APP_SUPABASE_KEY'] : '';
-    if (processKey) {
-      localStorage.setItem('supabase_key', processKey);
-      return processKey;
+    if (processKey && typeof processKey === 'string' && processKey.trim() !== '') {
+      if (typeof localStorage !== 'undefined') localStorage.setItem('supabase_key', processKey.trim());
+      return processKey.trim();
     }
 
     const importMetaKey = (import.meta as any).env?.['SUPABASE_KEY'] || (import.meta as any).env?.['NG_APP_SUPABASE_KEY'] || (import.meta as any).env?.['VITE_SUPABASE_KEY'];
-    if (importMetaKey) {
-      localStorage.setItem('supabase_key', importMetaKey);
-      return importMetaKey;
+    if (importMetaKey && typeof importMetaKey === 'string' && importMetaKey.trim() !== '') {
+      if (typeof localStorage !== 'undefined') localStorage.setItem('supabase_key', importMetaKey.trim());
+      return importMetaKey.trim();
     }
 
     return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZnllZ3htdmpmaWNuY2JldHlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNjYwMjksImV4cCI6MjA5Nzg0MjAyOX0.ioaZkwS98123Jb2xw2l6vev3FgoLwIVwsitg7pTew7c';
@@ -197,7 +201,7 @@ export class ScaleService {
 
   // Database Connection Configuration
   activeDb = signal<'firebase' | 'supabase'>(
-    (localStorage.getItem('active_db') as 'firebase' | 'supabase') || 'supabase'
+    ((typeof localStorage !== 'undefined' ? localStorage.getItem('active_db') : null) as 'firebase' | 'supabase') || 'supabase'
   );
   activeMonth = signal<number>(7); // Default is July (7)
   activeYear = signal<number>(new Date().getFullYear()); // Default is new Date().getFullYear()
@@ -230,7 +234,7 @@ export class ScaleService {
 
   constructor() {
     this.activeDb.set('supabase');
-    localStorage.setItem('active_db', 'supabase');
+    if (typeof localStorage !== 'undefined') localStorage.setItem('active_db', 'supabase');
     
     if (this.activeDb() === 'firebase') {
       this.initFirebaseSync();
@@ -241,7 +245,7 @@ export class ScaleService {
 
   setDatabaseProvider(provider: 'firebase' | 'supabase') {
     this.activeDb.set(provider);
-    localStorage.setItem('active_db', provider);
+    if (typeof localStorage !== 'undefined') localStorage.setItem('active_db', provider);
     this.databaseError.set(null);
     if (provider === 'supabase') {
       this.clearFirebaseSync();
@@ -254,8 +258,8 @@ export class ScaleService {
   setSupabaseConfig(url: string, key: string) {
     this.supabaseUrl.set(url);
     this.supabaseKey.set(key);
-    localStorage.setItem('supabase_url', url);
-    localStorage.setItem('supabase_key', key);
+    if (typeof localStorage !== 'undefined') localStorage.setItem('supabase_url', url);
+    if (typeof localStorage !== 'undefined') localStorage.setItem('supabase_key', key);
     this.setDatabaseProvider('supabase');
   }
 
@@ -266,7 +270,9 @@ export class ScaleService {
       try {
         this.supabase = createClient(url, key);
         this.databaseError.set(null);
-        this.syncSupabase();
+        if (typeof window !== 'undefined') {
+          this.syncSupabase();
+        }
       } catch (err: any) {
         console.error('Erro ao inicializar Supabase:', err);
         this.databaseError.set(err.message || 'Erro ao inicializar cliente Supabase');
@@ -299,7 +305,7 @@ export class ScaleService {
         .range(from, from + step - 1);
 
       if (error) {
-        console.error('Error fetching paginated scale rows:', error);
+        console.error('Error fetching paginated scale rows:', error?.message || JSON.stringify(error));
         throw error;
       }
 
@@ -482,9 +488,31 @@ export class ScaleService {
         this.collaborators.set(mappedCollabs);
       }
     } catch (err: any) {
-      console.error('Error syncing Supabase:', err);
+      console.error('Error syncing Supabase:', err?.message || JSON.stringify(err));
+      
+      const currentUrl = this.supabaseUrl();
+      const currentKey = this.supabaseKey();
+      const defaultUrl = supabaseEnv?.url || 'https://vefyegxmvjficncbetyp.supabase.co';
+      const defaultKey = supabaseEnv?.key || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZnllZ3htdmpmaWNuY2JldHlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNjYwMjksImV4cCI6MjA5Nzg0MjAyOX0.ioaZkwS98123Jb2xw2l6vev3FgoLwIVwsitg7pTew7c';
+
+      if (currentUrl !== defaultUrl || currentKey !== defaultKey) {
+        console.warn('Supabase sync failed with custom/stored credentials. Performing self-healing rollback to default env credentials...');
+        this.supabaseUrl.set(defaultUrl);
+        this.supabaseKey.set(defaultKey);
+        if (typeof localStorage !== 'undefined') localStorage.setItem('supabase_url', defaultUrl);
+        if (typeof localStorage !== 'undefined') localStorage.setItem('supabase_key', defaultKey);
+        try {
+          this.supabase = createClient(defaultUrl, defaultKey);
+          await this.syncSupabase();
+          return;
+        } catch (retryErr: any) {
+          console.error('Self-healing retry with default credentials also failed:', retryErr);
+        }
+      }
+
       if (this.activeDb() === 'supabase') {
-        this.databaseError.set(`Erro de conexão com o Supabase: ${err.message || err}`);
+        const errMsg = err?.message || err?.details || err?.hint || (typeof err === 'object' ? JSON.stringify(err) : String(err));
+        this.databaseError.set(`Erro de conexão com o Supabase: ${errMsg}`);
         this.collaborators.set([]);
         this.shiftTypes.set([]);
         this.siglaTypes.set([]);
@@ -682,8 +710,8 @@ export class ScaleService {
 
     // Check count of other collabs requesting the same day
     const count = collabs.filter(c => (c.folgaRequests || []).some(r => r.date === date)).length;
-    if (count >= 2) {
-      return { success: false, message: 'Data indisponível. O limite de 2 colaboradores para esta data já foi atingido.' };
+    if (count >= 3) {
+      return { success: false, message: 'Data indisponível. O limite de 3 colaboradores para esta data já foi atingido.' };
     }
 
     const updatedRequests = [...currentRequests, { date, isPreSelected: false }];
