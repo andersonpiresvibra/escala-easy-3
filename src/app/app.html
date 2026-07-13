@@ -321,7 +321,7 @@
                     <input type="password" #pinInput placeholder="PIN de Acesso" (keyup.enter)="unlockAllShifts(pinInput.value); pinInput.value=''"
                            class="bg-[#020813] border border-[#10213b] text-white text-[9px] px-2 py-1.5 rounded-md w-full outline-none focus:border-emerald-500 placeholder:text-slate-600 font-mono">
                     <button (click)="unlockAllShifts(pinInput.value); pinInput.value=''"
-                            class="px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-[9px] uppercase rounded-md cursor-pointer transition-colors border-none outline-none">
+                            class="px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black text-[9px] uppercase rounded-md cursor-pointer transition-colors border-none outline-none">
                       Ok
                     </button>
                   </div>
@@ -481,7 +481,7 @@
                   <span class="material-icons text-sm">filter_alt</span>
                   <span>Filtros</span>
                   @if (activeFiltersCount() > 0) {
-                    <span class="bg-amber-500 text-slate-950 font-black rounded-full px-1.5 py-0.2 text-[8px] ml-0.5">{{ activeFiltersCount() }}</span>
+                    <span class="bg-amber-500 text-amber-950 font-black rounded-full px-1.5 py-0.2 text-[8px] ml-0.5">{{ activeFiltersCount() }}</span>
                   } @else {
                     <span class="material-icons text-[10px] transition-transform duration-200" [class.rotate-180]="showFilters()">expand_more</span>
                   }
@@ -2169,14 +2169,14 @@
         <div class="p-4 md:p-6 lg:p-8 space-y-6 animate-fade-in font-sans w-full flex-1 overflow-y-auto scrollbar-thin max-w-full" id="portal_tab_content">
           <!-- SIMULATION BAR & QUICK SWITCH -->
           @if (!getLoggedCollab()) {
-            <div class="bg-[#030a14] border border-[#10213b] rounded-lg p-5 shadow-xl space-y-4">
-              <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#10213b]/60">
+            <div [class]="'border rounded-lg p-5 shadow-xl space-y-4 transition-all duration-300 ' + (isLightTheme() ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#030a14] border-[#10213b] text-white')">
+              <div [class]="'flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b ' + (isLightTheme() ? 'border-slate-100' : 'border-[#10213b]/60')">
                 <div>
                   <div class="flex items-center gap-2">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <h3 class="font-black text-sm text-white uppercase tracking-wider">Sessão do Colaborador</h3>
+                    <h3 [class]="'font-black text-sm uppercase tracking-wider ' + (isLightTheme() ? 'text-slate-800' : 'text-white')">Sessão do Colaborador</h3>
                   </div>
-                  <p class="text-[10px] text-slate-400 mt-1">
+                  <p [class]="'text-[10px] mt-1 ' + (isLightTheme() ? 'text-slate-600' : 'text-slate-400')">
                     Selecione qualquer colaborador cadastrado na base para simular sua seção pessoal e realizar escolhas de folgas.
                   </p>
                 </div>
@@ -2193,30 +2193,30 @@
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-4">
                   @for (c of loginCollaborators(); track c.id) {
                     <div (click)="loginAsCollab(c.id)"
-                         class="border border-[#10213b] bg-[#071426]/40 hover:border-slate-700 hover:bg-[#071426] group p-3 rounded-xl cursor-pointer transition-all flex flex-col justify-between gap-2.5 select-none text-left relative overflow-hidden">
+                         [class]="'border group p-3 rounded-xl cursor-pointer transition-all flex flex-col justify-between gap-2.5 select-none text-left relative overflow-hidden ' + (isLightTheme() ? 'border-slate-200 bg-slate-50 hover:border-slate-400 hover:bg-slate-100' : 'border-[#10213b] bg-[#071426]/40 hover:border-slate-700 hover:bg-[#071426]')">
 
                       <div class="flex items-center gap-2 min-w-0">
                         <!-- Avatar -->
                         <img [src]="getCollabPhoto(c)" alt="Avatar" referrerpolicy="no-referrer" 
-                             class="w-8 h-8 rounded-full object-cover border shrink-0 border-[#10213b] group-hover:border-slate-500/20">
+                             [class]="'w-8 h-8 rounded-full object-cover border shrink-0 ' + (isLightTheme() ? 'border-slate-200 group-hover:border-slate-300' : 'border-[#10213b] group-hover:border-slate-500/20')">
                         
                         <!-- Info -->
                         <div class="min-w-0">
-                          <p class="text-[11px] font-black truncate text-white">
+                          <p [class]="'text-[11px] font-black truncate ' + (isLightTheme() ? 'text-slate-800' : 'text-white')">
                             {{ c.name }}
                           </p>
-                          <p class="text-[8px] text-slate-400 font-bold uppercase tracking-wider truncate">
+                          <p [class]="'text-[8px] font-bold uppercase tracking-wider truncate ' + (isLightTheme() ? 'text-slate-500' : 'text-slate-400')">
                             {{ c.role }}
                           </p>
                         </div>
                       </div>
 
                       <!-- Footer -->
-                      <div class="flex items-center justify-between border-t border-[#10213b]/60 pt-1.5">
-                        <span class="text-[7.5px] font-black font-mono text-slate-400 bg-[#030a14] px-1 py-0.5 rounded uppercase border border-[#10213b]/40">
+                      <div [class]="'flex items-center justify-between border-t pt-1.5 ' + (isLightTheme() ? 'border-slate-200' : 'border-[#10213b]/60')">
+                        <span [class]="'text-[7.5px] font-black font-mono px-1 py-0.5 rounded uppercase border ' + (isLightTheme() ? 'text-slate-600 bg-slate-150 border-slate-200' : 'text-slate-400 bg-[#030a14] border-[#10213b]/40')">
                           {{ c.shift }}
                         </span>
-                        <span class="text-[7.5px] font-black font-mono text-slate-400 bg-[#030a14] px-1 py-0.5 rounded uppercase border border-[#10213b]/40">
+                        <span [class]="'text-[7.5px] font-black font-mono px-1 py-0.5 rounded uppercase border ' + (isLightTheme() ? 'text-slate-600 bg-slate-150 border-slate-200' : 'text-slate-400 bg-[#030a14] border-[#10213b]/40')">
                           {{ c.sector }}
                         </span>
                       </div>
@@ -2238,236 +2238,357 @@
                 <!-- LEFT SIDEBAR: PROFILE & STATS -->
                 <div class="lg:col-span-4 space-y-6">
 
-                  <!-- WIDGET UNIFICADO: MONITOR DE JORNADA & DESCANSO -->
-                  <div [class]="'p-4 border rounded-xl flex flex-col space-y-4 transition-all duration-300 shadow-xl ' + (isLightTheme() ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#030a14] border-[#10213b] text-white')"
-                     [style.border-color]="seqStats.isWorking ? (seqStats.streak === 1 ? '#10b981' : (seqStats.streak === 2 ? '#0ea5e9' : (seqStats.streak === 3 ? '#f59e0b' : '#ef4444'))) : (isLightTheme() ? '#e2e8f0' : '#10213b')">
+                  <!-- WIDGET UNIFICADO: MONITOR -->
+                  <div [class]="'max-w-[390px] w-full border rounded-[16px] flex flex-col p-3 gap-3 transition-all duration-300 shadow-2xl ' + (isLightTheme() ? 'bg-white border-slate-200 text-slate-900 shadow-slate-100/40' : 'bg-[#0F172A] border-[#334155] text-[#F8FAFC] shadow-black/25')" style="box-shadow: 0 12px 24px rgba(0,0,0,0.25);">
                   
                     <!-- HEADER -->
-                    <div class="flex items-center justify-between pb-2 border-b border-[#10213b]/60">
+                    <div class="flex items-center pb-1.5 border-b" [class]="isLightTheme() ? 'border-slate-100' : 'border-[#334155]'">
                       <div class="flex items-center gap-2">
                         <span class="material-icons text-emerald-400 text-sm">query_stats</span>
-                        <span [class]="'text-xs font-black uppercase tracking-wider ' + (isLightTheme() ? 'text-slate-800' : 'text-slate-200')">
-                          Jornada &amp; Descanso
+                        <span [class]="'text-[15px] font-semibold tracking-wide uppercase ' + (isLightTheme() ? 'text-slate-800' : 'text-[#F8FAFC]')">
+                          Monitor
                         </span>
                       </div>
+                    </div>
+
+                    <!-- PRIMEIRA LINHA: STATUS DO DIA (100% WIDTH) -->
+                    <div [class]="'rounded-[16px] p-3 flex items-center justify-between border transition-all duration-300 ' + (isLightTheme() ? 'bg-slate-50 border-slate-200' : 'bg-[#1E293B] border-[#334155]')">
                       @if (seqStats.isWorking) {
-                        <span class="text-[9px] font-bold font-mono text-amber-400 bg-amber-950/40 border border-amber-500/25 px-2 py-0.5 rounded uppercase tracking-wider">
-                          Trabalhando Hoje
+                        <div class="flex items-center gap-2">
+                          <span class="relative flex h-2.5 w-2.5">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F59E0B] opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#F59E0B]"></span>
+                          </span>
+                          <span [class]="'text-[11px] font-bold tracking-wider uppercase ' + (isLightTheme() ? 'text-slate-700' : 'text-[#F8FAFC]')">
+                            TRABALHANDO HOJE
+                          </span>
+                        </div>
+                        <span class="text-[11px] font-extrabold px-2 py-0.5 rounded border border-[#F59E0B]/30 bg-[#F59E0B]/10 text-[#F59E0B] uppercase tracking-wide font-mono">
+                          ATIVO
                         </span>
                       } @else {
-                        <span class="text-[9px] font-bold font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/25 px-2 py-0.5 rounded uppercase tracking-wider animate-pulse">
-                          De Folga Hoje
+                        <div class="flex items-center gap-2">
+                          <span class="relative flex h-2.5 w-2.5">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                          </span>
+                          <span [class]="'text-[11px] font-bold tracking-wider uppercase ' + (isLightTheme() ? 'text-slate-700' : 'text-[#F8FAFC]')">
+                            DE FOLGA HOJE
+                          </span>
+                        </div>
+                        <span class="text-[11px] font-extrabold px-2 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 uppercase tracking-wide font-mono">
+                          DESCANSO
                         </span>
                       }
                     </div>
 
-                    <!-- CONTEÚDO INTEGRADO: SEM SUB-CARDS POLUÍDOS OU MICRO-TEXTOS -->
-                    <div class="space-y-4">
+                    <!-- SEGUNDA LINHA: GRID DE 2 COLUNAS (50% / 50%) -->
+                    <div class="grid grid-cols-2 gap-3 w-full">
                       
-                      <!-- SEÇÃO 1: STATUS DA JORNADA -->
-                      <div class="space-y-3">
-                        @if (seqStats.isWorking) {
-                          <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2.5">
-                              <span class="material-icons text-amber-500 text-lg">schedule</span>
-                              <div>
-                                <p [class]="'text-[13px] font-extrabold leading-tight ' + (isLightTheme() ? 'text-slate-900' : 'text-slate-100')">
-                                  {{ seqStats.streak }}º / {{ seqStats.totalStreak }} Dias consecutivos
-                                </p>
-                              </div>
-                            </div>
-                            <span class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded"
-                                  [class]="seqStats.textCol + ' ' + seqStats.textBg">
-                              {{ seqStats.fatigueLevel }}
+                      <!-- LADO ESQUERDO: SCORE DE ENERGIA (GRÁFICO DE ROSCA / GAUGE SEMICIRCULAR) -->
+                      <div [class]="'rounded-[16px] p-3 flex flex-col items-center justify-between text-center gap-1.5 border transition-all duration-300 ' + (isLightTheme() ? 'bg-slate-50 border-slate-200' : 'bg-[#1E293B] border-[#334155]')">
+                        <span class="text-[11px] font-bold tracking-wider uppercase text-slate-500 font-sans">Energia</span>
+                        
+                        <!-- Semicircular Gauge SVG -->
+                        <div class="relative w-[110px] h-[55px] flex items-center justify-center shrink-0 mt-1">
+                          <svg class="w-full h-full" viewBox="0 0 100 52">
+                            <!-- Segment 1: Green -->
+                            <path d="M 12 48 A 38 38 0 0 1 20 28"
+                                  fill="none"
+                                  stroke-width="5.5"
+                                  stroke-linecap="round"
+                                  [style.stroke]="(!seqStats.isWorking || seqStats.streak >= 1) ? '#10b981' : (isLightTheme() ? '#e2e8f0' : '#223147')" />
+                            <!-- Segment 2: Blue -->
+                            <path d="M 22 26 A 38 38 0 0 1 38 15"
+                                  fill="none"
+                                  stroke-width="5.5"
+                                  stroke-linecap="round"
+                                  [style.stroke]="(seqStats.isWorking && seqStats.streak >= 2) ? '#3b82f6' : (isLightTheme() ? '#e2e8f0' : '#223147')" />
+                            <!-- Segment 3: Yellow -->
+                            <path d="M 41 14 A 38 38 0 0 1 59 14"
+                                  fill="none"
+                                  stroke-width="5.5"
+                                  stroke-linecap="round"
+                                  [style.stroke]="(seqStats.isWorking && seqStats.streak >= 3) ? '#eab308' : (isLightTheme() ? '#e2e8f0' : '#223147')" />
+                            <!-- Segment 4: Orange -->
+                            <path d="M 62 15 A 38 38 0 0 1 78 26"
+                                  fill="none"
+                                  stroke-width="5.5"
+                                  stroke-linecap="round"
+                                  [style.stroke]="(seqStats.isWorking && seqStats.streak >= 4) ? '#f97316' : (isLightTheme() ? '#e2e8f0' : '#223147')" />
+                            <!-- Segment 5: Red -->
+                            <path d="M 80 28 A 38 38 0 0 1 87 48"
+                                  fill="none"
+                                  stroke-width="5.5"
+                                  stroke-linecap="round"
+                                  [style.stroke]="(seqStats.isWorking && seqStats.streak >= 5) ? '#ef4444' : (isLightTheme() ? '#e2e8f0' : '#223147')" />
+                          </svg>
+                          <!-- Gauge percentage value in the center bottom -->
+                          <div class="absolute bottom-0 inset-x-0 flex flex-col items-center justify-end">
+                            <span [class]="'text-[18px] font-bold font-mono leading-none ' + (isLightTheme() ? 'text-slate-800' : 'text-[#F8FAFC]')">
+                              {{ getEnergyPercent(seqStats) }}%
                             </span>
-                          </div>
-                        } @else {
-                          <div class="flex items-center gap-2.5">
-                            <span class="material-icons text-emerald-400 text-lg">weekend</span>
-                            <div>
-                              <p class="text-[13px] font-extrabold text-emerald-400 leading-tight">
-                                ✨ Excelente Folga! ✨
-                              </p>
-                              <p class="text-[10px] text-slate-500">
-                                Desconecte-se e aproveite seu merecido descanso hoje.
-                              </p>
-                            </div>
-                          </div>
-                        }
-
-                        <!-- Energy progress bar - compact and clear -->
-                        <div class="space-y-1 pt-1">
-                          <div class="flex items-center justify-between text-[9px] font-black tracking-wider text-slate-500">
-                            <span>SCORE DE ENERGIA ATUAL</span>
-                            <span class="text-slate-500">{{ seqStats.alertMessage }}</span>
-                          </div>
-                          <div class="grid gap-1 h-1.5 w-full" [style.grid-template-columns]="'repeat(' + seqStats.totalStreak + ', minmax(0, 1fr))'">
-                            @for (i of getArray(seqStats.totalStreak); track i) {
-                              <div class="rounded-sm transition-all duration-300"
-                                   [style.background-color]="getBarColor(i, seqStats.streak, seqStats.isWorking)"></div>
-                            }
                           </div>
                         </div>
 
-                        <!-- Feedback Card (Bom Retorno, Bom Trabalho, Atenção, Alerta, Alerta Máxima) -->
-                        @if (seqStats.isWorking) {
-                          <div class="pt-1">
-                            @if (seqStats.streak === 1) {
-                              <div class="p-3 border rounded-lg flex items-start gap-2.5 transition-all duration-300 shadow-sm animate-fade-in"
-                                   [class]="isLightTheme() ? 'bg-emerald-50/70 border-emerald-200 text-emerald-800' : 'bg-emerald-950/20 border-emerald-500/20 text-emerald-400'">
-                                <span class="material-icons text-emerald-500 text-base mt-0.5">sentiment_satisfied_alt</span>
-                                <div class="min-w-0">
-                                  <p class="text-[11px] font-black uppercase tracking-wider leading-none">Bom Retorno</p>
-                                  <p class="text-[9.5px] opacity-90 leading-normal mt-1">Primeiro dia de retorno pós-folga. Suas energias estão renovadas!</p>
-                                </div>
-                              </div>
-                            } @else if (seqStats.streak === 2) {
-                              <div class="p-3 border rounded-lg flex items-start gap-2.5 transition-all duration-300 shadow-sm animate-fade-in"
-                                   [class]="isLightTheme() ? 'bg-blue-50/70 border-blue-200 text-blue-800' : 'bg-blue-950/20 border-blue-500/20 text-blue-400'">
-                                <span class="material-icons text-blue-500 text-base mt-0.5">task_alt</span>
-                                <div class="min-w-0">
-                                  <p class="text-[11px] font-black uppercase tracking-wider leading-none">Bom Trabalho</p>
-                                  <p class="text-[9.5px] opacity-90 leading-normal mt-1">Segundo dia de jornada. Mantendo o ritmo produtivo e seguro.</p>
-                                </div>
-                              </div>
-                            } @else if (seqStats.streak === 3) {
-                              <div class="p-3 border rounded-lg flex items-start gap-2.5 transition-all duration-300 shadow-sm animate-fade-in"
-                                   [class]="isLightTheme() ? 'bg-amber-50/70 border-amber-200 text-amber-800' : 'bg-amber-950/20 border-amber-500/20 text-amber-400'">
-                                <span class="material-icons text-amber-500 text-base mt-0.5">info</span>
-                                <div class="min-w-0">
-                                  <p class="text-[11px] font-black uppercase tracking-wider leading-none">Atenção</p>
-                                  <p class="text-[9.5px] opacity-90 leading-normal mt-1">Terceiro dia consecutivo. Fique atento aos primeiros sinais de cansaço.</p>
-                                </div>
-                              </div>
-                            } @else if (seqStats.streak === 4) {
-                              <div class="p-3 border rounded-lg flex items-start gap-2.5 transition-all duration-300 shadow-sm animate-fade-in"
-                                   [class]="isLightTheme() ? 'bg-orange-50/70 border-orange-200 text-orange-800' : 'bg-orange-950/20 border-orange-500/20 text-orange-400'">
-                                <span class="material-icons text-orange-500 text-base mt-0.5">warning</span>
-                                <div class="min-w-0">
-                                  <p class="text-[11px] font-black uppercase tracking-wider leading-none">Alerta</p>
-                                  <p class="text-[9.5px] opacity-90 leading-normal mt-1">Quarto dia consecutivo. Cuidado com o acúmulo de esforço físico e mental.</p>
-                                </div>
-                              </div>
-                            } @else if (seqStats.streak >= 5) {
-                              <div class="p-3 border rounded-lg flex items-start gap-2.5 transition-all duration-300 shadow-sm animate-fade-in"
-                                   [class]="isLightTheme() ? 'bg-rose-50/70 border-rose-200 text-rose-800' : 'bg-rose-950/20 border-rose-500/20 text-rose-400'">
-                                <span class="material-icons text-rose-500 text-base mt-0.5">dangerous</span>
-                                <div class="min-w-0">
-                                  <p class="text-[11px] font-black uppercase tracking-wider leading-none">Alerta Máxima</p>
-                                  <p class="text-[9.5px] opacity-90 leading-normal mt-1">Ciclo estendido de trabalho de {{ seqStats.streak }} dias consecutivos. Redobre cuidados e cumpra todos os protocolos!</p>
-                                </div>
-                              </div>
-                            }
-                          </div>
-                        }
+                        <!-- Dynamic Status Pill -->
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider leading-none truncate max-w-full"
+                              [class]="!seqStats.isWorking ? 
+                                       (isLightTheme() ? 'text-emerald-700 bg-emerald-50 border border-emerald-100' : 'text-emerald-400 bg-emerald-950/30 border border-emerald-500/10') :
+                                       (seqStats.streak === 1 ? (isLightTheme() ? 'text-emerald-700 bg-emerald-50 border border-emerald-100' : 'text-emerald-400 bg-emerald-950/30 border border-emerald-500/10') :
+                                       (seqStats.streak === 2 ? (isLightTheme() ? 'text-blue-700 bg-blue-50 border border-blue-100' : 'text-blue-400 bg-blue-950/30 border border-blue-500/10') :
+                                       (seqStats.streak === 3 ? (isLightTheme() ? 'text-amber-700 bg-amber-50 border border-amber-150' : 'text-amber-400 bg-amber-950/30 border border-amber-500/10') :
+                                       (seqStats.streak === 4 ? (isLightTheme() ? 'text-[#F59E0B] bg-[#F59E0B]/10 border border-[#F59E0B]/25' : 'text-[#F59E0B] bg-[#F59E0B]/10 border border-[#F59E0B]/25') :
+                                       (isLightTheme() ? 'text-rose-700 bg-rose-50 border border-rose-100' : 'text-rose-400 bg-rose-950/30 border border-rose-500/10')))))">
+                          {{ seqStats.isWorking ? seqStats.fatigueLevel : 'Carregada' }}
+                        </span>
                       </div>
 
-                      <!-- SEÇÃO 2: RADAR DE FOLGAS (LINHA DE TEXTO SIMPLES E ALTAMENTE VISÍVEL) -->
-                      <div class="pt-3 border-t border-[#10213b]/50">
-                        @if (offStats.isOffToday) {
-                          <div class="text-[11px] text-emerald-400 font-bold flex items-center gap-1.5">
-                            <span class="material-icons text-xs text-emerald-400">check_circle</span>
-                            <span>Aproveite o seu dia de folga! Nenhuma atividade de escala programada para hoje.</span>
+                      <!-- LADO DIREITO: RASTREADOR DE CICLO -->
+                      <div [class]="'rounded-[16px] p-3 flex flex-col items-center justify-between text-center gap-1.5 border transition-all duration-300 ' + (isLightTheme() ? 'bg-slate-50 border-slate-200' : 'bg-[#1E293B] border-[#334155]')">
+                        <span class="text-[11px] font-bold tracking-wider uppercase text-slate-500 font-sans">Ciclo</span>
+                        
+                        <!-- Visual Gauge / Numbers -->
+                        <div class="flex flex-col items-center justify-center my-1">
+                          <div class="flex items-baseline gap-1">
+                            <span [class]="'text-3.5xl font-extrabold font-mono leading-none ' + 
+                                           (!seqStats.isWorking ? 'text-emerald-400' : 
+                                           (seqStats.streak === 1 ? 'text-emerald-400' :
+                                           (seqStats.streak === 2 ? 'text-blue-400' :
+                                           (seqStats.streak === 3 ? 'text-amber-400' :
+                                           (seqStats.streak === 4 ? 'text-orange-500' : 'text-rose-500')))))">
+                              {{ seqStats.isWorking ? seqStats.streak : 0 }}
+                            </span>
+                            <span class="text-xs text-slate-500 font-bold font-mono">/{{ seqStats.totalStreak || 0 }}</span>
                           </div>
+                          <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-1 font-sans">DIAS TRAB.</span>
+                        </div>
+
+                        <!-- Progress Dots -->
+                        <div class="flex items-center justify-center gap-1.5 w-full px-1 py-0.5">
+                          @for (i of getArray(seqStats.totalStreak); track i) {
+                            <div class="h-1.5 w-3.5 rounded-full transition-all duration-300"
+                                 [style.background-color]="getBarColor(i, seqStats.streak, seqStats.isWorking)"></div>
+                          }
+                        </div>
+                      </div>
+
+                    </div>
+
+                    <!-- TERCEIRA LINHA: CARD DE FEEDBACK COGNITIVO (100% WIDTH) -->
+                    <div class="w-full">
+                      <div [class]="'rounded-2xl border p-3 flex gap-3 items-start transition-all duration-300 shadow-sm ' + getFeedbackCardClass(seqStats)">
+                        
+                        <!-- Inline SVG Warning/Alert Icon matching Figma -->
+                        @if (!seqStats.isWorking || seqStats.streak <= 2) {
+                          <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
                         } @else {
-                          <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                              <span class="material-icons text-amber-500 text-base">radar</span>
-                              <span class="text-xs font-bold text-slate-700">
-                                @if (offStats.days === 1) {
-                                  Falta apenas <span class="text-amber-600 font-extrabold text-[13px] font-mono">1 dia</span> de trabalho para folgar!
-                                } @else if (offStats.days === 999) {
-                                  Sem mais folgas programadas.
-                                } @else {
-                                  Faltam <span class="text-amber-600 font-extrabold text-[13px] font-mono">{{ offStats.days }} dias</span> para sua folga!
-                                }
-                              </span>
-                            </div>
-                          </div>
+                          <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                          </svg>
+                        }
+
+                        <div class="flex flex-col min-w-0">
+                          <!-- Title (13px Bold (700)) -->
+                          <span class="text-[13px] font-bold uppercase tracking-wide font-sans leading-tight">
+                            @if (!seqStats.isWorking) {
+                              Excelente Folga
+                            } @else if (seqStats.streak === 1) {
+                              Bom Retorno
+                            } @else if (seqStats.streak === 2) {
+                              Bom Trabalho
+                            } @else if (seqStats.streak === 3) {
+                              Atenção
+                            } @else if (seqStats.streak === 4) {
+                              Alerta de Fadiga
+                            } @else {
+                              Alerta Máxima
+                            }
+                          </span>
+                          <!-- Body text (12px Regular (400)) -->
+                          <p class="text-[12px] opacity-90 leading-relaxed font-sans mt-0.5">
+                            @if (!seqStats.isWorking) {
+                              Desconecte-se e aproveite seu merecido descanso hoje.
+                            } @else if (seqStats.streak === 1) {
+                              Primeiro dia de retorno pós-folga. Suas energias estão renovadas!
+                            } @else if (seqStats.streak === 2) {
+                              Segundo dia de jornada. Mantendo o ritmo produtivo e seguro.
+                            } @else if (seqStats.streak === 3) {
+                              Terceiro dia consecutivo. Fique atento aos primeiros sinais de cansaço.
+                            } @else if (seqStats.streak === 4) {
+                              Quarto dia consecutivo. Evite acúmulo de esforço e descanse.
+                            } @else {
+                              Ciclo estendido de trabalho de {{ seqStats.streak }} dias consecutivos. Redobre cuidados e cumpra todos os protocolos!
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- QUARTA LINHA: GRID DE 2 COLUNAS (50% / 50%) -->
+                    <div class="grid grid-cols-2 gap-3 w-full font-sans">
+                      
+                      <!-- LADO ESQUERDO: RADAR DE FOLGAS -->
+                      <div [class]="'rounded-[16px] p-3 flex flex-col items-center justify-center text-center gap-1.5 border transition-all duration-300 ' + (isLightTheme() ? 'bg-slate-50 border-slate-200' : 'bg-[#1E293B] border-[#334155]')">
+                        @if (offStats.isOffToday) {
+                          <!-- Linha 1 -->
+                          <span class="text-[10px] font-bold tracking-wider uppercase text-emerald-500/70 font-sans">Hoje é</span>
+                          <!-- Linha 2 -->
+                          <span class="text-[18px] font-black text-emerald-500 tracking-tight leading-none my-0.5">FOLGA!</span>
+                          <!-- Linha 3 -->
+                          <span class="text-[9px] text-slate-500 font-bold tracking-wider uppercase leading-none">Aproveite!</span>
+                        } @else if (offStats.days === 999) {
+                          <!-- Linha 1 -->
+                          <span class="text-[10px] font-bold tracking-wider uppercase text-slate-500 font-sans">Escala</span>
+                          <!-- Linha 2 -->
+                          <span class="text-[15px] font-black text-rose-500 tracking-tight leading-none my-0.5">Sem Folga</span>
+                          <!-- Linha 3 -->
+                          <span class="text-[9px] text-slate-500 font-bold tracking-wider uppercase leading-none">Neste mês</span>
+                        } @else {
+                          <!-- Linha 1 -->
+                          <span class="text-[10px] font-bold tracking-wider uppercase text-slate-500 font-sans">
+                            {{ offStats.days === 1 ? 'Falta' : 'Faltam' }}
+                          </span>
+                          <!-- Linha 2 -->
+                          <span class="text-[18px] font-black text-[#F59E0B] tracking-tight leading-none font-mono my-0.5">
+                            {{ offStats.days === 1 ? '1 dia' : offStats.days + ' dias' }}
+                          </span>
+                          <!-- Linha 3 -->
+                          <span class="text-[9px] text-slate-500 font-bold tracking-wider uppercase leading-none">Até a folga</span>
                         }
                       </div>
 
-                      <!-- SEÇÃO 3: FOLGAS PROGRAMADAS DO MÊS (FOLGA SECA EM LINHA DE TEXTO) -->
-                      @if (offStats.nextOffDays.length > 0) {
-                        <div class="pt-3 border-t border-[#10213b]/50 space-y-2">
-                          <p class="text-[10px] font-black tracking-wider text-slate-500 uppercase">
-                            FOLGAS PROGRAMADAS DE {{ currentMonthName() | uppercase }}
-                          </p>
-                          <div class="text-[11px] text-slate-600 flex items-center gap-1.5 flex-wrap">
-                            <span class="material-icons text-xs text-emerald-500">calendar_month</span>
-                            <span>Dias de descanso planejado:</span>
-                            <div class="flex flex-wrap gap-1.5 ml-1">
-                              @for (day of offStats.nextOffDays; track day) {
-                                <span class="font-mono font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded text-xs select-none shadow-sm">
+                      <!-- LADO DIREITO: PROXIMA(S) FOLGA(S) -->
+                      <div [class]="'rounded-[16px] p-3 flex flex-col justify-between gap-1.5 border transition-all duration-300 ' + (isLightTheme() ? 'bg-slate-50 border-slate-200' : 'bg-[#1E293B] border-[#334155]')">
+                        <span class="text-[11px] font-bold tracking-wider uppercase text-slate-500 font-sans">PRÓXIMA(S) FOLGA(S)</span>
+                        
+                        <div class="flex items-center gap-1.5 my-1 overflow-hidden">
+                          @if (offStats.nextOffDays.length > 0) {
+                            <div class="flex flex-wrap gap-1.5 max-h-[30px] overflow-hidden">
+                              @for (day of offStats.nextOffDays.slice(0, 3); track day) {
+                                <span class="font-mono font-extrabold text-[#F59E0B] bg-[#F59E0B]/10 border border-[#F59E0B]/30 px-1.5 py-0.5 rounded-lg text-[12px] select-none shadow-sm leading-none min-w-[24px] h-[24px] flex items-center justify-center">
                                   {{ day }}
                                 </span>
                               }
                             </div>
-                          </div>
+                          } @else {
+                            <span class="text-[11px] text-slate-500 italic">Nenhuma</span>
+                          }
                         </div>
-                      }
+
+                        <span class="text-[9px] text-slate-500 font-bold tracking-wider uppercase truncate leading-none">
+                          {{ currentMonthName() | uppercase }}
+                        </span>
+                      </div>
 
                     </div>
 
                   </div>
                 <!-- PORTAL COLLABORATOR PERFIL & WIDGETS -->
-                <div class="bg-[#030a14] border border-[#10213b] rounded-lg p-5 shadow-xl space-y-4">
-                  <div class="pb-2 border-b border-[#10213b] flex items-center justify-between">
-                    <h4 class="font-black text-xs text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                <div [class]="'lg:col-span-8 w-full border rounded-[16px] p-5 shadow-2xl space-y-4 transition-all duration-300 ' + (isLightTheme() ? 'bg-white border-slate-200 text-slate-900 shadow-slate-100/40' : 'bg-[#0F172A] border-[#334155] text-[#F8FAFC] shadow-black/25')" style="box-shadow: 0 12px 24px rgba(0,0,0,0.25);">
+                  <div [class]="'pb-2 border-b flex items-center justify-between ' + (isLightTheme() ? 'border-slate-100' : 'border-[#10213b]')">
+                    <h4 [class]="'font-black text-xs uppercase tracking-wider flex items-center gap-1.5 ' + (isLightTheme() ? 'text-slate-800' : 'text-slate-200')">
                       <span class="material-icons text-emerald-500 text-sm">health_and_safety</span>
                       Monitoramento de Perfil &amp; Indicadores
                     </h4>
-                    <span class="text-[8px] font-black uppercase text-slate-500 tracking-widest font-mono">Status</span>
+                    <span [class]="'text-[8px] font-black uppercase tracking-widest font-mono ' + (isLightTheme() ? 'text-slate-400' : 'text-slate-500')">Status</span>
                   </div>
 
                   <!-- Statistics Bento Widgets Grid (Indicators) -->
                   <div class="grid grid-cols-1 gap-4">
 
-                     <!-- WIDGET 2: WORK STREAK INDICATOR & TABS (VISUALIZAÇÃO DE DIAS DE TRABALHO OU SEMANAS CRÍTICAS) -->
-                    <div class="p-4 rounded-lg flex flex-col justify-between space-y-4 border transition-all duration-300"
+                     <!-- WIDGET 2: DAYS OFF (LEFT) & WORK DAYS (RIGHT) SIDE-BY-SIDE -->
+                    <div class="p-4 rounded-lg flex flex-col space-y-4 border transition-all duration-300"
                          [class.bg-[#071426]/60]="!isLightTheme()"
                          [class.border-[#10213b]]="!isLightTheme()"
                          [class.bg-slate-50]="isLightTheme()"
                          [class.border-slate-200]="isLightTheme()">
                       
-                      <!-- TABS SELECTOR -->
-                      <div class="flex items-center gap-1 p-0.5 rounded-lg border select-none"
-                           [class.bg-[#030a14]]="!isLightTheme()"
-                           [class.border-[#10213b]]="!isLightTheme()"
-                           [class.bg-slate-100]="isLightTheme()"
-                           [class.border-slate-200]="isLightTheme()">
-                        <button (click)="setPortalWidgetTab('trabalho')"
-                                class="flex-1 py-1.5 px-2 rounded-md font-black text-[9px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all outline-none cursor-pointer"
-                                [class.bg-emerald-500]="portalWidgetTab() === 'trabalho' && !isLightTheme()"
-                                [class.bg-emerald-600]="portalWidgetTab() === 'trabalho' && isLightTheme()"
-                                [class.text-slate-950]="portalWidgetTab() === 'trabalho' && !isLightTheme()"
-                                [class.text-slate-900]="portalWidgetTab() === 'trabalho' && isLightTheme()"
-                                [class.bg-transparent]="portalWidgetTab() !== 'trabalho'"
-                                [class.text-slate-500]="portalWidgetTab() !== 'trabalho' && !isLightTheme()"
-                                [class.text-slate-600]="portalWidgetTab() !== 'trabalho' && isLightTheme()">
-                          <span class="material-icons text-xs">work</span>
-                          Dias de Trabalho
-                        </button>
-                        <button (click)="setPortalWidgetTab('semanas')"
-                                class="flex-1 py-1.5 px-2 rounded-md font-black text-[9px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all outline-none cursor-pointer"
-                                [class.bg-emerald-500]="portalWidgetTab() === 'semanas' && !isLightTheme()"
-                                [class.bg-emerald-600]="portalWidgetTab() === 'semanas' && isLightTheme()"
-                                [class.text-slate-950]="portalWidgetTab() === 'semanas' && !isLightTheme()"
-                                [class.text-slate-900]="portalWidgetTab() === 'semanas' && isLightTheme()"
-                                [class.bg-transparent]="portalWidgetTab() !== 'semanas'"
-                                [class.text-slate-500]="portalWidgetTab() !== 'semanas' && !isLightTheme()"
-                                [class.text-slate-600]="portalWidgetTab() !== 'semanas' && isLightTheme()">
-                          <span class="material-icons text-xs">warning</span>
-                          Semanas Críticas
-                        </button>
-                      </div>
-
-                      @if (portalWidgetTab() === 'trabalho') {
-                        <!-- TAB 1: WORK DAYS FROM DATABASE -->
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        <!-- LEFT SIDE: DAYS OFF -->
                         <div class="space-y-3">
-                          <div class="flex items-center justify-between">
+                          <div class="flex items-center justify-between pb-1 border-b"
+                               [class.border-slate-800/40]="!isLightTheme()"
+                               [class.border-slate-200]="isLightTheme()">
                             <span class="text-[9px] font-black uppercase tracking-wider flex items-center gap-1"
-                                  [class.text-slate-500]="!isLightTheme()"
+                                  [class.text-slate-400]="!isLightTheme()"
+                                  [class.text-slate-600]="isLightTheme()">
+                              <span class="material-icons text-xs text-amber-500">nights_stay</span>
+                              Visualização de Folgas
+                            </span>
+                            <span class="text-[8px] font-bold font-mono text-amber-500 bg-amber-950/40 border border-amber-500/20 px-1.5 py-0.5 rounded shrink-0"
+                                  [class.text-amber-700]="isLightTheme()"
+                                  [class.bg-amber-50]="isLightTheme()"
+                                  [class.border-amber-200]="isLightTheme()">
+                              {{ getCollabOffDays(logged).length }} Dias
+                            </span>
+                          </div>
+                          <p class="text-[8px] text-slate-500 leading-relaxed font-sans">Dias de folga ou afastamento do colaborador neste mês.</p>
+
+                          <div class="grid grid-cols-4 xs:grid-cols-5 sm:grid-cols-6 lg:grid-cols-4 xl:grid-cols-5 gap-1">
+                            @for (day of getCollabOffDays(logged); track day) {
+                              <div class="p-1 border rounded-lg flex flex-col items-center justify-center text-center select-none min-h-[42px] transition-all duration-300 relative overflow-hidden group hover:scale-[1.03]"
+                                   [class.bg-amber-950/20]="!isPastDay(day) && !isToday(day) && !isLightTheme()"
+                                   [class.border-amber-500/30]="!isPastDay(day) && !isToday(day) && !isLightTheme()"
+                                   [class.text-amber-300]="!isPastDay(day) && !isToday(day) && !isLightTheme()"
+                                   
+                                   [class.bg-amber-50/50]="!isPastDay(day) && !isToday(day) && isLightTheme()"
+                                   [class.border-amber-200]="!isPastDay(day) && !isToday(day) && isLightTheme()"
+                                   [class.text-amber-800]="!isPastDay(day) && !isToday(day) && isLightTheme()"
+                                   
+                                   [class.opacity-35]="isPastDay(day)"
+                                   [class.bg-slate-950/30]="isPastDay(day) && !isLightTheme()"
+                                   [class.border-slate-800]="isPastDay(day) && !isLightTheme()"
+                                   [class.text-slate-500]="isPastDay(day) && !isLightTheme()"
+                                   
+                                   [class.bg-slate-100]="isPastDay(day) && isLightTheme()"
+                                   [class.border-slate-200]="isPastDay(day) && isLightTheme()"
+                                   [class.text-slate-500]="isPastDay(day) && isLightTheme()"
+                                   
+                                   [class.bg-amber-500]="isToday(day) && !isLightTheme()"
+                                   [class.text-amber-950]="isToday(day) && !isLightTheme()"
+                                   [class.border-amber-500]="isToday(day) && !isLightTheme()"
+                                   
+                                   [class.bg-amber-600]="isToday(day) && isLightTheme()"
+                                   [class.text-white]="isToday(day) && isLightTheme()"
+                                   [class.border-amber-600]="isToday(day) && isLightTheme()"
+                                   
+                                   [class.ring-1]="isToday(day)"
+                                   [class.ring-amber-400]="isToday(day)">
+                                 <span class="text-[10px] font-mono font-black leading-none"
+                                       [class.text-amber-400]="!isPastDay(day) && !isToday(day) && !isLightTheme()"
+                                       [class.text-amber-700]="!isPastDay(day) && !isToday(day) && isLightTheme()"
+                                       [class.text-slate-600]="isPastDay(day) && !isLightTheme()"
+                                       [class.text-slate-500]="isPastDay(day) && isLightTheme()"
+                                       [class.text-amber-950]="isToday(day) && !isLightTheme()"
+                                       [class.text-white]="isToday(day) && isLightTheme()">
+                                   {{ day < 10 ? '0' + day : day }}
+                                 </span>
+                                 <span class="text-[6px] font-black uppercase tracking-wider text-slate-500 leading-none">
+                                   {{ getDayOfWeekLabel(day) }}
+                                 </span>
+                              </div>
+                            } @empty {
+                              <div class="col-span-full py-8 text-center flex flex-col items-center justify-center space-y-2 border border-dashed rounded-lg"
+                                   [class.border-slate-800]="!isLightTheme()"
+                                   [class.border-slate-200]="isLightTheme()">
+                                <span class="material-icons text-slate-500 text-sm">info</span>
+                                <span class="text-[8.5px] font-bold uppercase tracking-wider text-slate-500 block">Sem folgas</span>
+                              </div>
+                            }
+                          </div>
+                        </div>
+
+                        <!-- RIGHT SIDE: WORK DAYS -->
+                        <div class="space-y-3">
+                          <div class="flex items-center justify-between pb-1 border-b"
+                               [class.border-slate-800/40]="!isLightTheme()"
+                               [class.border-slate-200]="isLightTheme()">
+                            <span class="text-[9px] font-black uppercase tracking-wider flex items-center gap-1"
+                                  [class.text-slate-400]="!isLightTheme()"
                                   [class.text-slate-600]="isLightTheme()">
                               <span class="material-icons text-xs text-emerald-500">done_all</span>
                               Dias de Trabalho Efetivos
@@ -2480,29 +2601,54 @@
                             </span>
                           </div>
                           
-                          <p class="text-[8px] text-slate-500 leading-relaxed">
+                          <p class="text-[8px] text-slate-500 leading-relaxed font-sans">
                             Abaixo estão listados apenas os dias de trabalho programados em seu cadastro no banco de dados.
                           </p>
 
-                          <div class="grid grid-cols-5 xs:grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-5 xl:grid-cols-6 gap-1">
+                          <div class="grid grid-cols-4 xs:grid-cols-5 sm:grid-cols-6 lg:grid-cols-4 xl:grid-cols-5 gap-1">
                             @for (day of getCollabWorkDays(logged); track day) {
                               @let dayInfo = getCollaboratorDayScheduleInfo(logged, day);
                               <div class="p-1 border rounded-lg flex flex-col items-center justify-center text-center select-none min-h-[42px] transition-all duration-300 relative overflow-hidden group hover:scale-[1.03]"
-                                   [class.bg-emerald-950/20]="!isLightTheme()"
-                                   [class.border-emerald-500/30]="!isLightTheme()"
-                                   [class.bg-emerald-50/50]="isLightTheme()"
-                                   [class.border-emerald-200]="isLightTheme()"
+                                   [class.bg-emerald-950/20]="!isPastDay(day) && !isToday(day) && !isLightTheme()"
+                                   [class.border-emerald-500/30]="!isPastDay(day) && !isToday(day) && !isLightTheme()"
+                                   [class.text-emerald-300]="!isPastDay(day) && !isToday(day) && !isLightTheme()"
+                                   
+                                   [class.bg-emerald-50/50]="!isPastDay(day) && !isToday(day) && isLightTheme()"
+                                   [class.border-emerald-200]="!isPastDay(day) && !isToday(day) && isLightTheme()"
+                                   [class.text-emerald-800]="!isPastDay(day) && !isToday(day) && isLightTheme()"
+                                   
+                                   [class.opacity-35]="isPastDay(day)"
+                                   [class.bg-slate-950/30]="isPastDay(day) && !isLightTheme()"
+                                   [class.border-slate-800]="isPastDay(day) && !isLightTheme()"
+                                   [class.text-slate-500]="isPastDay(day) && !isLightTheme()"
+                                   [class.border-dashed]="isPastDay(day)"
+                                   
+                                   [class.bg-slate-100]="isPastDay(day) && isLightTheme()"
+                                   [class.border-slate-200]="isPastDay(day) && isLightTheme()"
+                                   [class.text-slate-500]="isPastDay(day) && isLightTheme()"
+                                   
+                                   [class.bg-emerald-500]="isToday(day) && !isLightTheme()"
+                                   [class.text-emerald-950]="isToday(day) && !isLightTheme()"
+                                   [class.border-emerald-500]="isToday(day) && !isLightTheme()"
+                                   
+                                   [class.bg-emerald-600]="isToday(day) && isLightTheme()"
+                                   [class.text-white]="isToday(day) && isLightTheme()"
+                                   [class.border-emerald-600]="isToday(day) && isLightTheme()"
+                                   
                                    [class.ring-1]="isToday(day)"
                                    [class.ring-emerald-400]="isToday(day)">
                                    
                                 <span class="text-[10px] font-mono font-black leading-none"
-                                      [class.text-emerald-400]="!isLightTheme()"
-                                      [class.text-emerald-700]="isLightTheme()">
+                                      [class.text-emerald-400]="!isPastDay(day) && !isToday(day) && !isLightTheme()"
+                                      [class.text-emerald-700]="!isPastDay(day) && !isToday(day) && isLightTheme()"
+                                      [class.text-slate-600]="isPastDay(day) && !isLightTheme()"
+                                      [class.text-slate-500]="isPastDay(day) && isLightTheme()"
+                                      [class.text-emerald-950]="isToday(day) && !isLightTheme()"
+                                      [class.text-white]="isToday(day) && isLightTheme()">
                                   {{ day < 10 ? '0' + day : day }}
                                 </span>
                                 
-                                <span class="text-[6px] font-black uppercase tracking-wider text-slate-500 leading-none"
-                                      [class.text-slate-500]="isLightTheme()">
+                                <span class="text-[6px] font-black uppercase tracking-wider text-slate-500 leading-none">
                                   {{ getDayOfWeekLabel(day) }}
                                 </span>
                               </div>
@@ -2516,253 +2662,239 @@
                             }
                           </div>
                         </div>
-                      } @else {
-                        <!-- TAB 2: CRITICAL WEEKS OVERVIEW -->
-                        <div class="space-y-4">
-                          <div>
-                            <div class="flex items-center justify-between">
-                              <span class="text-[9px] font-black uppercase tracking-wider flex items-center gap-1"
-                                    [class.text-slate-500]="!isLightTheme()"
-                                    [class.text-slate-600]="isLightTheme()">
-                                <span class="material-icons text-xs text-emerald-500">warning</span>
-                                Carga Semanal &amp; Evolução
-                              </span>
-                              <span class="text-[8px] font-bold font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-1.5 py-0.5 rounded shrink-0"
-                                    [class.text-emerald-700]="isLightTheme()"
-                                    [class.bg-emerald-50]="isLightTheme()"
-                                    [class.border-emerald-200]="isLightTheme()">
-                                {{ getCollabWorkDays(logged).length }} Dias Ativos
-                              </span>
-                            </div>
-                            <p class="text-[8px] text-slate-500 mt-0.5 leading-relaxed">Visão agrupada por semanas e nível de severidade de carga de trabalho.</p>
-                          </div>
 
-                          <!-- GRAPHIC SEGMENTED EVOLUTION BAR (4/5 PARTS) -->
-                          <div class="space-y-1.5">
-                            <div class="flex items-center justify-between text-[7px] uppercase font-black tracking-wider text-slate-500">
-                              <span>Evolução de Criticidade Semanal</span>
-                              <span class="font-mono text-emerald-500">Alerta e Atenção</span>
-                            </div>
-                            <div class="w-full h-3 rounded-full flex gap-1 p-0.5"
-                                 [class.bg-slate-950/60]="!isLightTheme()"
-                                 [class.bg-slate-200]="isLightTheme()">
-                              @for (week of getWeeklyWorkSequences(logged); track week.weekNum) {
-                                <div class="flex-1 h-full rounded-sm transition-all duration-300 relative"
-                                     [class.bg-rose-500]="week.severity === 'critical'"
-                                     [class.shadow-[0_0_8px_rgba(239,68,68,0.4)]]="week.severity === 'critical'"
-                                     
-                                     [class.bg-amber-500]="week.severity === 'warning'"
-                                     [class.shadow-[0_0_8px_rgba(245,158,11,0.4)]]="week.severity === 'warning'"
-                                     
-                                     [class.bg-emerald-500]="week.severity === 'normal'"
-                                     [class.shadow-[0_0_8px_rgba(16,185,129,0.4)]]="week.severity === 'normal'"
-                                     [title]="week.label + ': ' + week.workCount + ' dias (' + week.severityText + ')'">
-                                </div>
-                              }
-                            </div>
-                            <div class="flex items-center justify-between text-[6.5px] font-bold text-slate-500 uppercase">
-                              <span>Início do Mês</span>
-                              <span>Fim do Mês</span>
-                            </div>
-                          </div>
-
-                          <!-- WEEKLY DETAILED SECTIONS GRID -->
-                          <div class="space-y-3 max-h-[220px] overflow-y-auto pr-1">
-                            @for (week of getWeeklyWorkSequences(logged); track week.weekNum) {
-                              <div class="p-3 border rounded-lg flex flex-col space-y-2 transition-all duration-300"
-                                   [class.bg-rose-950/10]="week.severity === 'critical' && !isLightTheme()"
-                                   [class.border-rose-500/30]="week.severity === 'critical' && !isLightTheme()"
-                                   [class.bg-rose-50/50]="week.severity === 'critical' && isLightTheme()"
-                                   [class.border-rose-200]="week.severity === 'critical' && isLightTheme()"
-                                   
-                                   [class.bg-amber-950/10]="week.severity === 'warning' && !isLightTheme()"
-                                   [class.border-amber-500/30]="week.severity === 'warning' && !isLightTheme()"
-                                   [class.bg-amber-50/50]="week.severity === 'warning' && isLightTheme()"
-                                   [class.border-amber-200]="week.severity === 'warning' && isLightTheme()"
-                                   
-                                   [class.bg-emerald-950/10]="week.severity === 'normal' && !isLightTheme()"
-                                   [class.border-emerald-500/20]="week.severity === 'normal' && !isLightTheme()"
-                                   [class.bg-emerald-50/20]="week.severity === 'normal' && isLightTheme()"
-                                   [class.border-slate-200]="week.severity === 'normal' && isLightTheme()">
-                                   
-                                   <!-- Week Header -->
-                                   <div class="flex items-center justify-between">
-                                     <div class="flex items-center gap-2">
-                                       <!-- SVG Micro Donut Chart -->
-                                       <div class="relative flex items-center justify-center shrink-0">
-                                         <svg class="w-6 h-6 -rotate-90" viewBox="0 0 36 36">
-                                           <circle class="stroke-slate-800/40" [class.stroke-slate-200]="isLightTheme()" stroke-width="4px" stroke="currentColor" fill="transparent" r="15.915" cx="18" cy="18" />
-                                           <circle [class]="week.severity === 'critical' ? 'stroke-rose-500' : (week.severity === 'warning' ? 'stroke-amber-500' : 'stroke-emerald-500')"
-                                                   stroke-width="4px"
-                                                   stroke-linecap="round"
-                                                   [attr.stroke-dasharray]="100"
-                                                   [attr.stroke-dashoffset]="100 - week.percentage"
-                                                   fill="transparent"
-                                                   r="15.915" cx="18" cy="18" />
-                                         </svg>
-                                         <span class="absolute text-[7px] font-black font-mono text-slate-300" [class.text-slate-700]="isLightTheme()">
-                                           {{ week.percentage }}%
-                                         </span>
-                                       </div>
-                                       
-                                       <div>
-                                         <span class="text-[9px] font-black uppercase tracking-wider block"
-                                               [class.text-slate-800]="!isLightTheme()"
-                                               [class.text-slate-800]="isLightTheme()">
-                                           {{ week.label }}
-                                         </span>
-                                         <span class="text-[7px] text-slate-500 block leading-none font-bold">
-                                           {{ week.range }}
-                                         </span>
-                                       </div>
-                                     </div>
-                                     
-                                     <div class="flex items-center gap-1.5">
-                                       <span class="text-[7.5px] font-black font-mono px-1.5 py-0.5 rounded border uppercase tracking-wider shrink-0"
-                                             [class.bg-rose-950/40]="week.severity === 'critical' && !isLightTheme()"
-                                             [class.text-rose-400]="week.severity === 'critical' && !isLightTheme()"
-                                             [class.border-rose-500/20]="week.severity === 'critical' && !isLightTheme()"
-                                             [class.bg-rose-50]="week.severity === 'critical' && isLightTheme()"
-                                             [class.text-rose-700]="week.severity === 'critical' && isLightTheme()"
-                                             [class.border-rose-200]="week.severity === 'critical' && isLightTheme()"
-                                             
-                                             [class.bg-amber-950/40]="week.severity === 'warning' && !isLightTheme()"
-                                             [class.text-amber-400]="week.severity === 'warning' && !isLightTheme()"
-                                             [class.border-amber-500/20]="week.severity === 'warning' && !isLightTheme()"
-                                             [class.bg-amber-50]="week.severity === 'warning' && isLightTheme()"
-                                             [class.text-amber-700]="week.severity === 'warning' && isLightTheme()"
-                                             [class.border-amber-200]="week.severity === 'warning' && isLightTheme()"
-                                             
-                                             [class.bg-emerald-950/40]="week.severity === 'normal' && !isLightTheme()"
-                                             [class.text-emerald-400]="week.severity === 'normal' && !isLightTheme()"
-                                             [class.border-emerald-500/20]="week.severity === 'normal' && !isLightTheme()"
-                                             [class.bg-emerald-50]="week.severity === 'normal' && isLightTheme()"
-                                             [class.text-emerald-700]="week.severity === 'normal' && isLightTheme()"
-                                             [class.border-emerald-200]="week.severity === 'normal' && isLightTheme()">
-                                         {{ week.severityText }}
-                                       </span>
-                                     </div>
-                                   </div>
-
-                                   <!-- Week Days Worked Grid (styled like the off days grid but themed by week urgency) -->
-                                   <div class="grid grid-cols-5 gap-1">
-                                     @for (dayObj of week.daysList; track dayObj.day) {
-                                       @if (dayObj.isWork) {
-                                         <div class="p-1 border rounded flex flex-col items-center justify-center text-center select-none min-h-[36px] transition-all duration-300"
-                                              [class.bg-rose-950/30]="week.severity === 'critical' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                              [class.border-rose-500/30]="week.severity === 'critical' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                              [class.text-rose-300]="week.severity === 'critical' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                              [class.bg-rose-100/40]="week.severity === 'critical' && isLightTheme() && !isPastDay(dayObj.day)"
-                                              [class.border-rose-200]="week.severity === 'critical' && isLightTheme() && !isPastDay(dayObj.day)"
-                                              [class.text-rose-800]="week.severity === 'critical' && isLightTheme() && !isPastDay(dayObj.day)"
-
-                                              [class.bg-amber-950/30]="week.severity === 'warning' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                              [class.border-amber-500/30]="week.severity === 'warning' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                              [class.text-amber-300]="week.severity === 'warning' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                              [class.bg-amber-100/40]="week.severity === 'warning' && isLightTheme() && !isPastDay(dayObj.day)"
-                                              [class.border-amber-200]="week.severity === 'warning' && isLightTheme() && !isPastDay(dayObj.day)"
-                                              [class.text-amber-800]="week.severity === 'warning' && isLightTheme() && !isPastDay(dayObj.day)"
-
-                                              [class.bg-emerald-950/30]="week.severity === 'normal' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                              [class.border-emerald-500/20]="week.severity === 'normal' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                              [class.text-emerald-300]="week.severity === 'normal' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                              [class.bg-emerald-50]="week.severity === 'normal' && isLightTheme() && !isPastDay(dayObj.day)"
-                                              [class.border-emerald-200]="week.severity === 'normal' && isLightTheme() && !isPastDay(dayObj.day)"
-                                              [class.text-emerald-800]="week.severity === 'normal' && isLightTheme() && !isPastDay(dayObj.day)"
-
-                                              [class.opacity-35]="isPastDay(dayObj.day)"
-                                              [class.bg-slate-950/30]="!isLightTheme() && isPastDay(dayObj.day)"
-                                              [class.border-slate-800]="!isLightTheme() && isPastDay(dayObj.day)"
-                                              [class.text-slate-500]="!isLightTheme() && isPastDay(dayObj.day)"
-                                              [class.bg-slate-100]="isLightTheme() && isPastDay(dayObj.day)"
-                                              [class.border-slate-200]="isLightTheme() && isPastDay(dayObj.day)"
-                                              [class.text-slate-500]="isLightTheme() && isPastDay(dayObj.day)"
-
-                                              [class.ring-1]="isToday(dayObj.day)"
-                                              [class.ring-emerald-400]="isToday(dayObj.day)">
-                                           <span class="text-[10px] font-mono font-black leading-tight"
-                                                 [class.text-rose-400]="week.severity === 'critical' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                                 [class.text-rose-700]="week.severity === 'critical' && isLightTheme() && !isPastDay(dayObj.day)"
-                                                 [class.text-amber-400]="week.severity === 'warning' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                                 [class.text-amber-700]="week.severity === 'warning' && isLightTheme() && !isPastDay(dayObj.day)"
-                                                 [class.text-emerald-400]="week.severity === 'normal' && !isLightTheme() && !isPastDay(dayObj.day)"
-                                                 [class.text-emerald-700]="week.severity === 'normal' && isLightTheme() && !isPastDay(dayObj.day)"
-                                                 [class.text-slate-600]="!isLightTheme() && isPastDay(dayObj.day)"
-                                                 [class.text-slate-500]="isLightTheme() && isPastDay(dayObj.day)">
-                                             {{ dayObj.day < 10 ? '0' + dayObj.day : dayObj.day }}
-                                           </span>
-                                           <span class="text-[6px] font-black uppercase tracking-wider"
-                                                 [class.text-rose-500/70]="week.severity === 'critical' && !isPastDay(dayObj.day)"
-                                                 [class.text-rose-600/70]="week.severity === 'critical' && isPastDay(dayObj.day)"
-                                                 [class.text-amber-500/70]="week.severity === 'warning' && !isPastDay(dayObj.day)"
-                                                 [class.text-amber-600/70]="week.severity === 'warning' && isPastDay(dayObj.day)"
-                                                 [class.text-emerald-500/70]="week.severity === 'normal' && !isPastDay(dayObj.day)"
-                                                 [class.text-emerald-600/70]="week.severity === 'normal' && isPastDay(dayObj.day)"
-                                                 [class.text-slate-700]="!isLightTheme() && isPastDay(dayObj.day)"
-                                                 [class.text-slate-500]="isLightTheme() && isPastDay(dayObj.day)">
-                                             {{ getDayOfWeekLabel(dayObj.day) }}
-                                           </span>
-                                         </div>
-                                       }
-                                     } @empty {
-                                       <div class="col-span-full py-3 text-center">
-                                         <span class="text-[7.5px] font-bold italic text-slate-500 uppercase tracking-wider">Folga total nesta semana</span>
-                                       </div>
-                                     }
-                                    </div>
-                              </div>
-                            }
-                          </div>
-                        </div>
-                      }
-                    </div>
-
-
-                    <!-- WIDGET 4: QUICK VIEW DAYS OFF -->
-                    <div class="p-4 bg-[#071426]/60 border border-[#10213b] rounded-lg flex flex-col justify-between space-y-3">
-                      <div>
-                        <div class="flex items-center justify-between">
-                          <span class="text-[9px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
-                            <span class="material-icons text-xs text-[#10b981]">nights_stay</span>
-                            Visualização de Folgas
-                          </span>
-                          <span class="text-[8px] font-bold font-mono text-[#10b981] bg-emerald-950/40 border border-emerald-500/20 px-1.5 py-0.5 rounded shrink-0">
-                            {{ getCollabOffDays(logged).length }} Dias
-                          </span>
-                        </div>
-                        <p class="text-[8px] text-slate-500 mt-0.5 leading-relaxed">Dias de folga ou afastamento do colaborador neste mês.</p>
                       </div>
 
-                      <div class="flex-1 w-full mt-2">
-                        <div class="grid grid-cols-5 gap-1">
-                          @for (day of getCollabOffDays(logged); track day) {
-                            <div class="p-1 border rounded flex flex-col items-center justify-center text-center select-none min-h-[36px] transition-all duration-300"
-                                 [class.bg-emerald-950/50]="!isPastDay(day)"
-                                 [class.border-emerald-500/40]="!isPastDay(day)"
-                                 [class.text-emerald-300]="!isPastDay(day)"
-                                 [class.opacity-20]="isPastDay(day)"
-                                 [class.bg-slate-950/30]="isPastDay(day)"
-                                 [class.border-slate-800]="isPastDay(day)"
-                                 [class.text-slate-500]="isPastDay(day)"
-                                 [class.ring-1]="isToday(day)"
-                                 [class.ring-emerald-400]="isToday(day)">
-                               <span class="text-[10px] font-mono font-black leading-tight"
-                                     [class.text-emerald-400]="!isPastDay(day)"
-                                     [class.text-slate-600]="isPastDay(day)">
-                                 {{ day < 10 ? '0' + day : day }}
-                                </span>
-                               <span class="text-[6px] font-black uppercase tracking-wider"
-                                     [class.text-emerald-500/70]="!isPastDay(day)"
-                                     [class.text-slate-700]="isPastDay(day)">
-                                 {{ getDayOfWeekLabel(day) }}
-                               </span>
-                            </div>
-                          } @empty {
-                            <div class="col-span-full py-4 text-center">
-                              <span class="text-[8.5px] font-bold uppercase tracking-wider text-slate-500 block">Sem folgas</span>
+                    </div>
+
+                    <!-- DIV 1: EVOLUÇÃO DE CRITICIDADE SEMANAL -->
+                    <div class="p-4 rounded-lg flex flex-col justify-between space-y-3 border transition-all duration-300 shadow-sm"
+                         [class.bg-[#071426]/60]="!isLightTheme()"
+                         [class.border-[#10213b]]="!isLightTheme()"
+                         [class.bg-slate-50]="isLightTheme()"
+                         [class.border-slate-200]="isLightTheme()">
+                      <div>
+                        <div class="flex items-center justify-between">
+                          <span class="text-[9px] font-black uppercase tracking-wider flex items-center gap-1"
+                                [class.text-slate-500]="!isLightTheme()"
+                                [class.text-slate-600]="isLightTheme()">
+                            <span class="material-icons text-xs text-emerald-500">trending_up</span>
+                            Evolução de Criticidade Semanal
+                          </span>
+                        </div>
+                        <p class="text-[8px] text-slate-500 mt-0.5 leading-relaxed font-sans">Evolução e severidade de carga de trabalho ao longo do mês agrupada por semanas.</p>
+                      </div>
+
+                      <!-- GRAPHIC SEGMENTED EVOLUTION BAR (4/5 PARTS) -->
+                      <div class="space-y-1.5">
+                        <div class="w-full h-3 rounded-full flex gap-1 p-0.5"
+                             [class.bg-slate-950/60]="!isLightTheme()"
+                             [class.bg-slate-200]="isLightTheme()">
+                          @for (week of getWeeklyWorkSequences(logged); track week.weekNum) {
+                            <div class="flex-1 h-full rounded-sm transition-all duration-300 relative"
+                                 [class.bg-rose-500]="week.severity === 'critical'"
+                                 [class.shadow-[0_0_8px_rgba(239,68,68,0.4)]]="week.severity === 'critical'"
+                                 
+                                 [class.bg-amber-500]="week.severity === 'warning'"
+                                 [class.shadow-[0_0_8px_rgba(245,158,11,0.4)]]="week.severity === 'warning'"
+                                 
+                                 [class.bg-emerald-500]="week.severity === 'normal'"
+                                 [class.shadow-[0_0_8px_rgba(16,185,129,0.4)]]="week.severity === 'normal'"
+                                 [title]="week.label + ': ' + week.workCount + ' dias (' + week.severityText + ')'">
                             </div>
                           }
                         </div>
+                        <div class="flex items-center justify-between text-[6.5px] font-bold text-slate-500 uppercase">
+                          <span>Início do Mês</span>
+                          <span>Fim do Mês</span>
+                        </div>
+                      </div>
+                    </div>
+
+
+                    <!-- DIV 2: CARGA SEMANAL & DETALHAMENTO -->
+                    <div class="p-4 rounded-lg flex flex-col justify-between space-y-3 border transition-all duration-300 shadow-sm"
+                         [class.bg-[#071426]/60]="!isLightTheme()"
+                         [class.border-[#10213b]]="!isLightTheme()"
+                         [class.bg-slate-50]="isLightTheme()"
+                         [class.border-slate-200]="isLightTheme()">
+                      <div>
+                        <div class="flex items-center justify-between">
+                          <span class="text-[9px] font-black uppercase tracking-wider flex items-center gap-1"
+                                [class.text-slate-500]="!isLightTheme()"
+                                [class.text-slate-600]="isLightTheme()">
+                            <span class="material-icons text-xs text-emerald-500">warning</span>
+                            Carga Semanal &amp; Detalhamento
+                          </span>
+                          <span class="text-[8px] font-bold font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-1.5 py-0.5 rounded shrink-0"
+                                [class.text-emerald-700]="isLightTheme()"
+                                [class.bg-emerald-50]="isLightTheme()"
+                                [class.border-emerald-200]="isLightTheme()">
+                            {{ getCollabWorkDays(logged).length }} Dias Ativos
+                          </span>
+                        </div>
+                        <p class="text-[8px] text-slate-500 mt-0.5 leading-relaxed font-sans">Análise detalhada do nível de fadiga e carga de trabalho semanal de cada ciclo.</p>
+                      </div>
+
+                      <!-- WEEKLY DETAILED SECTIONS GRID -->
+                      <div class="space-y-3 max-h-[190px] overflow-y-auto pr-1">
+                        @for (week of getWeeklyWorkSequences(logged); track week.weekNum) {
+                          <div class="p-3 border rounded-lg flex flex-col space-y-2 transition-all duration-300"
+                               [class.bg-rose-950/10]="week.severity === 'critical' && !isLightTheme()"
+                               [class.border-rose-500/30]="week.severity === 'critical' && !isLightTheme()"
+                               [class.bg-rose-50/50]="week.severity === 'critical' && isLightTheme()"
+                               [class.border-rose-200]="week.severity === 'critical' && isLightTheme()"
+                               
+                               [class.bg-amber-950/10]="week.severity === 'warning' && !isLightTheme()"
+                               [class.border-amber-500/30]="week.severity === 'warning' && !isLightTheme()"
+                               [class.bg-amber-50/50]="week.severity === 'warning' && isLightTheme()"
+                               [class.border-amber-200]="week.severity === 'warning' && isLightTheme()"
+                               
+                               [class.bg-emerald-950/10]="week.severity === 'normal' && !isLightTheme()"
+                               [class.border-emerald-500/20]="week.severity === 'normal' && !isLightTheme()"
+                               [class.bg-emerald-50/20]="week.severity === 'normal' && isLightTheme()"
+                               [class.border-slate-200]="week.severity === 'normal' && isLightTheme()">
+                               
+                               <!-- Week Header -->
+                               <div class="flex items-center justify-between">
+                                 <div class="flex items-center gap-2">
+                                   <!-- SVG Micro Donut Chart -->
+                                   <div class="relative flex items-center justify-center shrink-0">
+                                     <svg class="w-6 h-6 -rotate-90" viewBox="0 0 36 36">
+                                       <circle class="stroke-slate-800/40" [class.stroke-slate-200]="isLightTheme()" stroke-width="4px" stroke="currentColor" fill="transparent" r="15.915" cx="18" cy="18" />
+                                       <circle [class]="week.severity === 'critical' ? 'stroke-rose-500' : (week.severity === 'warning' ? 'stroke-amber-500' : 'stroke-emerald-500')"
+                                               stroke-width="4px"
+                                               stroke-linecap="round"
+                                               [attr.stroke-dasharray]="100"
+                                               [attr.stroke-dashoffset]="100 - week.percentage"
+                                               fill="transparent"
+                                               r="15.915" cx="18" cy="18" />
+                                     </svg>
+                                     <span class="absolute text-[7px] font-black font-mono text-slate-300" [class.text-slate-700]="isLightTheme()">
+                                       {{ week.percentage }}%
+                                     </span>
+                                   </div>
+                                   
+                                   <div>
+                                     <span class="text-[9px] font-black uppercase tracking-wider block"
+                                           [class.text-slate-300]="!isLightTheme()"
+                                           [class.text-slate-800]="isLightTheme()">
+                                       {{ week.label }}
+                                     </span>
+                                     <span class="text-[7px] text-slate-500 block leading-none font-bold">
+                                       {{ week.range }}
+                                     </span>
+                                   </div>
+                                 </div>
+                                 
+                                 <div class="flex items-center gap-1.5">
+                                   <span class="text-[7.5px] font-black font-mono px-1.5 py-0.5 rounded border uppercase tracking-wider shrink-0"
+                                         [class.bg-rose-950/40]="week.severity === 'critical' && !isLightTheme()"
+                                         [class.text-rose-400]="week.severity === 'critical' && !isLightTheme()"
+                                         [class.border-rose-500/20]="week.severity === 'critical' && !isLightTheme()"
+                                         [class.bg-rose-50]="week.severity === 'critical' && isLightTheme()"
+                                         [class.text-rose-700]="week.severity === 'critical' && isLightTheme()"
+                                         [class.border-rose-200]="week.severity === 'critical' && isLightTheme()"
+                                         
+                                         [class.bg-amber-950/40]="week.severity === 'warning' && !isLightTheme()"
+                                         [class.text-amber-400]="week.severity === 'warning' && !isLightTheme()"
+                                         [class.border-amber-500/20]="week.severity === 'warning' && !isLightTheme()"
+                                         [class.bg-amber-50]="week.severity === 'warning' && isLightTheme()"
+                                         [class.text-amber-700]="week.severity === 'warning' && isLightTheme()"
+                                         [class.border-amber-200]="week.severity === 'warning' && isLightTheme()"
+                                         
+                                         [class.bg-emerald-950/40]="week.severity === 'normal' && !isLightTheme()"
+                                         [class.text-emerald-400]="week.severity === 'normal' && !isLightTheme()"
+                                         [class.border-emerald-500/20]="week.severity === 'normal' && !isLightTheme()"
+                                         [class.bg-emerald-50]="week.severity === 'normal' && isLightTheme()"
+                                         [class.text-emerald-700]="week.severity === 'normal' && isLightTheme()"
+                                         [class.border-emerald-200]="week.severity === 'normal' && isLightTheme()">
+                                     {{ week.severityText }}
+                                   </span>
+                                 </div>
+                               </div>
+
+                               <!-- Week Days Worked Grid (styled like the off days grid but themed by week urgency) -->
+                               <div class="grid grid-cols-5 gap-1">
+                                 @for (dayObj of week.daysList; track dayObj.day) {
+                                   @if (dayObj.isWork) {
+                                     <div class="p-1 border rounded flex flex-col items-center justify-center text-center select-none min-h-[36px] transition-all duration-300"
+                                          [class.bg-rose-950/30]="week.severity === 'critical' && !isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                          [class.border-rose-500/30]="week.severity === 'critical' && !isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                          [class.text-rose-300]="week.severity === 'critical' && !isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                          [class.bg-rose-100/40]="week.severity === 'critical' && isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                          [class.border-rose-200]="week.severity === 'critical' && isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                          [class.text-rose-800]="week.severity === 'critical' && isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+
+                                          [class.bg-amber-950/30]="week.severity === 'warning' && !isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                          [class.border-amber-500/30]="week.severity === 'warning' && !isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                          [class.text-amber-300]="week.severity === 'warning' && !isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                          [class.bg-amber-100/40]="week.severity === 'warning' && isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                          [class.border-amber-200]="week.severity === 'warning' && isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                          [class.text-amber-800]="week.severity === 'warning' && isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+
+                                          [class.bg-emerald-950/30]="week.severity === 'normal' && !isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                          [class.border-emerald-500/20]="week.severity === 'normal' && !isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                          [class.text-emerald-300]="week.severity === 'normal' && !isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                          [class.bg-emerald-50]="week.severity === 'normal' && isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                          [class.border-emerald-200]="week.severity === 'normal' && isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                          [class.text-emerald-800]="week.severity === 'normal' && isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+
+                                          [class.opacity-35]="isPastDay(dayObj.day)"
+                                          [class.bg-slate-950/30]="!isLightTheme() && isPastDay(dayObj.day)"
+                                          [class.border-slate-800]="!isLightTheme() && isPastDay(dayObj.day)"
+                                          [class.text-slate-500]="!isLightTheme() && isPastDay(dayObj.day)"
+                                          [class.border-dashed]="isPastDay(dayObj.day)"
+                                          [class.bg-slate-100]="isLightTheme() && isPastDay(dayObj.day)"
+                                          [class.border-slate-200]="isLightTheme() && isPastDay(dayObj.day)"
+                                          [class.text-slate-500]="isLightTheme() && isPastDay(dayObj.day)"
+
+                                          [class.bg-emerald-500]="isToday(dayObj.day) && !isLightTheme()"
+                                          [class.text-emerald-950]="isToday(dayObj.day) && !isLightTheme()"
+                                          [class.border-emerald-500]="isToday(dayObj.day) && !isLightTheme()"
+                                          
+                                          [class.bg-emerald-600]="isToday(dayObj.day) && isLightTheme()"
+                                          [class.text-white]="isToday(dayObj.day) && isLightTheme()"
+                                          [class.border-emerald-600]="isToday(dayObj.day) && isLightTheme()"
+
+                                          [class.ring-1]="isToday(dayObj.day)"
+                                          [class.ring-emerald-400]="isToday(dayObj.day)">
+                                       <span class="text-[10px] font-mono font-black leading-tight"
+                                             [class.text-rose-400]="week.severity === 'critical' && !isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                             [class.text-rose-700]="week.severity === 'critical' && isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                             [class.text-amber-400]="week.severity === 'warning' && !isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                             [class.text-amber-700]="week.severity === 'warning' && isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                             [class.text-emerald-400]="week.severity === 'normal' && !isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                             [class.text-emerald-700]="week.severity === 'normal' && isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                             [class.text-slate-600]="!isLightTheme() && isPastDay(dayObj.day)"
+                                             [class.text-slate-500]="isLightTheme() && isPastDay(dayObj.day)"
+                                             [class.text-emerald-950]="isToday(dayObj.day) && !isLightTheme()"
+                                             [class.text-white]="isToday(dayObj.day) && isLightTheme()">
+                                         {{ dayObj.day < 10 ? '0' + dayObj.day : dayObj.day }}
+                                       </span>
+                                       <span class="text-[6px] font-black uppercase tracking-wider block"
+                                             [class.text-rose-500/70]="week.severity === 'critical' && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                             [class.text-rose-600/70]="week.severity === 'critical' && isPastDay(dayObj.day)"
+                                             [class.text-amber-500/70]="week.severity === 'warning' && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                             [class.text-amber-600/70]="week.severity === 'warning' && isPastDay(dayObj.day)"
+                                             [class.text-emerald-500/70]="week.severity === 'normal' && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
+                                             [class.text-emerald-600/70]="week.severity === 'normal' && isPastDay(dayObj.day)"
+                                             [class.text-slate-700]="!isLightTheme() && isPastDay(dayObj.day)"
+                                             [class.text-slate-500]="isLightTheme() && isPastDay(dayObj.day)"
+                                             [class.text-emerald-950]="isToday(dayObj.day) && !isLightTheme()"
+                                             [class.text-white/80]="isToday(dayObj.day) && isLightTheme()">
+                                         {{ getDayOfWeekLabel(dayObj.day) }}
+                                       </span>
+                                     </div>
+                                   }
+                                 } @empty {
+                                   <div class="col-span-full py-3 text-center">
+                                     <span class="text-[7.5px] font-bold italic text-slate-500 uppercase tracking-wider">Folga total nesta semana</span>
+                                   </div>
+                                 }
+                               </div>
+                          </div>
+                        }
                       </div>
                     </div>
 
@@ -2884,10 +3016,10 @@
                         <h4 class="font-black text-xs text-slate-900 uppercase tracking-wider flex items-center gap-1.5"
                             [class.text-slate-800]="isLightTheme()">
                           <span class="material-icons text-[#10b981] text-sm">calendar_month</span>
-                          Calendário Oficial - {{ currentMonthName() }} {{ currentYear() }}
+                          Calendário
                         </h4>
                         <p class="text-[9px] text-slate-500 mt-1" [class.text-slate-500]="isLightTheme()">
-                          Legenda: Verde (Folgas), Vermelho (Licenças), Azul (Escala Regular).
+                          Legenda: Verde (FOLGA), Vermelho (AUSENTE), Azul (TRABALHO).
                         </p>
                       </div>
                       
@@ -2979,8 +3111,8 @@
                                   [class.text-rose-400]="dayInfo.status === 'licenca'"
                                   [class.text-slate-300]="dayInfo.status === 'trabalho' && !isLightTheme()"
                                   [class.text-slate-700]="dayInfo.status === 'trabalho' && isLightTheme()">
-                              <span class="hidden sm:inline">{{ dayInfo.status === 'folga' ? 'Folga' : (dayInfo.status === 'licenca' || dayInfo.status === 'afastamento' ? 'Atestado' : 'Trabalho') }}</span>
-                              <span class="inline sm:hidden">{{ dayInfo.status === 'folga' ? 'Folga' : (dayInfo.status === 'licenca' || dayInfo.status === 'afastamento' ? 'Atest.' : 'Trab.') }}</span>
+                              <span class="hidden sm:inline">{{ dayInfo.status === 'folga' ? 'FOLGA' : (dayInfo.status === 'licenca' || dayInfo.status === 'afastamento' ? 'AUSENTE' : 'TRABALHO') }}</span>
+                              <span class="inline sm:hidden">{{ dayInfo.status === 'folga' ? 'FOLGA' : (dayInfo.status === 'licenca' || dayInfo.status === 'afastamento' ? 'AUSENTE' : 'TRABALHO') }}</span>
                             </span>
                           </div>
 
@@ -3294,7 +3426,7 @@
                       Se não cadastrar, estas siglas serão convertidas para interrogação (?) no sistema.
                     </span>
                     <button (click)="registerUnrecognizedCodes()"
-                            class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded font-black text-[9px] uppercase tracking-wider transition-all cursor-pointer border-none outline-none flex items-center gap-1 shrink-0 shadow-lg shadow-amber-500/10">
+                            class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-amber-950 rounded font-black text-[9px] uppercase tracking-wider transition-all cursor-pointer border-none outline-none flex items-center gap-1 shrink-0 shadow-lg shadow-amber-500/10">
                       <span class="material-icons text-xs">add_box</span>
                       Criar Automaticamente
                     </button>
@@ -3369,7 +3501,7 @@
         </div>
 
         <p class="text-[10px] text-slate-400 leading-relaxed">
-          Selecione o provedor de banco de dados ativo para o sistema de gestão de escala Escala Easy VIBRA. Toda a sincronização de dados ocorrerá de forma isolada de acordo com o provedor selecionado.
+          Selecione o provedor de banco de dados ativo para o sistema de gestão de escala. Toda a sincronização de dados ocorrerá de forma isolada de acordo com o provedor selecionado.
         </p>
 
         <!-- Database Provider Toggles -->

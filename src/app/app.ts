@@ -1587,6 +1587,43 @@ export class App {
     }
   }
 
+  getEnergyPercent(seqStats: any): number {
+    if (!seqStats) return 100;
+    if (!seqStats.isWorking) return 100;
+    return Math.max(20, 100 - (seqStats.streak - 1) * 20);
+  }
+
+  getDonutColor(streak: number, isWorking: boolean): string {
+    if (!isWorking) return '#10b981'; // emerald-500
+    switch(streak) {
+      case 1: return '#10b981'; // emerald-500
+      case 2: return '#3b82f6'; // blue-500
+      case 3: return '#eab308'; // yellow-500
+      case 4: return '#f97316'; // orange-500
+      default: return '#ef4444'; // red-500
+    }
+  }
+
+  getFeedbackCardClass(seqStats: any): string {
+    if (!seqStats) return '';
+    const light = this.isLightTheme();
+    if (!seqStats.isWorking) {
+      return light ? 'bg-emerald-50/70 border-emerald-200 text-emerald-800' : 'bg-emerald-950/10 border-emerald-500/20 text-emerald-400';
+    }
+    switch(seqStats.streak) {
+      case 1:
+        return light ? 'bg-emerald-50/70 border-emerald-200 text-emerald-800' : 'bg-emerald-950/10 border-emerald-500/20 text-emerald-400';
+      case 2:
+        return light ? 'bg-blue-50/70 border-blue-200 text-blue-800' : 'bg-blue-950/10 border-blue-500/20 text-blue-400';
+      case 3:
+        return light ? 'bg-amber-50/70 border-amber-200 text-amber-800' : 'bg-amber-950/10 border-amber-500/20 text-amber-400';
+      case 4:
+        return light ? 'bg-orange-50/70 border-[#F59E0B] text-orange-800' : 'bg-[#F59E0B]/5 border-[#F59E0B] text-[#F59E0B]';
+      default:
+        return light ? 'bg-rose-50/70 border-rose-200 text-rose-800' : 'bg-rose-950/10 border-rose-500/20 text-rose-400';
+    }
+  }
+
   getConsecutiveWorkStats(collab: any) {
     if (!collab) return { isWorking: false, currentDay: 1, streak: 0, totalStreak: 0, energyColor: 'text-emerald-400', energyBg: 'bg-emerald-500', borderCol: 'border-emerald-500/20', textCol: 'text-emerald-400', textBg: 'bg-emerald-950/40', fatigueLevel: 'Em Folga / Descanso', alertMessage: 'Aproveite para recarregar as energias!' };
     

@@ -23,3 +23,9 @@ Qualquer alteração ou sugestão de código futura deve respeitar estritamente 
 * **PROIBIÇÃO DE MOCK/DADOS INVENTADOS:** O aplicativo não deve sob circunstância alguma utilizar listas estáticas de colaboradores, turnos inventados, ou siglas simuladas que estejam fora das tabelas oficiais acima.
 * Toda a interface deve ser 100% dinâmica, lendo as siglas, os turnos e os colaboradores cadastrados unicamente a partir do banco de dados relacional.
 
+## Diretrizes de Harmonia Cromática (Círculo Cromático)
+* **DIRETRIZ DE DESIGN OBRIGATÓRIA:** É terminantemente proibido usar textos de contraste escuro sujo (como preto ou cinza escuro genéricos) sobre fundos coloridos vibrantes (como verde, esmeralda, âmbar ou vermelho).
+* Toda a interface deve seguir estritamente o guia de cores estabelecido em `/DESIGN_CHROMATIC_GUIDELINES.md`. 
+* Sempre que um fundo colorido for criado ou modificado (como botões, badges, cabeçalhos, indicações de dia ou status), aplique as regras de harmonia cromática de círculo cromático (ex: `text-white` ou um tom extremamente escuro análogo como `text-emerald-950` sobre fundos esmeralda).
+
+

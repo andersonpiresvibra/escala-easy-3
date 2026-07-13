@@ -37,3 +37,5 @@ O aplicativo lida unicamente com **escala de trabalho corporativa** (turnos de o
 - **NÃO** possui qualquer relação com aviação, aeronaves, aeroportos ou malhas de voos.
 - Evite absolutamente o termo "malha" ou qualquer conotação aérea.
 - Siga as diretrizes de dados do arquivo `/AGENT_ROLES.md` para conexões dinamicas ao banco de dados relacional.
+- **Harmonia Cromática OBRIGATÓRIA:** Consulte e aplique estritamente as diretrizes de `/DESIGN_CHROMATIC_GUIDELINES.md` para qualquer alteração ou criação de designs de tela e cores de componentes (evitando contrastes sem harmonia como texto preto/escuro sobre fundo verde ou âmbar).
+
