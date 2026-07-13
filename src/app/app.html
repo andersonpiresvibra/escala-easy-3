@@ -321,7 +321,7 @@
                     <input type="password" #pinInput placeholder="PIN de Acesso" (keyup.enter)="unlockAllShifts(pinInput.value); pinInput.value=''"
                            class="bg-[#020813] border border-[#10213b] text-white text-[9px] px-2 py-1.5 rounded-md w-full outline-none focus:border-emerald-500 placeholder:text-slate-600 font-mono">
                     <button (click)="unlockAllShifts(pinInput.value); pinInput.value=''"
-                            class="px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black text-[9px] uppercase rounded-md cursor-pointer transition-colors border-none outline-none">
+                            class="px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-white font-black text-[9px] uppercase rounded-md cursor-pointer transition-colors border-none outline-none">
                       Ok
                     </button>
                   </div>
@@ -2549,7 +2549,7 @@
                                    [class.text-slate-500]="isPastDay(day) && isLightTheme()"
                                    
                                    [class.bg-amber-500]="isToday(day) && !isLightTheme()"
-                                   [class.text-amber-950]="isToday(day) && !isLightTheme()"
+                                   [class.text-white]="isToday(day) && !isLightTheme()"
                                    [class.border-amber-500]="isToday(day) && !isLightTheme()"
                                    
                                    [class.bg-amber-600]="isToday(day) && isLightTheme()"
@@ -2563,7 +2563,7 @@
                                        [class.text-amber-700]="!isPastDay(day) && !isToday(day) && isLightTheme()"
                                        [class.text-slate-600]="isPastDay(day) && !isLightTheme()"
                                        [class.text-slate-500]="isPastDay(day) && isLightTheme()"
-                                       [class.text-amber-950]="isToday(day) && !isLightTheme()"
+                                       [class.text-white]="isToday(day) && !isLightTheme()"
                                        [class.text-white]="isToday(day) && isLightTheme()">
                                    {{ day < 10 ? '0' + day : day }}
                                  </span>
@@ -2628,7 +2628,7 @@
                                    [class.text-slate-500]="isPastDay(day) && isLightTheme()"
                                    
                                    [class.bg-emerald-500]="isToday(day) && !isLightTheme()"
-                                   [class.text-emerald-950]="isToday(day) && !isLightTheme()"
+                                   [class.text-white]="isToday(day) && !isLightTheme()"
                                    [class.border-emerald-500]="isToday(day) && !isLightTheme()"
                                    
                                    [class.bg-emerald-600]="isToday(day) && isLightTheme()"
@@ -2643,7 +2643,7 @@
                                       [class.text-emerald-700]="!isPastDay(day) && !isToday(day) && isLightTheme()"
                                       [class.text-slate-600]="isPastDay(day) && !isLightTheme()"
                                       [class.text-slate-500]="isPastDay(day) && isLightTheme()"
-                                      [class.text-emerald-950]="isToday(day) && !isLightTheme()"
+                                      [class.text-white]="isToday(day) && !isLightTheme()"
                                       [class.text-white]="isToday(day) && isLightTheme()">
                                   {{ day < 10 ? '0' + day : day }}
                                 </span>
@@ -2850,7 +2850,7 @@
                                           [class.text-slate-500]="isLightTheme() && isPastDay(dayObj.day)"
 
                                           [class.bg-emerald-500]="isToday(dayObj.day) && !isLightTheme()"
-                                          [class.text-emerald-950]="isToday(dayObj.day) && !isLightTheme()"
+                                          [class.text-white]="isToday(dayObj.day) && !isLightTheme()"
                                           [class.border-emerald-500]="isToday(dayObj.day) && !isLightTheme()"
                                           
                                           [class.bg-emerald-600]="isToday(dayObj.day) && isLightTheme()"
@@ -2868,7 +2868,7 @@
                                              [class.text-emerald-700]="week.severity === 'normal' && isLightTheme() && !isPastDay(dayObj.day) && !isToday(dayObj.day)"
                                              [class.text-slate-600]="!isLightTheme() && isPastDay(dayObj.day)"
                                              [class.text-slate-500]="isLightTheme() && isPastDay(dayObj.day)"
-                                             [class.text-emerald-950]="isToday(dayObj.day) && !isLightTheme()"
+                                             [class.text-white]="isToday(dayObj.day) && !isLightTheme()"
                                              [class.text-white]="isToday(dayObj.day) && isLightTheme()">
                                          {{ dayObj.day < 10 ? '0' + dayObj.day : dayObj.day }}
                                        </span>
@@ -2881,7 +2881,7 @@
                                              [class.text-emerald-600/70]="week.severity === 'normal' && isPastDay(dayObj.day)"
                                              [class.text-slate-700]="!isLightTheme() && isPastDay(dayObj.day)"
                                              [class.text-slate-500]="isLightTheme() && isPastDay(dayObj.day)"
-                                             [class.text-emerald-950]="isToday(dayObj.day) && !isLightTheme()"
+                                             [class.text-white]="isToday(dayObj.day) && !isLightTheme()"
                                              [class.text-white/80]="isToday(dayObj.day) && isLightTheme()">
                                          {{ getDayOfWeekLabel(dayObj.day) }}
                                        </span>
