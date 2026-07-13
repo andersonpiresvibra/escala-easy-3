@@ -3,7 +3,7 @@
   "short_name": "Escala Easy",
   "description": "Gestão de Escala de Trabalho Mensal",
   "start_url": "/",
-  "display": "standalone",
+  "display": "fullscreen",
   "background_color": "#020813",
   "theme_color": "#020813",
   "icons": [

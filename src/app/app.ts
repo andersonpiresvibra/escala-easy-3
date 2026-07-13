@@ -21,12 +21,22 @@ interface AppNotification {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './app.html',
+  styleUrls: ['./app.css'],
   host: {
     '(document:fullscreenchange)': 'onFullscreenChange()',
-    '(document:click)': 'onDocumentClick($event)'
+    '(document:click)': 'onDocumentClick($event)',
+    '(window:resize)': 'onResize()'
   }
 })
 export class App {
+
+  onResize() {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      if (this.activeSubTab() !== 'portal') {
+        this.activeSubTab.set('portal');
+      }
+    }
+  }
   public scaleService = inject(ScaleService);
 
   // Theme & Fullscreen states
@@ -714,6 +724,60 @@ export class App {
   selectedCollabTeamDayTab = signal<'today' | 'tomorrow' | 'other'>('today');
   selectedCollabTeamDayOther = signal<number>(new Date().getDate());
 
+  // --- Long Press Edit Dates Logic ---
+  private datesLongPressTimer: any;
+  public editingSpecialDates = signal<{date: string, description: string, priority: number}[]>([]);
+
+  onImportantDatesPointerDown(event: Event) {
+    this.datesLongPressTimer = setTimeout(() => {
+      this.isPortalEditingDates.set(true);
+      const logged = this.getLoggedCollab();
+      if (logged) {
+         const currentDates = JSON.parse(JSON.stringify(logged.specialDates || []));
+         this.editingSpecialDates.set(currentDates);
+      }
+    }, 2000);
+  }
+
+  onImportantDatesPointerUp() {
+    if (this.datesLongPressTimer) {
+      clearTimeout(this.datesLongPressTimer);
+    }
+  }
+
+  updateSpecialDateRow(index: number, field: 'date' | 'description', value: string) {
+    this.editingSpecialDates.update(dates => {
+      const newDates = [...dates];
+      newDates[index] = { ...newDates[index], [field]: value };
+      return newDates;
+    });
+  }
+
+  addSpecialDateRow() {
+    this.editingSpecialDates.update(dates => [...dates, { date: '', description: '', priority: 1 }]);
+  }
+
+  removeSpecialDateRow(index: number) {
+    this.editingSpecialDates.update(dates => {
+      const newDates = [...dates];
+      newDates.splice(index, 1);
+      return newDates;
+    });
+  }
+
+  saveSpecialDates() {
+    const logged = this.getLoggedCollab();
+    if (!logged) return;
+    const validDates = this.editingSpecialDates().filter(d => d.date && d.description);
+    const updated = {
+       ...logged,
+       specialDates: validDates
+    };
+    this.scaleService.updateCollaborator(updated);
+    this.isPortalEditingDates.set(false);
+    this.showToast('Datas importantes atualizadas com sucesso!');
+  }
+
   getImportantDatesForCollab(collab: any): { dateLabel: string; label: string; icon: string; color: string; details: string; priorityLabel?: string; rawDate: string; isBirthday?: boolean; priorityValue?: number }[] {
     if (!collab) return [];
     const dates: { dateLabel: string; label: string; icon: string; color: string; details: string; priorityLabel?: string; rawDate: string; isBirthday?: boolean; priorityValue?: number }[] = [];
@@ -1068,6 +1132,9 @@ export class App {
   unrecognizedCodes = signal<string[]>([]);
 
   constructor() {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      this.activeSubTab.set('portal');
+    }
     this.updateClock();
     setInterval(() => this.updateClock(), 1000);
     this.showToast('Escala Easy VIBRA - Protótipo MVP Pronto');
@@ -1503,6 +1570,23 @@ export class App {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getArray(n: number): number[] {
+    return Array.from({length: Math.max(1, n)}, (_, i) => i + 1);
+  }
+
+  getBarColor(index: number, currentStreak: number, isWorking: boolean): string {
+    if (!isWorking) return '#e2e8f0'; // slate-200
+    if (index > currentStreak) return '#e2e8f0'; // future
+    
+    switch(index) {
+      case 1: return '#10b981'; // emerald-500
+      case 2: return '#3b82f6'; // blue-500
+      case 3: return '#eab308'; // yellow-500
+      case 4: return '#f97316'; // orange-500
+      default: return '#ef4444'; // red-500
+    }
+  }
+
   getConsecutiveWorkStats(collab: any) {
     if (!collab) return { isWorking: false, currentDay: 1, streak: 0, totalStreak: 0, energyColor: 'text-emerald-400', energyBg: 'bg-emerald-500', borderCol: 'border-emerald-500/20', textCol: 'text-emerald-400', textBg: 'bg-emerald-950/40', fatigueLevel: 'Em Folga / Descanso', alertMessage: 'Aproveite para recarregar as energias!' };
     
