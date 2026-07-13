@@ -2,7 +2,7 @@
   "name": "escala-easy-3",
   "compatibility_date": "2024-04-01",
   "assets": {
-    "directory": "dist/browser",
+    "directory": "dist/app/browser",
     "not_found_handling": "single-page-application"
   }
 }
