@@ -1575,8 +1575,8 @@ export class App {
   }
 
   getBarColor(index: number, currentStreak: number, isWorking: boolean): string {
-    if (!isWorking) return '#e2e8f0'; // slate-200
-    if (index > currentStreak) return '#e2e8f0'; // future
+    if (!isWorking) return '#cbd5e1'; // cinza claro
+    if (index > currentStreak) return '#cbd5e1'; // cinza claro quando não atingida ainda
     
     switch(index) {
       case 1: return '#10b981'; // emerald-500
